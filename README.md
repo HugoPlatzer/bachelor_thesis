@@ -1,4 +1,9 @@
-# Schedule
+Here I'm developing my bachelor thesis on the topic of
+**"Developing a driver for a film scanner by means of USB sniffing and reverse engineering"**.
+
+[View PDF(compiled online)](https://latexonline.cc/compile?git=https%3A%2F%2Fgithub.com%2FHugoPlatzer%2Fbachelor_thesis&target=thesis.tex&command=pdflatex&trackId=1509982456569)
+
+## Schedule
 
 * USB standard: Basics, Endpoints, Transfer types **12.11.**
 * Sniffing: hardware devices, software (windows vs. linux),
