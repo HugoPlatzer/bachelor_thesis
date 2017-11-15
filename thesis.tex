@@ -1,12 +1,8 @@
 \documentclass{article}
-%\usepackage[ngerman]{babel}
-\usepackage[utf8]{inputenc}
 \usepackage{graphicx}
 \usepackage[affil-it]{authblk}
 \usepackage{url}
 \usepackage{nth}
-%\usepackage{csquotes}
-%\MakeOuterQuote{"}
 
 \begin{document}
 
@@ -16,9 +12,112 @@
 
 \section{The USB standard}
 
-blablubb
+\subsection{Motivation}
+
+USB is an interface intended to connect various peripherals to PCs. These include:
+Human interface devices like keyboards and mice; storage devices like card readers,
+external hard disks, memory sticks and smartphones; multimedia devices like microphones, speakers,
+cameras and scanners. Some highlights leading to its wide adoption:
+
+\begin{itemize}
+  \item Unified interface for all kinds of peripherals
+  \item Plug and play: The user plugs in the device, the configuration (e.g. loading the appropriate drivers)
+  is done automatically by the operating system
+  \item Number of ports can be increased using hubs. Multiple hubs can be chained
+        allowing for up to 127 devices on a single root port.
+  \item High data rate of 480 Mbit / s (USB 2.0 high-speed mode). Also offers low-latency
+        transfers for real-time audio/video applications
+  \item Backwards compatibility: Older USB 1.1 devices can be used at 2.0 hosts.
+        High-speed USB 2.0 devices can also be used on older
+        machines supporting only USB 1.1 (albeit at lower speed).
+\end{itemize}
+
+\subsection{Electrical side}
+
+\begin{figure}[!htbp]
+  \caption{USB cable cross-section}
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/usb_cable.jpg}
+\end{figure}
+
+A USB cable has four wires: One as ground, VBUS for a 5 V power supply and two for data transmission.
+The power line allows it to draw up to 100 mA without any configuration. This is useful for simple
+devices that are not using the data lanes, just the power, like USB lights. Also it allows for devices
+not taking much power to be self-powered which eliminates the need for an extra power supply and connector.
+Devices can ask the host for more power (up to 500 mA), those that need even more (like a lot of scanners) need
+an external supply.
+
+\subsection{Signaling}
+
+\subsubsection{Low-level states}
+
+USB is a serial bus which means there is only a single path for data transmission.
+Differential signalling across the D- and D+ wires is used, which means the difference in voltage
+across the two wires (rather than some absolute) determines the state. This is beneficial because
+noise during transmission should affect both lines equally, not changing the difference.
+Higher frequencies and thus data rates become possible.
+
+\begin{table}[!htbp]
+  \caption{USB speed modes}
+  \centering
+  \begin{tabular}{l | l | l}
+    Mode & Speed & Bit time \\ \hline
+    Low Speed & 1.5 Mbit / s & 667 ns \\
+    Full Speed & 12 Mbit / s & 83 ns \\
+    High Speed & 480 Mbit / s & 2 ns \\
+  \end{tabular}
+\end{table}
+
+\begin{table}[!htbp]
+  \caption{Low-level data line states (only applies to Full Speed)}
+  \centering
+  \begin{tabular}{l | l}
+    Levels & State \\ \hline
+    Differential '0' & D- high, D+ low \\
+    Differential '1' & D- low, D+ high \\
+    Single Ended Zero (SE0) & both low \\
+    Single Ended One (SE1) & both high (illegal state, should never happen) \\
+    Data 'J' state & Differential '1' \\
+    Data 'K' state & Differential '0' \\
+    Idle state & Data 'J' state \\
+    Start of Packet (SOP) & Switch from idle to 'K' \\
+    End of Packet (EOP) & SE0 for 2 bit times followed by 'J' for 1 bit time \\
+    Disconnect & SE0 for $\geq$ 2 us \\
+    Connect & Idle for 2.5 us \\
+    Reset & SE0 for $\geq$ 2.5 us \\
+  \end{tabular}
+\end{table}
+
+Low Speed is used for devices where speed is not important (mice, keyboards).
+It allows for cheaper cables and electronics. High Speed is only available
+in USB 2.0. For reasons of simplicity, only full speed signaling will be covered
+here.
+
+SE0 is the state of the data lines if no device is connected. The host
+recognizes a device being plugged in by the D+ line being "pulled up" to high.
+It then most likely initiates a reset so the device is in a known state for
+communication to begin. Similarly, a disconnect is sensed by a SE0 for some time.
+
+\subsubsection{Bitstream encoding}
+
+USB uses NRZI encoding for the transmitted data: A zero is represented by a change to
+the opposite state while a one is represented by staying in the same state.
+
+\begin{figure}[!htbp]
+  \caption{NRZI bitstream encoding}
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/nrzi_encoding.jpg}
+\end{figure}
+
+For keeping the receiver clock in sync with the data it is not ideal if the signal
+stays at J or K for too long. To prevent this, a technique called "bit stuffing"
+is used: Before doing NRZI encoding, a zero is inserted after every six consecutive ones
+in the data. The receiver recognizes the stuffed bits during decoding and discards them.
 
 \begin{thebibliography}{}
+
+\bibitem{usbstd}
+Universal Serial Bus Specification, Revision 2.0. April 27, 2000. Available at \url{http://www.usb.org/developers/docs/usb20_docs/}
 
 \bibitem{uc}
 USB Complete: Everything You Need to Develop Custom USB Peripherals (\nth{3} edition).
