@@ -196,9 +196,22 @@ Used to transmit the actual data in a transaction.
 
 Used to report the status of a transaction.
 
-\subsection{Transactions}
-
 \subsection{Transfers}
+
+Transfers are the abstraction level of data exchange as seen at the software
+side of the host. They are composed of transactions, which usually consist of three
+packets: 
+
+\begin{enumerate}
+  \item A token packet to tell the type of the transaction and its destination
+        (as all USB communication is initiated by the host, the token packet always comes
+        from the host)
+  \item A DATA packet for the actual payload. Length can vary between 8-64 bytes on Full Speed links.
+        This can go host to device or device to host.
+  \item A handshake packet (usually ACK, NAK) lets the sender know if the data was received successfully.
+\end{enumerate}
+
+Transfers usually consist of multiple transactions.
 
 \begin{figure}[H]
   \caption{Composition of a USB transfer}
@@ -207,6 +220,15 @@ Used to report the status of a transaction.
 \end{figure}
 
 \subsubsection {Control transfer}
+
+Every device must have endpoint 0 for control transfers in both directions.
+They start with a Setup transaction specifying the target device and endpoint plus
+an extra 8 bytes of data. These 8 bytes tell the type and parameters of the control transfer.
+Depending on the kind of control transfer, there may be data
+transactions for additional information, but this is not required.
+The transfer is completed with a Status transaction to report back about the success of the whole transfer.
+
+
 
 \subsubsection {Interrupt transfer}
 
