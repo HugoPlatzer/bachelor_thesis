@@ -3,6 +3,8 @@
 \usepackage[affil-it]{authblk}
 \usepackage{url}
 \usepackage{nth}
+\usepackage{float}
+\usepackage{multirow}
 
 \begin{document}
 
@@ -88,6 +90,7 @@ Higher frequencies and thus data rates become possible.
   \end{tabular}
 \end{table}
 
+\pagebreak
 Low Speed is used for devices where speed is not important (mice, keyboards).
 It allows for cheaper cables and electronics. High Speed is only available
 in USB 2.0. For reasons of simplicity, only full speed signaling will be covered
@@ -97,6 +100,10 @@ SE0 is the state of the data lines if no device is connected. The host
 recognizes a device being plugged in by the D+ line being "pulled up" to high.
 It then most likely initiates a reset so the device is in a known state for
 communication to begin. Similarly, a disconnect is sensed by a SE0 for some time.
+
+It is important to note that {\bf all communication on the USB bus is initiated by the
+host}. Devices on the bus can not directly talk to each other and can only talk
+to the host as a direct response to a request made by it before.
 
 \subsubsection{Bitstream encoding}
 
@@ -113,6 +120,101 @@ For keeping the receiver clock in sync with the data it is not ideal if the sign
 stays at J or K for too long. To prevent this, a technique called "bit stuffing"
 is used: Before doing NRZI encoding, a zero is inserted after every six consecutive ones
 in the data. The receiver recognizes the stuffed bits during decoding and discards them.
+
+\subsection {Packets}
+
+Packets are the atomic unit of data transmission in USB. In between packet transmission,
+the bus remains in an idle state. Every packet starts with a sync pattern to synchronize
+the clocks between sender and receiver. Next are the actual data bits. The packet is
+terminated by an EOP state. Fields in a packet are transmitted least-significant
+bit first.
+
+The first 8 bits of every packet contain the packet ID (PID) which identifies its type
+and thus how the rest of the packet data should be interpreted. The PID is 4 bits long, they are transmitted a second time in reverse bit order to allow the receiver to quickly
+discard a faulty packet. There are 17 different packet types (PRE and ERR have the same ID,
+some are only relevant for High Speed):
+
+\begin{table}[!htbp]
+  \caption{USB packet types; notice how the least-significant two bits identify the packet category}
+  \centering
+  \begin{tabular}{l | l | l | p{5cm}}
+    PID type & PID name & \begin{tabular}{@{}l} PID bits \\ ($<3:0>$) \end{tabular} & Description \\ \hline
+    \multirow{4}*{Token} & OUT & 0001 & Address + endpoint number for host-to-device transaction \\
+                         & IN & 1001 & Address + endpoint number for device-to-host transaction \\
+                         & SOF & 0101 & Start-of-frame marker, frame number \\
+                         & SETUP & 1101 & Special host-to-device transaction for device configuration \\ \hline
+    \multirow{4}*{Data} & DATA0 & 0011 & Data packet \\
+                         & DATA1 & 1011 & Data packet \\
+                         & DATA2 & 0111 & Data packet (only High Speed) \\
+                         & MDATA & 1111 & Data packet (only High Speed) \\ \hline
+    \multirow{4}*{Handshake} & ACK & 0010 & Receiver accepts error-free data packet \\
+                         & NAK & 1010 & Receiver cannot accept data or transmitter cannot send data \\
+                         & STALL & 1110 & Endpoint halted or control pipe request not supported \\
+                         & NYET & 0110 & Data packet (only High Speed) \\ \hline
+    \multirow{4}*{Special} & PRE & 1100 & Preamble to enable downstream traffic to low-speed devices \\
+                         & ERR & 1100 & Split Transaction error handshake \\
+                         & SPLIT & 1000 & High speed Split Transaction token (only High Speed) \\
+                         & PING & 0100 & High speed control flow probe (only High Speed) \\
+                         & Reserved & 0000 & Reserved PID \\
+  \end{tabular}
+\end{table}
+
+\subsubsection{Token packet}
+
+\begin{figure}[H]
+  \caption{Token packet composition}
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/token_packet.jpg}
+\end{figure}
+
+Token packets are used at the start of so-called transactions to specify the target
+of the transaction on the bus, namely a certain device and endpoint. There are 127
+possible devices on a bus (address 0 is reserved for a device that has not been configured yet).
+
+Endpoints are logical entities on a device that are used as sources and sinks of data
+in so-called pipes. A pipe is either in OUT (to device) or IN (to host) direction.
+Endpoint 0 is a special bidirectional pipe that must be available on every device
+right after the reset. It is used mainly for identifying and configuring the device.
+
+\subsubsection{Data packet}
+
+\begin{figure}[H]
+  \caption{Data packet composition}
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/data_packet.jpg}
+\end{figure}
+
+Used to transmit the actual data in a transaction.
+
+\subsubsection{Handshake packet}
+
+\begin{figure}[H]
+  \caption{Handshake packet composition}
+  \centering
+  \includegraphics[width=0.21\textwidth]{images/handshake_packet.jpg}
+\end{figure}
+
+Used to report the status of a transaction.
+
+\subsection{Transactions}
+
+\subsection{Transfers}
+
+\begin{figure}[H]
+  \caption{Composition of a USB transfer}
+  \centering
+  \includegraphics[width=\textwidth]{images/transfer_tree.jpg}
+\end{figure}
+
+\subsubsection {Control transfer}
+
+\subsubsection {Interrupt transfer}
+
+\subsubsection {Bulk transfer}
+
+\subsubsection {Isochronous transfer}
+
+\subsection{Enumeration, Configuration}
 
 \begin{thebibliography}{}
 
