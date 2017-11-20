@@ -138,7 +138,7 @@ some are only relevant for High Speed):
   \caption{USB packet types; notice how the least-significant two bits identify the packet category}
   \centering
   \begin{tabular}{l | l | l | p{5cm}}
-    PID type & PID name & \begin{tabular}{@{}l} PID bits \\ ($<3:0>$) \end{tabular} & Description \\ \hline
+    PID type & PID name & \begin{tabular}{@{}l} PID bits \\ (3..0) \end{tabular} & Description \\ \hline
     \multirow{4}*{Token} & OUT & 0001 & Address + endpoint number for host-to-device transaction \\
                          & IN & 1001 & Address + endpoint number for device-to-host transaction \\
                          & SOF & 0101 & Start-of-frame marker, frame number \\
@@ -162,7 +162,7 @@ some are only relevant for High Speed):
 \subsubsection{Token packet}
 
 \begin{figure}[H]
-  \caption{Token packet composition}
+  \caption{Token packet format}
   \centering
   \includegraphics[width=0.5\textwidth]{images/token_packet.jpg}
 \end{figure}
@@ -179,7 +179,7 @@ right after the reset. It is used mainly for identifying and configuring the dev
 \subsubsection{Data packet}
 
 \begin{figure}[H]
-  \caption{Data packet composition}
+  \caption{Data packet format}
   \centering
   \includegraphics[width=0.5\textwidth]{images/data_packet.jpg}
 \end{figure}
@@ -189,7 +189,7 @@ Used to transmit the actual data in a transaction.
 \subsubsection{Handshake packet}
 
 \begin{figure}[H]
-  \caption{Handshake packet composition}
+  \caption{Handshake packet format}
   \centering
   \includegraphics[width=0.21\textwidth]{images/handshake_packet.jpg}
 \end{figure}
@@ -199,7 +199,11 @@ Used to report the status of a transaction.
 \subsection{Transfers}
 
 Transfers are the abstraction level of data exchange as seen at the software
-side of the host. They are composed of transactions, which usually consist of three
+side of the host. From the host's perspective, a transfer transmits a string of
+ bytes from / to the device. A transfer is directed to one of the device's endpoints,
+each of them has one of four transfer types plus a transfer direction
+asscociated with it during device configuration.
+Transfers are composed of transactions, which usually consist of three
 packets: 
 
 \begin{enumerate}
@@ -221,22 +225,158 @@ Transfers usually consist of multiple transactions.
 
 \subsubsection {Control transfer}
 
-Every device must have endpoint 0 for control transfers in both directions.
-They start with a Setup transaction specifying the target device and endpoint plus
-an extra 8 bytes of data. These 8 bytes tell the type and parameters of the control transfer.
-Depending on the kind of control transfer, there may be data
-transactions for additional information, but this is not required.
-The transfer is completed with a Status transaction to report back about the success of the whole transfer.
+Every device must have endpoint 0 for control transfers. Control endpoints
+are message-based. This means each transfer is for a specific message which has
+defined length, format and purpose. There can be transfers in either direction
+on the same endpoint, although each transfer has a specified (data stage) direction.
+Control transfers start with a Setup stage / transaction specifying the target device
+and endpoint plus an extra 8 bytes of data called the Device Request.
 
+\begin{table}[H]
+  \caption{Device Request format}
+  \centering
+  \begin{tabular}{l | l | l | p{5.5cm}}
+    \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
+    \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
+    
+    0 & bmRequestType & 1 &
+    
+      Bits 0..4: Recipient
+      
+      \begin{tabular}{l l}
+        0 & Device \\
+        1 & Interface \\
+        2 & Endpoint \\
+        3 & Other \\
+        4..31 & Reserved \\
+      \end{tabular}
+      
+      \vspace{3mm}
+      Bits 5..6: Type
+      
+      \begin{tabular}{l l}
+        0 & Standard \\
+        1 & Class \\
+        2 & Vendor \\
+        3 & Reserved \\
+      \end{tabular}
+      
+      \vspace{3mm}
+      Bit 7: Transfer direction
+      
+      \begin{tabular}{l l}
+        0 & Host to device \\
+        1 & Device to host \\
+      \end{tabular} \\ \hline
+  
+    1 & bRequest & 1 & Specific request \\ \hline
+    2 & wValue & 2 & Varies according to request \\ \hline
+    4 & wIndex & 1 & Varies according to request, typically used
+    for a index or offset \\ \hline
+    6 & wLength & 2 & Number of bytes to be transferred in the data stage
+    (0 means no data stage) \\
+  \end{tabular}
+\end{table}
 
+Depending on the kind of control transfer, there may be a data stage
+consisting of data transactions, but this is not required. If there
+are data transactions, all are going in the same direction as specified
+by the request type.
+The transfer is completed with a Status transaction to report back
+about the success of the whole transfer.
 
-\subsubsection {Interrupt transfer}
+Control transfers are used right after the device reset to get information about
+its capabilities and set a configuration. For this, there are 11 bRequest values
+called Standard Requests that have to be supported by all devices as part of the standard.
+
+\begin{table}[H]
+  \caption{Some important Standard Requests}
+  \centering
+  \begin{tabular}{l | l | p{2cm} | p{2cm}}
+    bRequest & \begin{tabular}{@{}l}  bmRequestType \\ (7..0) \end{tabular}
+     & wValue & wIndex \\ \hline
+    
+    GET\_DESCRIPTOR & 10000000 & Descriptor type and index & Zero or Language ID \\ \hline
+    SET\_ADDRESS & 00000000 & Device address & Zero \\ \hline
+    GET\_STATUS & \begin{tabular}{@{}l}  10000000 \\ 10000001 \\ 10000010 \end{tabular}
+    & Zero & \begin{tabular}{@{}l}  Zero \\ Interface \\ Endpoint \end{tabular} \\ \hline
+    SET\_CONFIGURATION & 0000000 & Configuration value & Zero \\
+  \end{tabular}
+  
+  \vspace{5mm}
+  \begin{tabular}{l | l | p{5cm}}
+    bRequest & wLength & Data \\ \hline
+    
+    GET\_DESCRIPTOR & Descriptor length & Descriptor \\
+    SET\_ADDRESS & None & None \\
+    GET\_STATUS & Two & Device, Interface or endpoint status \\
+    SET\_CONFIGURATION & None & None \\
+  \end{tabular}
+\end{table}
+
+They are also used to control the device after the configuration phase during normal operation.
+There are standardized requests (Class Requests) for certain device classes like keyboards, storage devices etc.
+
+Other non-standard devices have custom, vendor-specific requests that are not documented
+in the USB standard.
 
 \subsubsection {Bulk transfer}
 
+Bulk transfers are used to transmit large amouts of data with guaranteed delivery
+and low overhead but no latency / bandwidth constraints.
+Compared to control transfers, they are stream-based. This means there is no defined message
+format or size. For an IN endpoint, the host would poll the device endpoint for data until it receives
+(cumulative) as many bytes as requested by the software. A transfer can also be ended by the device sending
+a data transaction of less size than the maximum of this endpoint (data is always split so there is at most one
+smaller packet at the end) or a zero-size data transaction. To avoid data packets being lost, they
+alternate between the DATA0 / DATA1 PIDs. A single bulk endpoint is only for incoming
+or only for outgoing transfers.
+The host schedules them at times when the bus bandwidth is not used by other transfer types.
+Typical uses for bulk transfers are transferring data from/to an external harddrive,
+to a printer or from a scanner.
+
+\subsubsection {Interrupt transfer}
+
+On the bus, interrupt transfers look the same as bulk transfers.
+The main difference is scheduling: The host guarantees that a transfer
+attempt is made as often as specified in the endpoint descriptor (1 - 100 ms).
+Despite the name, interrupt transfers have nothing to do with hardware interrupts.
+All communication on the USB bus is initiated by the host, so it has to poll the device
+for data.
+Typical uses for interrupt transfers are receiving keypresses from keyboards and
+movements from mice.
+
 \subsubsection {Isochronous transfer}
 
+Isochronous transfers are for transmitting data at a constant rate with guaranteed
+latency. Compared to interrupt transfers, they offer a guaranteed transfer rate
+(with interrupt transfers the interval between two transfers can be anywhere
+between zero and the specified maximum). The drawback is a lack of any handshake
+/ retry mechanism.
+Typical uses for isochronous transfers are USB sound cards or webcams.
+
 \subsection{Enumeration, Configuration}
+
+Enumeration is the process of the host learing about a new device after it
+has been plugged in. For this, the host assigns a new address to the device,
+queries a variety of descriptors to find out the device's capabilities,
+selects a configuration profile and loads a suitable driver.
+
+The host will learn about a new device that is plugged in by being notified
+by the hub (every USB bus has at least a root hub). It asks the hub to apply
+a reset to the device, then does a SET\_ADDRESS device request to move the
+new device from its default address zero to an unused one.
+
+\subsubsection{Device descriptor}
+
+After setting the address, a GET\_DESCRIPTOR
+device request is made, asking for the device descriptor.
+
+\subsubsection{Configuration descriptor}
+
+\subsubsection{Interface descriptor}
+
+\subsubsection{Endpoint descriptor}
 
 \begin{thebibliography}{}
 
