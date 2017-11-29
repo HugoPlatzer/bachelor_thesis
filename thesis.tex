@@ -19,7 +19,7 @@
 USB is an interface intended to connect various peripherals to PCs. These include:
 Human interface devices like keyboards and mice; storage devices like card readers,
 external hard disks, memory sticks and smartphones; multimedia devices like microphones, speakers,
-cameras and scanners. Some highlights leading to its wide adoption:
+cameras and scanners. Some highlights leading to its wide adoption \cite[p. 11]{usbstd}:
 
 \begin{itemize}
   \item Unified interface for all kinds of peripherals
@@ -37,7 +37,7 @@ cameras and scanners. Some highlights leading to its wide adoption:
 \subsection{Electrical side}
 
 \begin{figure}[!htbp]
-  \caption{USB cable cross-section}
+  \caption{USB cable cross-section \cite[p. 17]{usbstd}}
   \centering
   \includegraphics[width=0.5\textwidth]{images/usb_cable.jpg}
 \end{figure}
@@ -47,7 +47,7 @@ The power line allows it to draw up to 100 mA without any configuration. This is
 devices that are not using the data lanes, just the power, like USB lights. Also it allows for devices
 not taking much power to be self-powered which eliminates the need for an extra power supply and connector.
 Devices can ask the host for more power (up to 500 mA), those that need even more (like a lot of scanners) need
-an external supply.
+an external supply. \cite[p. 17f.]{usbstd}
 
 \subsection{Signaling}
 
@@ -60,7 +60,7 @@ noise during transmission should affect both lines equally, not changing the dif
 Higher frequencies and thus data rates become possible.
 
 \begin{table}[!htbp]
-  \caption{USB speed modes}
+  \caption{USB speed modes \cite[p. 159]{usbstd}}
   \centering
   \begin{tabular}{l | l | l}
     Mode & Speed & Bit time \\ \hline
@@ -71,7 +71,7 @@ Higher frequencies and thus data rates become possible.
 \end{table}
 
 \begin{table}[!htbp]
-  \caption{Low-level data line states (only applies to Full Speed)}
+  \caption{Low-level data line states (only applies to Full Speed) \cite[p. 145]{usbstd}}
   \centering
   \begin{tabular}{l | l}
     Levels & State \\ \hline
@@ -94,16 +94,18 @@ Higher frequencies and thus data rates become possible.
 Low Speed is used for devices where speed is not important (mice, keyboards).
 It allows for cheaper cables and electronics. High Speed is only available
 in USB 2.0. For reasons of simplicity, only full speed signaling will be covered
-here.
+here. \cite[p. 12]{usbstd}
 
 SE0 is the state of the data lines if no device is connected. The host
 recognizes a device being plugged in by the D+ line being "pulled up" to high.
 It then most likely initiates a reset so the device is in a known state for
 communication to begin. Similarly, a disconnect is sensed by a SE0 for some time.
+\cite[p. 149]{usbstd}
 
 It is important to note that {\bf all communication on the USB bus is initiated by the
 host}. Devices on the bus can not directly talk to each other and can only talk
 to the host as a direct response to a request made by it before.
+\cite[p. 27]{usbstd}
 
 \subsubsection{Bitstream encoding}
 
@@ -111,7 +113,7 @@ USB uses NRZI encoding for the transmitted data: A zero is represented by a chan
 the opposite state while a one is represented by staying in the same state.
 
 \begin{figure}[!htbp]
-  \caption{NRZI bitstream encoding}
+  \caption{NRZI bitstream encoding \cite[p. 157]{usbstd}}
   \centering
   \includegraphics[width=0.5\textwidth]{images/nrzi_encoding.jpg}
 \end{figure}
@@ -120,6 +122,7 @@ For keeping the receiver clock in sync with the data it is not ideal if the sign
 stays at J or K for too long. To prevent this, a technique called "bit stuffing"
 is used: Before doing NRZI encoding, a zero is inserted after every six consecutive ones
 in the data. The receiver recognizes the stuffed bits during decoding and discards them.
+\cite[p. 157]{usbstd}
 
 \subsection {Packets}
 
@@ -127,15 +130,15 @@ Packets are the atomic unit of data transmission in USB. In between packet trans
 the bus remains in an idle state. Every packet starts with a sync pattern to synchronize
 the clocks between sender and receiver. Next are the actual data bits. The packet is
 terminated by an EOP state. Fields in a packet are transmitted least-significant
-bit first.
+bit first. \cite[p. 195]{usbstd}
 
 The first 8 bits of every packet contain the packet ID (PID) which identifies its type
 and thus how the rest of the packet data should be interpreted. The PID is 4 bits long, they are transmitted a second time in reverse bit order to allow the receiver to quickly
 discard a faulty packet. There are 17 different packet types (PRE and ERR have the same ID,
-some are only relevant for High Speed):
+some are only relevant for High Speed) \cite[p. 195]{usbstd}:
 
 \begin{table}[!htbp]
-  \caption{USB packet types; notice how the least-significant two bits identify the packet category}
+  \caption{USB packet types; notice how the least-significant two bits identify the packet category \cite[p. 196]{usbstd}}
   \centering
   \begin{tabular}{l | l | l | p{5cm}}
     PID type & PID name & \begin{tabular}{@{}l} PID bits \\ (3..0) \end{tabular} & Description \\ \hline
@@ -162,7 +165,7 @@ some are only relevant for High Speed):
 \subsubsection{Token packet}
 
 \begin{figure}[H]
-  \caption{Token packet format}
+  \caption{Token packet format \cite[p. 199]{usbstd}}
   \centering
   \includegraphics[width=0.5\textwidth]{images/token_packet.jpg}
 \end{figure}
@@ -170,16 +173,18 @@ some are only relevant for High Speed):
 Token packets are used at the start of so-called transactions to specify the target
 of the transaction on the bus, namely a certain device and endpoint. There are 127
 possible devices on a bus (address 0 is reserved for a device that has not been configured yet).
+\cite[p. 256]{usbstd}
 
 Endpoints are logical entities on a device that are used as sources and sinks of data
 in so-called pipes. A pipe is either in OUT (to device) or IN (to host) direction.
 Endpoint 0 is a special bidirectional pipe that must be available on every device
 right after the reset. It is used mainly for identifying and configuring the device.
+\cite[p. 33]{usbstd}
 
 \subsubsection{Data packet}
 
 \begin{figure}[H]
-  \caption{Data packet format}
+  \caption{Data packet format \cite[p. 206]{usbstd}}
   \centering
   \includegraphics[width=0.5\textwidth]{images/data_packet.jpg}
 \end{figure}
@@ -189,7 +194,7 @@ Used to transmit the actual data in a transaction.
 \subsubsection{Handshake packet}
 
 \begin{figure}[H]
-  \caption{Handshake packet format}
+  \caption{Handshake packet format \cite[p. 206]{usbstd}}
   \centering
   \includegraphics[width=0.21\textwidth]{images/handshake_packet.jpg}
 \end{figure}
@@ -204,7 +209,7 @@ side of the host. From the host's perspective, a transfer transmits a string of
 each of them has one of four transfer types plus a transfer direction
 asscociated with it during device configuration.
 Transfers are composed of transactions, which usually consist of three
-packets: 
+packets \cite[p. 209ff.]{usbstd}:
 
 \begin{enumerate}
   \item A token packet to tell the type of the transaction and its destination
@@ -218,7 +223,7 @@ packets:
 Transfers usually consist of multiple transactions.
 
 \begin{figure}[H]
-  \caption{Composition of a USB transfer}
+  \caption{Composition of a USB transfer \cite[p. 44]{uc}}
   \centering
   \includegraphics[width=\textwidth]{images/transfer_tree.jpg}
 \end{figure}
@@ -230,10 +235,10 @@ are message-based. This means each transfer is for a specific message which has
 defined length, format and purpose. There can be transfers in either direction
 on the same endpoint, although each transfer has a specified (data stage) direction.
 Control transfers start with a Setup stage / transaction specifying the target device
-and endpoint plus an extra 8 bytes of data called the Device Request.
+and endpoint plus an extra 8 bytes of data called the Device Request. \cite[p. 38f.]{usbstd}
 
 \begin{table}[H]
-  \caption{Device Request format}
+  \caption{Device Request format \cite[p. 248]{usbstd}}
   \centering
   \begin{tabular}{l | l | l | p{5.5cm}}
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
@@ -290,7 +295,7 @@ its capabilities and set a configuration. For this, there are 11 bRequest values
 called Standard Requests that have to be supported by all devices as part of the standard.
 
 \begin{table}[H]
-  \caption{Some important Standard Requests}
+  \caption{Some important Standard Requests \cite[p. 250]{usbstd}}
   \centering
   \begin{tabular}{l | l | p{2cm} | p{2cm}}
     bRequest & \begin{tabular}{@{}l}  bmRequestType \\ (7..0) \end{tabular}
@@ -333,7 +338,7 @@ alternate between the DATA0 / DATA1 PIDs. A single bulk endpoint is only for inc
 or only for outgoing transfers.
 The host schedules them at times when the bus bandwidth is not used by other transfer types.
 Typical uses for bulk transfers are transferring data from/to an external harddrive,
-to a printer or from a scanner.
+to a printer or from a scanner. \cite[p. 52ff.]{usbstd}
 
 \subsubsection {Interrupt transfer}
 
@@ -344,7 +349,7 @@ Despite the name, interrupt transfers have nothing to do with hardware interrupt
 All communication on the USB bus is initiated by the host, so it has to poll the device
 for data.
 Typical uses for interrupt transfers are receiving keypresses from keyboards and
-movements from mice.
+movements from mice. \cite[p. 48ff.]{usbstd}
 
 \subsubsection {Isochronous transfer}
 
@@ -354,18 +359,24 @@ latency. Compared to interrupt transfers, they offer a guaranteed transfer rate
 between zero and the specified maximum). The drawback is a lack of any handshake
 / retry mechanism.
 Typical uses for isochronous transfers are USB sound cards or webcams.
+\cite[p. 44ff.]{usbstd}
 
-\subsection{Enumeration, Configuration}
+\subsection{Device initialization}
 
-Enumeration is the process of the host learing about a new device after it
-has been plugged in. For this, the host assigns a new address to the device,
-queries a variety of descriptors to find out the device's capabilities,
-selects a configuration profile and loads a suitable driver.
-
-The host will learn about a new device that is plugged in by being notified
+The host will learn about a new device being plugged in by being notified
 by the hub (every USB bus has at least a root hub). It asks the hub to apply
 a reset to the device, then does a SET\_ADDRESS device request to move the
-new device from its default address zero to an unused one.
+new device from its default address zero to an unused one. This is called
+enumeration.
+
+After it has been assigned an address, the host queries various descriptors
+(especially the Device and Configuration Descriptor) identifying the capabilities
+of the device.
+
+If the host supports the device (i.e. has the right drivers) it will choose one
+of the device's configuration profiles. This gets the device into configured
+state and allows it to communicate with the suitable driver using a device-specific
+protocol. \cite[p. 87ff.]{uc}
 
 \subsubsection{Device descriptor}
 
