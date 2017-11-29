@@ -305,7 +305,7 @@ called Standard Requests that have to be supported by all devices as part of the
     SET\_ADDRESS & 00000000 & Device address & Zero \\ \hline
     GET\_STATUS & \begin{tabular}{@{}l}  10000000 \\ 10000001 \\ 10000010 \end{tabular}
     & Zero & \begin{tabular}{@{}l}  Zero \\ Interface \\ Endpoint \end{tabular} \\ \hline
-    SET\_CONFIGURATION & 0000000 & Configuration value & Zero \\
+    SET\_CONFIGURATION & 00000000 & Configuration value & Zero \\
   \end{tabular}
   
   \vspace{5mm}
@@ -363,20 +363,22 @@ Typical uses for isochronous transfers are USB sound cards or webcams.
 
 \subsection{Device initialization}
 
-The host will learn about a new device being plugged in by being notified
-by the hub (every USB bus has at least a root hub). It asks the hub to apply
-a reset to the device, then does a SET\_ADDRESS device request to move the
-new device from its default address zero to an unused one. This is called
-enumeration.
+The process from a device being plugged in to it becoming usable for the user
+roughly goes as follows (every USB bus has at least a root hub device interacting with
+the operating system) \cite[p. 87ff.]{uc}:
 
-After it has been assigned an address, the host queries various descriptors
-(especially the Device and Configuration Descriptor) identifying the capabilities
-of the device.
-
-If the host supports the device (i.e. has the right drivers) it will choose one
-of the device's configuration profiles. This gets the device into configured
-state and allows it to communicate with the suitable driver using a device-specific
-protocol. \cite[p. 87ff.]{uc}
+\begin{enumerate}
+  \item The hub detects the device by the change in levels on the data lines.
+  \item The hub reports the device to the host.
+  \item The host tells the hub to reset the device so communication can begin.
+  \item The host assigns an address to the new device.
+  \item The host asks for the Device Descriptor to get information identifying the device
+        (vendor / product ID, device class).
+  \item The host looks for a driver handling this VID / PID combination, if it does not find one,
+        it leaves the device in an unconfigured state.
+  \item If a driver is found, it is loaded. The device is asked for its configuration profiles.
+        The driver sets a configuration and can now make the device serve its purpose.
+\end{enumerate}
 
 \subsubsection{Device descriptor}
 
