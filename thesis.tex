@@ -372,22 +372,57 @@ new device from its default address zero to an unused one.
 After setting the address, a GET\_DESCRIPTOR
 device request is made, asking for the device descriptor.
 
+\begin{table}[H]
+  \caption{Device Request format}
+  \centering
+  \begin{tabular}{l | l | l | p{5.5cm}}
+    \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
+    \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
+    
+    0 & bLength & 1 & Descriptor size in bytes \\
+    1 & bDescriptorType & 1 & 1 for DEVICE descriptor \\
+    2 & bcdUSB & 2 & USB specification release number \\
+    4 & bDeviceClass & 1 & Class code \\
+    5 & bDeviceSubclass & 1 & Subclass code \\
+    6 & bDeviceProtocol & 1 & Protocol code \\
+    7 & bMaxPacketSize0 & 1 & Maximum packed size for Endpoint 0  \\
+    8 & idVendor & 2 & Vendor ID \\
+    10 & idProduct & 2 & Product ID \\
+    12 & bcdDevice & 2 & Device release number \\
+    14 & iManufacturer & 1 & Index of manufacturer string descriptor \\
+    15 & iProduct & 1 & Index of product string descriptor \\
+    16 & iSerialNumber & 1 & Index of serial number string descriptor \\
+    17 & bNumConfigurations & 1 & Number of possible configurations \\
+  \end{tabular}
+\end{table}
+
 \subsubsection{Configuration descriptor}
 
 \subsubsection{Interface descriptor}
 
 \subsubsection{Endpoint descriptor}
 
+This is seen in \cite[p. 23]{usbstd}
+
+\newcounter{firstbib}
+\pagebreak
+
+\renewcommand{\refname}{References}
 \begin{thebibliography}{}
+  \bibitem{uc} USB Complete: Everything You Need to Develop
+               Custom USB Peripherals (\nth{3} edition).
+               Jan Axelson, Lakeview Research LLC 2012.
+               ISBN: {\tt   978-1-931448-03-1}
+  \setcounter{firstbib}{\value{enumiv}}
+\end{thebibliography}
 
-\bibitem{usbstd}
-Universal Serial Bus Specification, Revision 2.0. April 27, 2000. Available at \url{http://www.usb.org/developers/docs/usb20_docs/}
-
-\bibitem{uc}
-USB Complete: Everything You Need to Develop Custom USB Peripherals (\nth{3} edition).
-Jan Axelson, Lakeview Research LLC 2012. ISBN: {\tt   978-1-931448-03-1}
-
-
+\renewcommand{\refname}{Links}
+\begin{thebibliography}{}
+  \setcounter{enumiv}{\value{firstbib}}
+  
+  \bibitem{usbstd} Universal Serial Bus Specification, Revision 2.0.
+                   April 27, 2000. Available at
+                   \url{http://www.usb.org/developers/docs/usb20_docs/}
 \end{thebibliography}
 
 \end{document}
