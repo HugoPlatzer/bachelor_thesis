@@ -386,7 +386,7 @@ After setting the address, a GET\_DESCRIPTOR
 device request is made, asking for the device descriptor.
 
 \begin{table}[H]
-  \caption{Device Request format}
+  \caption{Device descriptor format \cite[p. 262f.]{usbstd}}
   \centering
   \begin{tabular}{l | l | l | p{5.5cm}}
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
@@ -409,13 +409,113 @@ device request is made, asking for the device descriptor.
   \end{tabular}
 \end{table}
 
+
+{\bf bDeviceClass} Classes are types of devices that were standardized in USB.
+There are class codes for audio devices, human interface devices, storage devices etc.
+There is also a vendor-specific class code for devices not conforming to a standardized class.
+They are further divided into subclasses specifying the actual functionality more
+precisely (i.e. keyboard vs. mouse for HID device).
+
+{\bf idVendor} is a 16-bit identifier assigned by the USB Implementers Forum
+for each manufacturer of USB compliant devices. Manufacturers must apply
+for a unique ID there.
+
+{\bf idProduct} is a 16-bit identifier assigned by the manufacturer
+of the device. Manufacturers manage their own PID space so that IDs
+are unique per device.
+
+
+
 \subsubsection{Configuration descriptor}
+
+Configurations are profiles that define one or more interfaces for the device
+and their characteristics.
+Only one configuration can be active at a time.
+\cite[p. 244]{usbstd}
+
+\begin{table}[H]
+  \caption{Configuration descriptor format \cite[p. 265]{usbstd}}
+  \centering
+  \begin{tabular}{l | l | l | p{5.5cm}}
+    \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
+    \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
+    
+    0 & bLength & 1 & Descriptor size in bytes \\
+    1 & bDescriptorType & 1 & 2 for CONFIGURATION descriptor \\
+    2 & wTotalLength & 2 & Total length of all descriptors for this configuration \\
+    4 & bNumInterfaces & 1 & Number of interfaces in this configuration \\
+    5 & bConfigurationValue & 1 & Value to be used to select this configuration with SET\_CONFIGURATION \\
+    6 & iConfiguration & 1 & Index of string descriptor for this configuration \\
+    7 & bmAttributes & 1 & Bitmap of configuration characteristics (Self-powered etc.) \\
+    8 & bMaxPower & 1 & Maximum power consumption from bus in this configuration (mA) \\
+  \end{tabular}
+\end{table}
 
 \subsubsection{Interface descriptor}
 
+Interfaces are sets of related endpoints that together provide a certain feature
+of the device. Deiices can have multiple active interfaces at the same time.
+Additionally, interfaces can have alternate settings that change its endpoints' characteristics.
+\cite[p. 244]{usbstd}
+
+Device drivers are often assigned to serve a specific interface rather than an entire device.
+
+\begin{table}[H]
+  \caption{Interface descriptor format \cite[p. 268f.]{usbstd}}
+  \centering
+  \begin{tabular}{l | l | l | p{5.5cm}}
+    \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
+    \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
+
+    0 & bLength & 1 & Descriptor size in bytes \\
+    1 & bDescriptorType & 1 & 4 for INTERFACE descriptor \\
+    2 & bInterfaceNumber & 1 & Number identifying this interface \\
+    3 & bAlternateSetting & 1 & Value specifying alternate setting for this interface \\
+    4 & bNumEndpoints & 1 & Number of endpoints in this interface (excluding default endpoint 0) \\
+    5 & bInterfaceClass & 1 & Type of functionality provided by interface (similar to Device class) \\
+    6 & bInterfaceSubClass & 1 & Subclass of device type (similar to Device class) \\
+    7 & bInterfaceProtocol & 1 & Protocol of class-specific requests made for this interface \\
+    8 & iInterface & 1 & Index of string descriptor for this interface \\
+  \end{tabular}
+\end{table}
+
 \subsubsection{Endpoint descriptor}
 
-This is seen in \cite[p. 23]{usbstd}
+Endpoint descriptors specify an endpoint's address, type and polling interval.
+
+\begin{table}[H]
+  \caption{String descriptor format \cite[p. 269ff.]{usbstd}}
+  \centering
+  \begin{tabular}{l | l | l | p{5.5cm}}
+    \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
+    \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
+    0 & bLength & 1 & Descriptor size in bytes \\
+    1 & bDescriptorType & 1 & 5 for ENDPOINT descriptor \\
+    2 & bEndpointAddress & 1 & Bits 3..0 give endpoint number, bit 7 gives endpoint direction
+        (0 - out, 1 - in) \\
+    3 & bmAttributes & 1 & Bits 1..0 describe endpoint type (Control, Isochronous, Bulk, Interrupt).
+        Bits 5..2 specify extra options for isochronous endpoints \\
+    4 & wMaxPacketSize & 2 & maximum packet size of the endpoint \\
+    6 & bInterval & 1 & How often the host should poll for data (in microframes)
+  \end{tabular}
+\end{table}
+
+\subsubsection{String descriptor}
+
+String descriptors provide information about the device in human-readable form.
+String descriptor 0 transmits language codes supported by the device.
+
+\begin{table}[H]
+  \caption{String descriptor format \cite[p. 273f.]{usbstd}}
+  \centering
+  \begin{tabular}{l | l | l | p{5.5cm}}
+    \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
+    \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
+    0 & bLength & 1 & Descriptor size in bytes \\
+    1 & bDescriptorType & 1 & for STRING descriptor \\
+    2 & bString & rest & String, UNICODE encoded
+  \end{tabular}
+\end{table}
 
 \newcounter{firstbib}
 \pagebreak
