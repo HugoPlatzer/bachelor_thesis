@@ -517,15 +517,87 @@ String descriptor 0 transmits language codes supported by the device.
   \end{tabular}
 \end{table}
 
+\section{USB sniffing}
+
+USB sniffing is the process of recording communication on the USB bus.
+This is useful for device developers, driver developers, keyloggers etc.
+
+\subsection{Hardware sniffing}
+
+Advantages of hardware USB analyzers \cite{analyzerbenefits}:
+
+\begin{itemize}
+\item Independent of the host, not affected by bugs in its USB hardware / software
+\item Allow analysis down to the lowest level (voltage levels between wires)
+\item See all packets transmitted, including unsuccessful transactions etc.
+\end{itemize}
+
+\subsection{Software sniffing}
+
+Software sniffing does not use dedicated hardware to listen to the signals
+on the wires. Instead, the host operating system reports packets sent / received
+to some software running on the same host.
+
+Advantages of purely software USB analyzers:
+
+\begin{itemize}
+\item Lower cost (free when using usbmon / Wireshark)
+\item Easy setup, convenient, no extra hardware required
+\end{itemize}
+
+\subsubsection{usbmon}
+
+usbmon is a module for the Linux kernel that allows access to
+USB request blocks (URBs) as they are being processed. \cite{usbmon}
+
+\subsubsection{Wireshark}
+
+Wireshark is a cross-platform sniffing and packet analysis software that
+became famous as an Ethernet (network) traffic sniffer.
+Its configurable interface allows the dissection of raw captured packets
+into more meaningful fields.
+For sniffing USB traffic, it requires the usbmon kernel module. \cite{wireshark}
+
+\subsection{Example}
+
+A USB keyboard is attatched, then the following keys are being pressed and
+then released in sequence: a, b, a.
+
+\begin{figure}[H]
+  \caption{Device descriptor of USB keyboard}
+  \centering
+  \includegraphics[width=\textwidth]{images/keyboard_sniff1.png}
+\end{figure}
+
+\begin{figure}[H]
+  \caption{Interface descriptor of USB keyboard}
+  \centering
+  \includegraphics[width=\textwidth]{images/keyboard_sniff2.png}
+\end{figure}
+
+\begin{figure}[H]
+  \caption{HID reports of USB keyboard}
+  \centering
+  \includegraphics[width=\textwidth]{images/keyboard_sniff3.png}
+\end{figure}
+
 \newcounter{firstbib}
 \pagebreak
 
 \renewcommand{\refname}{References}
 \begin{thebibliography}{}
+
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{USB standard}
+
   \bibitem{uc} USB Complete: Everything You Need to Develop
                Custom USB Peripherals (\nth{3} edition).
                Jan Axelson, Lakeview Research LLC 2012.
                ISBN: {\tt   978-1-931448-03-1}
+               
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{USB sniffing}
+  
+  \bibitem{usbmon} The usbmon: USB monitoring framework. Pete Zaitcev,
+  Proceedings of the Linux Symposium, Volume Two, July 20-23 2005.
   \setcounter{firstbib}{\value{enumiv}}
 \end{thebibliography}
 
@@ -533,9 +605,21 @@ String descriptor 0 transmits language codes supported by the device.
 \begin{thebibliography}{}
   \setcounter{enumiv}{\value{firstbib}}
   
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{USB standard}
+  
   \bibitem{usbstd} Universal Serial Bus Specification, Revision 2.0.
                    April 27, 2000. Available at
                    \url{http://www.usb.org/developers/docs/usb20_docs/}
+
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{USB sniffing}
+
+  \bibitem{analyzerbenefits} \url{https://www.totalphase.com/solutions/apps/usb-analyzer-benefits/}
+
+  \bibitem{wireshark} \url{https://wiki.wireshark.org/CaptureSetup/USB}
+    Explains how to set up Wireshark for USB capture, also describes sniffing
+    of USB traffic from Windows running inside VirtualBox
 \end{thebibliography}
+
+
 
 \end{document}
