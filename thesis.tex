@@ -5,6 +5,7 @@
 \usepackage{nth}
 \usepackage{float}
 \usepackage{multirow}
+\usepackage{hyperref}
 
 \begin{document}
 
@@ -362,6 +363,7 @@ Typical uses for isochronous transfers are USB sound cards or webcams.
 \cite[p. 44ff.]{usbstd}
 
 \subsection{Device initialization}
+\label{devinit}
 
 The process from a device being plugged in to it becoming usable for the user
 roughly goes as follows (every USB bus has at least a root hub device interacting with
@@ -524,6 +526,10 @@ This is useful for device developers, driver developers, keyloggers etc.
 
 \subsection{Hardware sniffing}
 
+Hardware sniffing uses a dedicated device that sits on the bus in between the
+host and device. Dedicated software is used to interpret the low-level signals
+as packets / transactions.
+
 Advantages of hardware USB analyzers \cite{analyzerbenefits}:
 
 \begin{itemize}
@@ -547,21 +553,47 @@ Advantages of purely software USB analyzers:
 
 \subsubsection{usbmon}
 
-usbmon is a module for the Linux kernel that allows access to
-USB request blocks (URBs) as they are being processed. \cite{usbmon}
+{\it usbmon} is a module for the Linux kernel that allows access to
+USB request blocks (URBs) as they are being processed. URBs loosely
+correspond to USB transfers. \cite{usbmon}
 
 \subsubsection{Wireshark}
 
 Wireshark is a cross-platform sniffing and packet analysis software that
 became famous as an Ethernet (network) traffic sniffer.
-Its configurable interface allows the dissection of raw captured packets
-into more meaningful fields.
-For sniffing USB traffic, it requires the usbmon kernel module. \cite{wireshark}
+Its configurable interface allows the dissection of raw captured packet
+bytes into more meaningful fields. Captures can be saved to disk for later
+analysis.
+
+For sniffing USB traffic, it requires the {\it usbmon} kernel module plus suitable
+permissions (running it as root is simplest). On the main screen, one selects
+one of the host's USB buses for recording. \cite{wireshark}
+It is good practice to check whether any devices other than the one to be recorded
+are on the same bus. This can be done with the {\it lsusb} command, which lists
+all connected USB devices and what bus they are on.
 
 \subsection{Example}
 
-A USB keyboard is attatched, then the following keys are being pressed and
-then released in sequence: a, b, a.
+\subsubsection{Scenario}
+
+To provide some insight into the sniffing process and how the recorded data can be
+interpreted, I chose to record keystrokes from a USB keyboard. Since USB keyboards
+are very widespread and follow a standard protocol, the experiment can be repeated
+by almost anyone.
+
+A bus with no devices on it (except the mandatory root hub with address 1) is chosen
+for sniffing.
+Recording is started before the device gets attached.
+The keyboard is attached, then the following keys are pressed and
+then released (one after another): a, b, a. Recording is then stopped.
+
+For brevity, only a few of the captured packets are discussed here.
+
+\subsubsection{Device configuration}
+
+When the device is connected, a process like in \autoref{devinit} starts.
+The device is reset, an address issued and descriptors queried. The device
+descriptor and the interface / endpoint descriptor are shown here.
 
 \begin{figure}[H]
   \caption{Device descriptor of USB keyboard}
@@ -569,20 +601,36 @@ then released in sequence: a, b, a.
   \includegraphics[width=\textwidth]{images/keyboard_sniff1.png}
 \end{figure}
 
+The class code of 00 signifies that information about the device should be
+obtained from the interface descriptor. The vendor name is queried
+from a database by Wireshark (only the 2 byte ID is transmitted over the bus).
+
 \begin{figure}[H]
-  \caption{Interface descriptor of USB keyboard}
+  \caption{Interface / endpoint descriptor of USB keyboard}
   \centering
   \includegraphics[width=\textwidth]{images/keyboard_sniff2.png}
 \end{figure}
 
+The interface identifies as a keyboard and has one extra input endpoint.
+Interrupt transfers should be performed there every 10ms.
+The data received from the endpoint is an 8-byte HID report giving information
+about pressed keys. The first of these bytes describes pressed modifier keys
+(Ctrl, Alt etc.) the second byte is reserved, the third byte describes the
+actual pressed key. \cite{usbhid}
+
+\subsubsection{Data transmitted while keys are pressed}
+
 \begin{figure}[H]
-  \caption{HID reports of USB keyboard}
+  \caption{HID reports from USB keyboard}
   \centering
   \includegraphics[width=\textwidth]{images/keyboard_sniff3.png}
 \end{figure}
 
 \newcounter{firstbib}
 \pagebreak
+
+In \cite[p.53]{usbusage} the byte values 04 and 05 stand for the a and
+b keys respectively.
 
 \renewcommand{\refname}{References}
 \begin{thebibliography}{}
@@ -618,6 +666,12 @@ then released in sequence: a, b, a.
   \bibitem{wireshark} \url{https://wiki.wireshark.org/CaptureSetup/USB}
     Explains how to set up Wireshark for USB capture, also describes sniffing
     of USB traffic from Windows running inside VirtualBox
+  
+  \bibitem{usbhid} \url{http://www.usb.org/developers/hidpage/HID1_11.pdf}
+  
+  \bibitem{usbusage}
+  \url{http://www.usb.org/developers/hidpage/Hut1_12v2.pdf}
+  USB HID Usage tables, describes meaning of bytes in HID reports
 \end{thebibliography}
 
 
