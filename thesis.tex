@@ -13,6 +13,10 @@
 \author{Hugo Platzer \\ University of Salzburg}
 \maketitle
 
+\section{Introduction}
+
+Describe the scanner and motivation
+
 \section{The USB standard}
 
 \subsection{Motivation}
@@ -524,11 +528,15 @@ String descriptor 0 transmits language codes supported by the device.
 USB sniffing is the process of recording communication on the USB bus.
 This is useful for device developers, driver developers, keyloggers etc.
 
-\subsection{Hardware sniffing}
+\subsection{Hardware vs. software sniffing}
 
 Hardware sniffing uses a dedicated device that sits on the bus in between the
 host and device. Dedicated software is used to interpret the low-level signals
 as packets / transactions.
+
+Software sniffing does not use dedicated hardware to listen to the signals
+on the wires. Instead, the host operating system reports packets sent / received
+to some software running on the same host.
 
 Advantages of hardware USB analyzers \cite{analyzerbenefits}:
 
@@ -538,12 +546,6 @@ Advantages of hardware USB analyzers \cite{analyzerbenefits}:
 \item See all packets transmitted, including unsuccessful transactions etc.
 \end{itemize}
 
-\subsection{Software sniffing}
-
-Software sniffing does not use dedicated hardware to listen to the signals
-on the wires. Instead, the host operating system reports packets sent / received
-to some software running on the same host.
-
 Advantages of purely software USB analyzers:
 
 \begin{itemize}
@@ -551,13 +553,21 @@ Advantages of purely software USB analyzers:
 \item Easy setup, convenient, no extra hardware required
 \end{itemize}
 
-\subsubsection{usbmon}
+\subsection{usbmon}
 
 {\it usbmon} is a module for the Linux kernel that allows access to
 USB request blocks (URBs) as they are being processed. URBs loosely
 correspond to USB transfers. \cite{usbmon}
 
-\subsubsection{Wireshark}
+\subsubsection{Payload size limitation}
+
+
+
+\subsubsection{Kernel patching}
+
+
+
+\subsection{Wireshark}
 
 Wireshark is a cross-platform sniffing and packet analysis software that
 became famous as an Ethernet (network) traffic sniffer.
@@ -565,12 +575,18 @@ Its configurable interface allows the dissection of raw captured packet
 bytes into more meaningful fields. Captures can be saved to disk for later
 analysis.
 
+\subsubsection{Setup}
+
 For sniffing USB traffic, it requires the {\it usbmon} kernel module plus suitable
 permissions (running it as root is simplest). On the main screen, one selects
 one of the host's USB buses for recording. \cite{wireshark}
 It is good practice to check whether any devices other than the one to be recorded
 are on the same bus. This can be done with the {\it lsusb} command, which lists
 all connected USB devices and what bus they are on.
+
+\subsubsection{Disabling other protocols}
+
+Disable other protocols
 
 \subsection{Example}
 
@@ -631,6 +647,16 @@ actual pressed key. \cite{usbhid}
 
 In \cite[p.53]{usbusage} the byte values 04 and 05 stand for the a and
 b keys respectively.
+
+\subsection{Sniffing Windows USB traffic}
+
+\section{Image extraction}
+
+\subsection{A quick look at the capture}
+
+\subsection{Extraction tool}
+
+\subsection{Results}
 
 \renewcommand{\refname}{References}
 \begin{thebibliography}{}
