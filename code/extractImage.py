@@ -10,6 +10,9 @@ from math import ceil
 
 def offset(data, n):
   return data[n:]
+  
+def upto(data, n):
+  return data[:n]
 
 def everyNth(data, n):
   return data[::n]
@@ -18,13 +21,14 @@ def chunks(data, n):
   return [data[i:i + n] for i in range(0, len(data), n)]
 
 parser = argparse.ArgumentParser()
-parser.add_argument("pcapFile")
-parser.add_argument("byteOffset", type = int)
-parser.add_argument("nthByte", type = int)
-parser.add_argument("bytesPerLine", type = int)
-parser.add_argument("lineOffset", type = int)
-parser.add_argument("nthLine", type = int)
-parser.add_argument("pngFile")
+parser.add_argument("-i", "--inputFile", help = "pcap file", type = str, required = True)
+parser.add_argument("-bo", "--byteOffset", type = int, default = 0)
+parser.add_argument("-bn", "--byteNth", type = int, default = 1)
+parser.add_argument("-ll", "--lineLength", type = int, required = True)
+parser.add_argument("-lo", "--lineOffset", type = int, default = 0)
+parser.add_argument("-ln", "--lineNth", type = int, default = 1)
+parser.add_argument("-lm", "--lineMax", type = int)
+parser.add_argument("-o", "--outputFile", help = "png file", type = str, required = True)
 args = parser.parse_args()
 
 # Use tshark for parsing the input file
@@ -32,27 +36,27 @@ args = parser.parse_args()
 
 # IMPORTANT: configure wireshark / tshark not to decode any protocols except USB
 # otherwise some packets' payload will not be printed as it's misinterpreted as some protocol
-cmdline = "tshark -Tfields -r {} -Y 'usb.endpoint_number == 0x81' -e usb.capdata | tr -d ':'"
-cmdline = cmdline.format(args.pcapFile, args.minPacketSize)
+cmdline = "tshark -r {} -Y 'usb.endpoint_number == 0x81' -e usb.capdata -T fields"
+cmdline = cmdline.format(args.inputFile)
 
-# concatenate bytes from all packets
-
+# concatenate bytes from all packets, then apply filters
 imageBytes = b""
-trigger = False
 
 for l in check_output(cmdline, shell = True).splitlines():
-  newBytes = bytearray.fromhex(l.decode("utf-8"))
-  print(len(newBytes))
+  newBytes = bytearray.fromhex(l.decode("utf-8").replace(":", ""))
   imageBytes += newBytes
 
+print("read {} bytes".format(len(imageBytes)))
+
 imageBytes = offset(imageBytes, args.byteOffset)
-imageBytes = everyNth(imageBytes, args.nthByte)
-imageLines = chunks(imageBytes, args.bytesPerLine)
+imageBytes = everyNth(imageBytes, args.byteNth)
+imageLines = chunks(imageBytes, args.lineLength)
 imageLines = offset(imageLines, args.lineOffset)
-imageLines = everyNth(imageLines, args.nthLine)
+imageLines = everyNth(imageLines, args.lineNth)
+if args.lineMax is not None:
+  imageLines = upto(imageLines, args.lineMax)
 
-print(len(imageLines))
-
+# write one grayscale PNG image
 im = Image.new("L", (len(imageLines[0]), len(imageLines)))
 print("image dimensions: {}x{}".format(im.size[0], im.size[1]))
 px = im.load()
@@ -61,4 +65,4 @@ for lineNr, line in enumerate(imageLines):
   for byteNr, byte in enumerate(line):
     px[byteNr, lineNr] = byte
 
-im.save(args.pngFile, "PNG")
+im.save(args.outputFile, "PNG")
