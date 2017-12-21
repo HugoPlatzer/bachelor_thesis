@@ -6,6 +6,7 @@
 \usepackage{float}
 \usepackage{multirow}
 \usepackage{hyperref}
+\usepackage{subfig}
 
 \begin{document}
 
@@ -622,15 +623,16 @@ Packets can be filtered by field values and only the desired fields printed.
 This section is based on Wireshark version 2.2.6, other versions may be significantly different.
 
 \begin{figure}[H]
-  \caption{Wireshark main screen}
+  \caption{Wireshark main screen: Choose an interface and start capturing or load an existing capture.}
   \centering
-  \includegraphics[width=\textwidth]{images/wireshark_main.jpg}
+  \includegraphics[width=0.9\textwidth]{images/wireshark_main.jpg}
 \end{figure}
 
 \begin{figure}[H]
-  \caption{Wireshark analysis screen}
+  \caption{Wireshark analysis screen: Packets are shown as a list in the center, sorted by some column.
+           Details for the selected packet can be inspected below. On the bottom, it shows the raw packet bytes.}
   \centering
-  \includegraphics[width=\textwidth]{images/wireshark_analyze.jpg}
+  \includegraphics[width=0.9\textwidth]{images/wireshark_analyze.jpg}
 \end{figure}
 
 \subsubsection{Steps \cite{wireshark}}
@@ -747,7 +749,8 @@ To allow the virtual machine to access the device, the "USB passthrough" feature
 This makes the device visible to the guest operating system: VirtualBox
 relays communication between the actual device on the host and the virtual device connected
 to a virtual USB controller for the guest.
-
+The passthrough is limited to devices with a specified vendor / product ID combination,
+new devices can be added by selecting the machine and clicking (Settings $\,\to\,$ USB).
 
 \begin{figure}[H]
   \caption{Setting a USB passthrough in VirtualBox}
@@ -768,7 +771,11 @@ The Windows XP operating system was set up inside VirtualBox. The
 vendor-supplied CyberView X5 scanner software (version 5.16) was installed.
 The scanner was connected to the VM via USB passthrough.
 
-TODO: Include scanner software parameters image
+\begin{figure}[H]
+  \caption{CyberView X5 software}
+  \centering
+  \includegraphics[width=0.75\textwidth]{images/extract_cvx.jpg}
+\end{figure}
 
 The scanner software was configured to scan a color positive at default (900 dpi) resolution.
 Other settings were left at their default. A prescan (Scan $\,\to\,$ Prescan) was first made to warm up the
@@ -779,6 +786,10 @@ after the scan had completed.
 It is important to use a kernel capable of recording the full payload (\ref{kernelpatch})
 and also to disable extra protocols in Wireshark (\ref{nonusb}).
 
+A color slide photo of a lake, green / yellow hills, reflections in the water and sky was used as a target.
+It allows one to easily know which channel (when having them as separate greyscale images)
+is red, green and blue and provides a good impression of overall image quality.
+
 \subsection{Looking at the capture}
 
 \begin{figure}[H]
@@ -787,8 +798,8 @@ and also to disable extra protocols in Wireshark (\ref{nonusb}).
   \includegraphics[width=\textwidth]{images/extract_sniff1.jpg}
 \end{figure}
 
-The scan took about 20 seconds and generated a capture around 6 megabytes
-in size. The image saved by the scanner software was 1240 x 801 pixels large.
+The scan took about 20 seconds and generated a capture around 11 megabytes
+in size. The image saved by the scanner software was 1655 x 1068 pixels large.
 When scrolling through the capture, there are many large bulk transfers
 incoming from endpoint 1. It seems likely these contain the image data.
 Since scanners work on a line-by-line basis, the pixels are probably
@@ -837,7 +848,54 @@ the following steps:
 
 \subsection{Results}
 
-As a first guess, the line width was specified li
+\subsubsection{First attempts}
+
+\begin{figure}[H]
+    \centering
+    \subfloat[width 1655]{{\includegraphics[width=2cm]{images/extract_result1.jpg} }}
+    \qquad
+    \subfloat[every 2nd byte, width 1655]{{\includegraphics[width=4cm]{images/extract_result2.jpg} }}
+    \qquad
+    \subfloat[every 2nd byte, width 1653]{{\includegraphics[width=4cm]{images/extract_result3.jpg} }}
+    \caption{First attempts at image extraction}
+    \label{extraction_first}
+
+\end{figure}
+
+As a first guess, the line width was set to the line width of the saved image (1653 px).
+This produced the result in \autoref{extraction_first} a). It clearly resembles some image but there
+is work to be done. Since there are two bytes per pixel, I tried keeping only every second byte
+starting from the first. This looked like \autoref{extraction_first} b). The noise is now gone which means
+I have kept the high bytes. The shapes being distorted points to a slightly off line width.
+The correct line width seems to be 1653 as seen in \autoref{extraction_first} c).
+
+\subsubsection{Byte offset}
+
+\begin{figure}[H]
+    \centering
+    \subfloat[offset 0]{{\includegraphics[width=3.5cm]{images/extract_result3.jpg} }}
+    \quad
+    \subfloat[offset 766]{{\includegraphics[width=3.5cm]{images/extract_result5.jpg} }}
+    \quad
+    \subfloat[offset 1300]{{\includegraphics[width=3.5cm]{images/extract_result4.jpg} }}
+    \caption{Different byte offsets}
+    \label{extraction_offset}
+
+\end{figure}
+
+\subsubsection{Color channel interleaving}
+
+\begin{figure}[H]
+    \centering
+    \subfloat[every 3rd line, offset 0]{{\includegraphics[width=5.5cm]{images/extract_result6.jpg} }}
+    \quad
+    \subfloat[every 3rd line, offset 1]{{\includegraphics[width=5.5cm]{images/extract_result7.jpg} }}
+    \quad
+    \subfloat[every 3rd line, offset 2]{{\includegraphics[width=5.5cm]{images/extract_result8.jpg} }}
+    \caption{Keeping every 3rd line from various offsets}
+    \label{extraction_offset}
+
+\end{figure}
 
 \newcounter{firstbib}
 \pagebreak

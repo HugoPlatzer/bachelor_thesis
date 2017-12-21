@@ -3,11 +3,11 @@
 # Extracts image data from USB communication captures (pcap format)
 # of the Reflecta CrystalScan 7200 film scanner
 
+import argparse
 from subprocess import check_output
 from PIL import Image
-import argparse
-from math import ceil
 
+# Filters for processing the input bytes
 def offset(data, n):
   return data[n:]
   
@@ -40,7 +40,7 @@ cmdline = "tshark -r {} -Y 'usb.endpoint_number == 0x81' -e usb.capdata -T field
 cmdline = cmdline.format(args.inputFile)
 
 # concatenate bytes from all packets, then apply filters
-imageBytes = b""
+imageBytes = bytearray()
 
 for l in check_output(cmdline, shell = True).splitlines():
   newBytes = bytearray.fromhex(l.decode("utf-8").replace(":", ""))
