@@ -687,7 +687,7 @@ For brevity, only a few of the captured packets are discussed here.
 
 \subsubsection{Device configuration}
 
-When the device is connected, a process like in \ref{devinit} starts.
+When the device is connected, a process like in \autoref{devinit} starts.
 The device is reset, an address issued and descriptors queried. The device
 descriptor and the interface / endpoint descriptor are shown here.
 
@@ -742,7 +742,7 @@ new devices can be added by selecting the machine and clicking (Settings $\,\to\
 \section{Image extraction}
 
 As a first step, I wanted to reconstruct the transmitted image from the
-sniffed communication during a scan. This does not require interaction between
+sniffed communication during a scan. This is done without interaction between
 my own software and the scanner, only the capture file is analyzed. Extracting the
 image is also a necessary step when implementing actual scanning software.
 
@@ -758,18 +758,23 @@ The scanner was connected to the VM via USB passthrough.
   \includegraphics[width=0.75\textwidth]{images/extract_cvx.jpg}
 \end{figure}
 
-The scanner software was configured to scan a color positive at default (900 dpi) resolution.
-Other settings were left at their default. A prescan (Scan $\,\to\,$ Prescan) was first made to warm up the
-scanner lamp so the actual scan (Scan $\,\to\,$ Scan) happens right away. Wireshark recording was started
-after completing the prescan, just before starting the actual scan. Recording was stopped
-after the scan had completed.
+The scanner software was configured to scan a color positive at 1200 dpi resolution.
+Digital ICE dust correction was enabled (Scan $\,\to\,$ Preference $\,\to\,$ Positive $\,\to\,$ ICE / ROC / GEM) to make the scanner
+record the infrared channel as well.
 
-It is important to use a kernel capable of recording the full payload (\ref{kernelpatch})
-and also to disable extra protocols in Wireshark (\ref{nonusb}).
+The scan (Scan $\,\to\,$ Scan) was performed without doing any pre-scans so as to
+get any kind of calibration data being exchanged only during the first scan.
 
-A color slide photo of a lake, green / yellow hills, reflections in the water and sky was used as a target.
+Wireshark recording was started before starting the scanner software and stopped
+after the software had saved the image.
+
+It is important to use a kernel capable of recording the full payload (\autoref{kernelpatch})
+and also to disable extra protocols in Wireshark (\autoref{nonusb}).
+
+A color slide photo of a lake, mountain peaks, green / yellow trees,
+reflections in the water and sky was used as target.
 It allows one to easily know which channel (when having them as separate greyscale images)
-is red, green and blue and provides a good impression of overall image quality.
+is red, green or blue and provides a good impression of overall image quality.
 
 \subsection{Looking at the capture}
 
@@ -779,18 +784,21 @@ is red, green and blue and provides a good impression of overall image quality.
   \includegraphics[width=\textwidth]{images/extract_sniff1.jpg}
 \end{figure}
 
-The scan took about 20 seconds and generated a capture around 11 megabytes
-in size. The image saved by the scanner software was 1655 x 1068 pixels large.
+The scan took about 30 seconds and generated a capture around 18 megabytes
+in size. The image saved by the scanner software was 1644 x 1069 pixels large.
 When scrolling through the capture, there are many large bulk transfers
 incoming from endpoint 1. It seems likely these contain the image data.
-Since scanners work on a line-by-line basis, the pixels are probably
-transferred one line after the other.
+Since scanners work on a line-by-line basis and the data is transferred
+in small chunks during the scan, the pixels are probably transferred
+one line after the other.
 
 \begin{figure}[H]
   \caption{Even (dark) and odd (light) offset bytes of payload}
   \centering
   \includegraphics[width=\textwidth]{images/extract_sniff2.jpg}
 \end{figure}
+
+\label{capture_highlowbytes}
 
 When looking at the payload of one of the transfers, bytes with odd offset
 have little variation among their neighbors while those with even offset
@@ -829,58 +837,159 @@ it performs the following steps:
 
 \subsection{Results}
 
-\subsubsection{First attempts}
+\begin{figure}[H]
+  \caption{Transferred bytes, line width 1644}
+  \centering
+  \includegraphics[height=6cm]{images/extract_1.jpg}
+\end{figure}
+
+The transferred bytes form three distinct images: The first section
+is a calibration scan, the second is a low-resolution preview scan and the third (largest)
+is the actual 1200 dpi scan. The main scan will be analyzed next,
+while the calibration scan is analyzed in \autoref{ssec:calibration}.
+The pre-scan is not studied further since its purpose can be served by
+doing a low-dpi regular scan.
+
+\subsubsection{Offsets, line width}
+
+To find the exact line width, the guessed line width was incremented / decremented by trial-and-error.
+The line width is correct when vertical lines in the image (mountain peaks in this case) no
+longer appear distorted. The correct line width was found to be 1645.
+
+Only the high bytes were kept to transform the 16-bit pixel values to 8-bit grayscale \autoref{capture_highlowbytes},
+this is done with the {\it --byteNth 2} option and a proper {\it --byteOffset}. In this capture,
+the high bytes are at even offsets (use trial-and-error), so {\it --byteOffset} must be even to keep
+high rather than low bytes. This however depends on the number of bytes before the actual image.
+
+The byte offset is then further adjusted (starting at zero, in steps of two)
+to synchronize the start of a line in the recreated image
+with the start of a line in the scanned image. This can be done quickly using bisection:
 
 \begin{figure}[H]
     \centering
-    \subfloat[width 1655]{{\includegraphics[width=2cm]{images/extract_result1.jpg} }}
-    \qquad
-    \subfloat[every 2nd byte, width 1655]{{\includegraphics[width=4cm]{images/extract_result2.jpg} }}
-    \qquad
-    \subfloat[every 2nd byte, width 1653]{{\includegraphics[width=4cm]{images/extract_result3.jpg} }}
-    \caption{First attempts at image extraction}
+    \subfloat[offset too low: 0]{{\includegraphics[height=6cm]{images/extract_3.jpg} }}
+    \hspace{3em}
+    \subfloat[offset too high: 600]{{\includegraphics[height=6cm]{images/extract_4.jpg} }}
+    \caption{Bisecting the correct byte offset}
     \label{extraction_first}
 
 \end{figure}
 
-As a first guess, the line width was set to the line width of the saved image (1653 px).
-This produced the result in \autoref{extraction_first} a). It clearly resembles some image but there
-is work to be done. Since there are two bytes per pixel, I tried keeping only every second byte
-starting from the first. This looked like \autoref{extraction_first} b). The noise is now gone which means
-I have kept the high bytes. The shapes being distorted points to a slightly off line width.
-The correct line width seems to be 1653 as seen in \autoref{extraction_first} c).
+If the offset is slightly too low, the rightmost part of the image will be moved to the very left.
+If it is slightly too high, the leftmost part of the image will be moved to the very right.
+An offset of 300 bytes was found to be ideal.
 
-\subsubsection{Byte offset}
+The line offset was adjusted to remove lines not belonging to the main scan, this
+can be inspected in an image editor such as GIMP \cite{gimp}. A line offset of 840 was found to
+look good, removing unwanted lines on top while keeping all of the main scan.
+
+\begin{figure}[H]
+  \caption{Main scan after adjusting \it{byteOffset, byteNth, lineOffset}}
+  \centering
+  \includegraphics[height=6cm]{images/extract_2.jpg}
+  \label{fig:extract_step1}
+\end{figure}
+
+\subsubsection{Channel deinterleaving}
+\label{ssec:deinterleave}
+
+\begin{figure}[H]
+  \caption{Interleaved color channels}
+  \centering
+  \includegraphics[width=8cm]{images/extract_5.jpg}
+\end{figure}
+
+When looking at the image of \autoref{fig:extract_step1} in detail,
+the pixels follow an interleaved line pattern of length 4. For each of
+the different channels red, green, blue and infrared there is a suitable
+value modulo 4 such that the image of this channel is defined by all lines
+whose offset is congruent to that value mod 4. This is the purpose of the
+{\it --lineNth} option together with a proper {\it --lineOffset}.
+{\it --lineNth} is set to 4 and then the previously determined
+line offset of 840 is incremented by 0, 1, 2 and 3 to get four separate
+color channel images:
 
 \begin{figure}[H]
     \centering
-    \subfloat[offset 0]{{\includegraphics[width=3.5cm]{images/extract_result3.jpg} }}
-    \quad
-    \subfloat[offset 766]{{\includegraphics[width=3.5cm]{images/extract_result5.jpg} }}
-    \quad
-    \subfloat[offset 1300]{{\includegraphics[width=3.5cm]{images/extract_result4.jpg} }}
-    \caption{Different byte offsets}
-    \label{extraction_offset}
-
+    \subfloat[offset 840]{{\includegraphics[height=3.5cm]{images/extract_6a.jpg} }} \quad
+    \subfloat[offset 841]{{\includegraphics[height=3.5cm]{images/extract_6b.jpg} }}
+    
+    \subfloat[offset 842]{{\includegraphics[height=3.5cm]{images/extract_6c.jpg} }} \quad
+    \subfloat[offset 843]{{\includegraphics[height=3.5cm]{images/extract_6d.jpg} }}
+    \caption{Four different line offsets / color channels}
 \end{figure}
 
-\subsubsection{Color channel interleaving}
+Thanks to the choice of image scanned, knowing which offset corresponds to what color channel
+is easy: 840 is green, 841 infrared (only dust visible), 842 red (bright yellow trees), 843 blue (bright sky).
+The order of channels can vary depending on how much data was skipped at the beginning.
+
+The infrared channel will be used in \autoref{sec:imgproc} to remove dust at the other color channels.
+
+\subsubsection{Channel alignment, combination, gamma correction}
+
+The extracted color channels are vertically misaligned, to fix this the
+channel which is the furthest "up" (i.e. the channel for which all other channels only need
+upwards shifting to align) is determined. Then, for each of the other channels the number
+of lines it needs to be moved up to align is determined. This is done visually in GIMP by
+opening the channels as layers and reducing the opacity of the channel to be aligned.
+The dust specks on the scan are ideal anchors for alignment.
+
+The red channel was found to be the furthest up, the green and infrared channels
+needed to be moved up 3 lines and the blue channel 5 lines.
+These numbers are multiplied by 4
+(because of interleaving) and added to the channel line offsets found in \autoref{ssec:deinterleave}.
+The line offsets now are: red 842 (same as before), green 852 (+12), infrared 853 (+12), blue 863 (+20).
+
+Due to the different line offsets, some channels have more lines than others.
+For combining channels, all need to be the same size. To achieve this, a maximum
+of 1060 lines was kept per channel. This leads to these final parameters:
+
+\begin{table}[H]
+  \caption{Final parameters per channel}
+  \centering
+  \begin{tabular}{c | c | c | c | c | c | c}
+    channel & byteOffset & byteNth & lineLength & lineOffset & lineNth & lineMax \\ \hline
+    red & 300 & 2 & 1645 & 842 & 4 & 1060 \\
+    green & 300 & 2 & 1645 & 852 & 4 & 1060 \\
+    blue & 300 & 2 & 1645 & 863 & 4 & 1060 \\
+    infrared & 300 & 2 & 1645 & 853 & 4 & 1060 \\
+  \end{tabular}
+\end{table}
+
+The red, green and blue channels are combined into an RGB image. To make the image look a little
+more presentable, a gamma correction with $\gamma = 2$ was applied on each channel.
+This means the brightness values get normalized to the range $[0, 1]$,
+then a mapping $x \mapsto x^{\frac{1}{2}}$ is applied, then the values are
+converted back to the range $[0, 255]$. This is the resulting 1045x1060 color image:
 
 \begin{figure}[H]
     \centering
-    \subfloat[every 3rd line, offset 0]{{\includegraphics[width=5.5cm]{images/extract_result6.jpg} }}
-    \quad
-    \subfloat[every 3rd line, offset 1]{{\includegraphics[width=5.5cm]{images/extract_result7.jpg} }}
-    \quad
-    \subfloat[every 3rd line, offset 2]{{\includegraphics[width=5.5cm]{images/extract_result8.jpg} }}
-    \caption{Keeping every 3rd line from various offsets}
-    \label{extraction_channel}
-
+    \subfloat[extracted from capture]{{\includegraphics[height=5cm]{images/extract_7a.jpg} }}
+    
+    \subfloat[saved by CyberView X5]{{\includegraphics[height=5cm]{images/extract_7b.jpg} }}
+    \caption{Extracted image compared to the scanner software}
 \end{figure}
+
+The color balance / saturation / contrast is different to the original because of postprocessing
+done by CyberView. Vertical stripes on the extracted image could be removed with
+the help of the calibration scan.
+CyberView also removes dust using the infrared channel (called Digital ICE).
+
+\subsection{Calibration image}
+\label{ssec:calibration}
 
 \section{Controlling the device}
 
+\subsection{Setup: PyUSB}
+
+\subsection{Vendor-specific control transfers}
+
+\subsection{Initiating a scan}
+
+\subsection{Receiving the image}
+
 \section{Image processing}
+\label{sec:imgproc}
 
 \newcounter{firstbib}
 \pagebreak
@@ -920,7 +1029,7 @@ The correct line width seems to be 1653 as seen in \autoref{extraction_first} c)
 
   \bibitem{usbmon_others}
   \url{http://permalink.gmane.org/gmane.linux.usb.general/101338}
-  Others describing issues with {\it} usbmon truncated payloads
+  Others describing issues with {\it} usbmon truncating payloads
   
   \bibitem{debkernel}
   \url{https://www.debian.org/releases/stretch/amd64/ch08s06.html.en}
@@ -942,13 +1051,16 @@ The correct line width seems to be 1653 as seen in \autoref{extraction_first} c)
   
   \bibitem{usbusage}
   \url{http://www.usb.org/developers/hidpage/Hut1_12v2.pdf}
-  USB HID Usage Tables. Describe meaning of bytes in HID reports
+  USB HID Usage Tables. Describes meaning of bytes in HID reports
 
   \bibitem{vbox}
   \url{https://www.virtualbox.org/}
 
   \bibitem{cvx5}
   \url{https://reflecta.de/de/downloads/drivers2/~nm.50~nc.108/Treiber-und-Software.html}
+  
+  \bibitem{gimp}
+  \url{https://www.gimp.org/}
 \end{thebibliography}
 
 
