@@ -287,6 +287,7 @@ and endpoint plus an extra 8 bytes of data called the Device Request. \cite[p. 3
     6 & wLength & 2 & Number of bytes to be transferred in the data stage
     (0 means no data stage) \\
   \end{tabular}
+  \label{table:ctrltransfer}
 \end{table}
 
 Depending on the kind of control transfer, there may be a data stage
@@ -982,7 +983,98 @@ CyberView also removes dust using the infrared channel (called Digital ICE).
 
 \subsection{Setup: PyUSB}
 
+PyUSB \cite{pyusb} is a Python module for accessing USB devices.
+Using it is straightforward:
+A handle for the device is created by specifying the characteristic
+vendor and product ID (these are for my scanner, can be found via {\it lsusb}):
+
+\begin{center}
+\tt dev = usb.core.find(idVendor=0x05e3, idProduct=0x0145)
+\end{center}
+
+After finding the scanner, like any USB device it needs to be configured
+before using it. This means choosing one of the available configuration
+profiles (described by configuration descriptors). The scanner, like most
+devices, only has one configuration. It can be selected with:
+
+\begin{center}
+\tt dev.set\_configuration(0)
+\end{center}
+
+After configuring the device, control and bulk transfers can be initiated.
+Control transfers are initiated like this:
+
+\begin{center}
+\tt
+dev.ctrl\_transfer(self, bmRequestType, bRequest, wValue, wIndex, data\_or\_wLength, timeout)
+\end{center}
+
+{\it bmRequestType, bRequest, wValue, wIndex, wLength} are described in \autoref{table:ctrltransfer}.
+timeout specifies the number of milliseconds after which the transfer is cancelled if
+still not completed.
+
+For host-to-device control transfers, {\it data\_or\_wLength} contains the data payload
+and the return value is the number of bytes actually written. The wLength parameter
+is inferred from the length of the payload bytestring.
+
+For device-to-host control transfers, {\it data\_or\_wLength} contains the wLength
+parameter specifying the number of bytes to be read and the return value is the payload
+received from the device.
+
+As opposed to control transfers, bulk transfers have no structure at the layer
+of the USB standard and can be imagined as reading from / writing to a byte stream.
+They are self-explanatory:
+
+\begin{center}
+\tt
+dev.read(endpoint, size, timeout)
+
+dev.write(endpoint, data, timeout)
+\end{center}
+
 \subsection{Vendor-specific control transfers}
+
+USB traffic starts when the scanner software loads and continues
+constantly while the software is running (even when idling).
+It consists of vendor-specific control transfers on endpoint 0
+in both directions: bmRequestType 0x40 outgoing / 0xc0 incoming, see \autoref{table:ctrltransfer}.
+Also there are incoming bulk transfers on endpoint 1, used both for
+receiving status information and image data.
+
+These combinations of control transfer parameters were observed
+while the software was idling / scanning:
+
+\begin{table}[H]
+  \caption{Control transfer parameter combinations}
+  \centering
+  \begin{tabular}{c | c | c | c | c}
+    bmRequestType & bRequest & wValue & wIndex & wLength \\ \hline
+    0x40 & 4 & 0x0082 & 0 & 8 \\
+    0xc0 & 12 & 0x0084 & 0 & 1 \\
+    0x40 & 12 & 0x0085 & 0 & 1 \\
+    0x40 & 12 & 0x0087 & 0 & 1 \\
+    0x40 & 12 & 0x0088 & 0 & 1 \\
+  \end{tabular}
+\end{table}
+
+Some additional parameter combinations were only observed during software
+startup:
+
+\begin{table}[H]
+  \caption{Parameter combinations at startup}
+  \centering
+  \begin{tabular}{c | c | c | c | c}
+    bmRequestType & bRequest & wValue & wIndex & wLength \\ \hline
+    0x40 & 12 & 0x0089 & 0xf49c & 1 \\
+    0xc0 & 12 & 0x008a & 0x008b & 1 \\
+    0x40 & 12 & 0x008b & varies & 1 \\
+    0x40 & 12 & 0x008c & 0x0010 & 1 \\
+    0xc0 & 12 & 0x008e & 0 & 1 \\
+  \end{tabular}
+\end{table}
+
+The data payload sent / received varies between different transfers
+with the same parameters.
 
 \subsection{Initiating a scan}
 
@@ -1061,6 +1153,9 @@ CyberView also removes dust using the infrared channel (called Digital ICE).
   
   \bibitem{gimp}
   \url{https://www.gimp.org/}
+
+  \bibitem{pyusb}
+  \url{https://github.com/pyusb/pyusb} Control USB devices from Python. Also has a nice tutorial
 \end{thebibliography}
 
 
