@@ -1047,13 +1047,13 @@ while the software was idling / scanning:
 \begin{table}[H]
   \caption{Control transfer parameter combinations}
   \centering
-  \begin{tabular}{c | c | c | c | c}
-    bmRequestType & bRequest & wValue & wIndex & wLength \\ \hline
-    0x40 & 4 & 0x0082 & 0 & 8 \\
-    0xc0 & 12 & 0x0084 & 0 & 1 \\
-    0x40 & 12 & 0x0085 & 0 & 1 \\
-    0x40 & 12 & 0x0087 & 0 & 1 \\
-    0x40 & 12 & 0x0088 & 0 & 1 \\
+  \begin{tabular}{c | c | c | c | c | c}
+    Combination & bmRequestType & bRequest & wValue & wIndex & wLength \\ \hline
+    a) & 0x40 & 4 & 0x0082 & 0 & 8 \\
+    b) & 0xc0 & 12 & 0x0084 & 0 & 1 \\
+    c) & 0x40 & 12 & 0x0085 & 0 & 1 \\
+    d) & 0x40 & 12 & 0x0087 & 0 & 1 \\
+    e) & 0x40 & 12 & 0x0088 & 0 & 1 \\
   \end{tabular}
 \end{table}
 
@@ -1063,20 +1063,107 @@ startup:
 \begin{table}[H]
   \caption{Parameter combinations at startup}
   \centering
-  \begin{tabular}{c | c | c | c | c}
-    bmRequestType & bRequest & wValue & wIndex & wLength \\ \hline
-    0x40 & 12 & 0x0089 & 0xf49c & 1 \\
-    0xc0 & 12 & 0x008a & 0x008b & 1 \\
-    0x40 & 12 & 0x008b & varies & 1 \\
-    0x40 & 12 & 0x008c & 0x0010 & 1 \\
-    0xc0 & 12 & 0x008e & 0 & 1 \\
+  \begin{tabular}{c | c | c | c | c | c}
+    Combination & bmRequestType & bRequest & wValue & wIndex & wLength \\ \hline
+    f) & 0x40 & 12 & 0x0089 & 0xf49c & 1 \\
+    g) & 0xc0 & 12 & 0x008a & 0x008b & 1 \\
+    h) & 0x40 & 12 & 0x008b & varies & 1 \\
+    i) & 0x40 & 12 & 0x008c & 0x0010 & 1 \\
+    j) & 0xc0 & 12 & 0x008e & 0 & 1 \\
   \end{tabular}
 \end{table}
 
 The data payload sent / received varies between different transfers
 with the same parameters.
 
+\subsection{Transaction patterns}
+
+\subsubsection{Header}
+
+\begin{table}[H]
+  \caption{Header structure for all three transaction types}
+  \centering
+  \begin{tabular}{c | c | c}
+    Nr. & Combination & Data payload \\ \hline
+    1. & e) & 0xff \\
+    2. & e) & 0xaa \\
+    3. & e) & 0x55 \\
+    4. & e) & 0x00 \\
+    5. & e) & 0xff \\
+    6. & e) & 0x87 \\
+    7. & e) & 0x78 \\
+    8. & e) & 0xe0 \\
+    9. & d) & 0x05 \\
+    10. & d) & 0x04 \\
+    11. & e) & 0xff \\
+  \end{tabular}
+\end{table}
+
+\subsubsection{Basic transaction}
+
+\begin{enumerate}
+  \item Header
+  \item Six parameter bytes, each of which is sent using a control transfer, combination c).
+        Only bytes 1 and 6 are set.
+  \item Two 1-byte status reads using combination b). The response for the first read is always 0x03,
+        for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
+\end{enumerate}
+
+\subsubsection{Extra parameter transaction}
+
+\begin{enumerate}
+  \item Header
+  \item Six parameter bytes, each of which is sent using a control transfer, combination c).
+        Only bytes 1 and 5 are set.
+        The fifth byte represents the number of bytes in step 4.
+  \item One 1-byte status read using combination b). Response should be 0x00.
+  \item Extra parameter bytes, each of which is sent using a control transfer, combination c).
+  \item Two 1-byte status reads using combination b). The response for the first read is always 0x03,
+        for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
+\end{enumerate}
+
+\subsubsection{Data read transaction}
+
+\begin{enumerate}
+  \item Header
+  \item Six parameter bytes, each of which is sent using a control transfer, combination c).
+        Only bytes 1, 4, and 5 are set.
+        The fourth and fifth byte represent the number of bytes to be read from the bulk endpoint
+        in big-endian format.
+  \item One 1-byte status read using combination b). Response should be 0x01.
+  \item The number of bytes to be read is once more transmitted using combination a), of the 8
+        byte payload, bytes 5 and 6 represent this number, this time in little-endian format, other
+        bytes are zero.
+  \item Bulk transfer from endpoint 1, reading the number of bytes as agreed on before.
+  \item Two 1-byte status reads using combination b). The response for the first read is always 0x03,
+        for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
+\end{enumerate}
+
+\subsubsection{Image retrieval transaction}
+
+This is similar to the data read transaction.
+
+\begin{enumerate}
+  \item Header
+  \item Six parameter bytes, each of which is sent using a control transfer, combination c).
+        Only bytes 1 and 5 are set.
+        Byte 1 is 0x08 and byte 5 the number of lines to be received.
+  \item One 1-byte status read using combination b). Response should be 0x01.
+  
+  \item The number of bytes to be read next is transmitted using combination a), of the 8
+        byte payload, bytes 5 and 6 represent the number in little-endian format, other
+        bytes are zero.
+  \item Bulk transfer from endpoint 1, reading the number of bytes as agreed on before.
+  
+  \item Steps 5 and 6 are repeated until all bytes of image data are read.
+  
+  \item Two 1-byte status reads using combination b). The response for the first read is always 0x03,
+        for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
+\end{enumerate}
+
 \subsection{Initiating a scan}
+
+\subsubsection{Timing}
 
 \subsection{Receiving the image}
 
