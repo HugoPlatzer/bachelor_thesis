@@ -5,6 +5,7 @@ from PyQt5.QtGui import QImage, QPixmap
 from PyQt5.QtCore import Qt, QThread, pyqtSignal
 import usb.core
 from time import time, sleep
+from datetime import datetime
 
 def hb(hexStr):
   return bytearray.fromhex(hexStr)
@@ -26,7 +27,8 @@ class ImageWidget(QLabel):
     self._updatePixmap()  
 
   def saveImage(self):
-    self.image.save("scan.png")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    self.image.save("scan_{}.png".format(timestamp))
   
   def __init__(self, imageSize, parent = None):
     super(ImageWidget, self).__init__()
