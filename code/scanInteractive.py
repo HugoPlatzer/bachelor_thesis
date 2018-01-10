@@ -11,13 +11,14 @@ def hb(hexStr):
   return bytearray.fromhex(hexStr)
 
 class ImageWidget(QLabel):
-  updateRow = pyqtSignal(int, list)
+  updateRow = pyqtSignal(int, bytearray)
   imageComplete = pyqtSignal()
   
   def _updateRow(self, i, line):
     print("updateRow {}".format(i))
-    for j in range(self.image.width()):
-      self.image.setPixel(j, i, line[j])
+    lineSize = self.image.width() * 4
+    offset = lineSize * i
+    self.imagePtr[offset:offset + lineSize] = line
     self._updatePixmap()
 
   def _updatePixmap(self):
@@ -34,7 +35,9 @@ class ImageWidget(QLabel):
     super(ImageWidget, self).__init__()
     self.setScaledContents(True)
     self.image = QImage(*imageSize, QImage.Format_ARGB32)
-    self.image.fill(0x00000000)
+    self.image.fill(0x12345678)
+    self.imagePtr = self.image.bits()
+    self.imagePtr.setsize(self.image.byteCount())
     self.updateRow.connect(self._updateRow)
     self.imageComplete.connect(self.saveImage)
     self.setMinimumSize(100, 100)
@@ -70,7 +73,7 @@ class ImageProcessor():
       return
     
     line = line[3::2]
-    line = [self.valueMap[v] for v in line]
+    line = bytearray(self.valueMap[v] for v in line)
     self.inLines[channel].append(line)
   
   def mergeChannels(self, r, g, b):
@@ -81,8 +84,12 @@ class ImageProcessor():
       lineR = self.inLines["r"].pop(0)
       lineG = self.inLines["g"].pop(0)
       lineB = self.inLines["b"].pop(0)
-      outLine = [self.mergeChannels(lineR[i], lineG[i], lineB[i])
-                 for i in range(len(lineR))]
+      outLine = bytearray()
+      for i in range(len(lineR)):
+        outLine.append(lineB[i])
+        outLine.append(lineG[i])
+        outLine.append(lineR[i])
+        outLine.append(0xff)
       self.widget.updateRow.emit(self.outLinesCount, outLine)
       self.outLinesCount += 1
 
