@@ -4,9 +4,9 @@ import argparse
 from subprocess import check_output
 import matplotlib.pyplot as plt
 
-def do_plot(values, maxI, label):
+def plotValues(values, maxNumber, label):
   xval, yval = [], []
-  while len(values) > 0 and values[0][0] < maxI:
+  while len(values) > 0 and values[0][1] <= maxNumber:
       v = values.pop(0)
       xval.append(v[0])
       yval.append(v[1])
@@ -14,27 +14,25 @@ def do_plot(values, maxI, label):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--inputFile", help = "pcap file", type = str, required = True)
+parser.add_argument("-n", "--numbers", help = "maximum packet number per segment", type = int, nargs = "+", required = True)
+parser.add_argument("-l", "--labels", help = "strings to describe each segment", type = str, nargs = "+", required = True)
 parser.add_argument("-o", "--outputFile", help = "image file", type = str, required = True)
 args = parser.parse_args()
 
 cmdline = "tshark -r {} -e _ws.col.Time -Tfields"
 cmdline = cmdline.format(args.inputFile)
 
-timestamps = []
-
+values = []
 for l in check_output(cmdline, shell = True).splitlines():
-  timestamps.append((len(timestamps), float(l)))
+  values.append((float(l), len(values) + 1))
 
 fig, ax = plt.subplots()
-ax.set_xlabel("Paketnummer")
-ax.set_ylabel("Zeit (Sekunden)")
-plt.tight_layout()
-do_plot(timestamps, 181, "Leerlauf (vor Scan)")
-do_plot(timestamps, 1229, "Übertragung der Parameter")
-do_plot(timestamps, 1510, "Warten auf Bereitschaft")
-do_plot(timestamps, 3065, "Scannen, Übertragen der Bilddaten")
-do_plot(timestamps, 100000, "Leerlauf (nach Scan)")
-plt.legend()
+ax.set_xlabel("Zeit (Sekunden)")
+ax.set_ylabel("Paketnummer")
 
-#plt.show()
+for i, n in enumerate(args.numbers):
+  plotValues(values, n, args.labels[i])
+
+plt.tight_layout()
+plt.legend()
 plt.savefig(args.outputFile)
