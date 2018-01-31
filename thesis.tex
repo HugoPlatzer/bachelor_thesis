@@ -11,12 +11,54 @@
 \begin{document}
 
 \title{Developing a driver for a film scanner by means of USB sniffing and reverse engineering}
-\author{Hugo Platzer \\ University of Salzburg}
+\author{Hugo Platzer \\ University of Salzburg, Austria}
 \maketitle
 
 \section{Introduction}
 
-Describe the scanner and motivation
+\subsection{The device}
+
+The Reflecta CrystalScan 7200 is a device for digitizing 35mm film material like
+slide, color negative and black-and-white negative film.
+It uses a linear CCD sensor on a head moving vertically to record the image on a row-by-row basis.
+The maximum scan resolution is 7200 dots per inch which amounts to around 70 megapixels
+on a 35mm film frame. It also has a feature called Digital ICE: In addition to red, green, blue, it also
+records an infrared channel of the film. The dyes in color film are transparent to infrared light,
+but dust is not, so the information from this channel is useful for removing it in software.
+This scanner is connected via USB. \cite{rcs} \cite{rcs_review}
+
+\begin{figure}[!htbp]
+  \caption{Reflecta CrystalScan 7200}
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/presentation/the_scanner.jpg}
+\end{figure}
+
+\subsection{Software support}
+
+Reflecta supplies a software called CyberView X5 with the scanner that
+provides basic functionality (adjust resolution, scan area, image processing parameters, dust correction).
+The software only runs on the Windows and macOS operating systems.
+
+For the Linux operating system, there is a community effort to build scanning software
+called SANE [CITE]. As opposed to vendor-supplied software, it supports many scanners
+from various manufacturers. Unfortunately, my scanner was not yet supported.
+There exist third-party software products that support this scanner: VueScan [CITE]
+and SilverFast [CITE]. VueScan also runs on Linux. These however are commercial software
+and not open-sourced.
+
+\subsection{Reverse engineering}
+
+Since there is no publicly available documentation on how a driver should control this
+device, reverse engineering was attempted.
+Reverse engineering is the process of reconstructing a specification from a finished
+product. Typically, the finished product is software or some sort of electronic
+appliance.
+Using only resources available to the end user (like hardware,
+software / firmware in machine code form, communication channels)
+one tries to gain understanding about the inner mechanisms of the product.
+
+In my case, I recorded and analyzed the activity on the USB bus while the scanner
+was communicating with the vendor-supplied software.
 
 \section{The USB standard}
 
@@ -1193,6 +1235,13 @@ This is similar to the data read transaction.
 \renewcommand{\refname}{Links}
 \begin{thebibliography}{}
   \setcounter{enumiv}{\value{firstbib}}
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{Scanner}
+  
+  \bibitem{rcs}
+  \url{https://reflecta.de/en/products/detail/~id.15/reflecta-CrystalScan-7200.html}
+  
+  \bibitem{rcs_review}
+  \url{http://www.filmscanner.info/en/ReflectaCrystalScan7200.html}
   
   \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{USB standard}
   
