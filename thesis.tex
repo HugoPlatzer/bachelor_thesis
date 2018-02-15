@@ -16,6 +16,17 @@
 
 \section{Introduction}
 
+For many vendors of consumer electronic devices,
+developing drivers for desktop operating systems
+with a small market share (such as Linux distributions) is not a priority. Even if
+they do develop them, their software usually remains closed-source, which can be considered undesirable from a security and maintainability standpoint. And even for those
+vendors releasing open-source drivers, the device's communication protocol generally remains
+undocumented.
+
+This paper focuses on a scanner for film material. The communication between the
+device and the supplied Windows software is recorded and analyzed. Based on this analysis,
+a working driver supporting basic scanning functionality is created.
+
 \subsection{The device}
 
 The Reflecta CrystalScan 7200 is a device for digitizing 35mm film material like
@@ -1091,15 +1102,16 @@ while the software was idling / scanning:
   \centering
   \begin{tabular}{c | c | c | c | c | c}
     Combination & bmRequestType & bRequest & wValue & wIndex & wLength \\ \hline
-    a) & 0x40 & 4 & 0x0082 & 0 & 8 \\
-    b) & 0xc0 & 12 & 0x0084 & 0 & 1 \\
-    c) & 0x40 & 12 & 0x0085 & 0 & 1 \\
-    d) & 0x40 & 12 & 0x0087 & 0 & 1 \\
-    e) & 0x40 & 12 & 0x0088 & 0 & 1 \\
+    a) & 0x40 (outgoing) & 4 & 0x0082 & 0 & 8 \\
+    b) & 0xc0 (incoming) & 12 & 0x0084 & 0 & 1 \\
+    c) & 0x40 (outgoing) & 12 & 0x0085 & 0 & 1 \\
+    d) & 0x40 (outgoing) & 12 & 0x0087 & 0 & 1 \\
+    e) & 0x40 (outgoing) & 12 & 0x0088 & 0 & 1 \\
   \end{tabular}
+  \label{table:paramcombos}
 \end{table}
 
-Some additional parameter combinations were only observed during software
+These additional parameter combinations were only observed during software
 startup:
 
 \begin{table}[H]
@@ -1107,26 +1119,33 @@ startup:
   \centering
   \begin{tabular}{c | c | c | c | c | c}
     Combination & bmRequestType & bRequest & wValue & wIndex & wLength \\ \hline
-    f) & 0x40 & 12 & 0x0089 & 0xf49c & 1 \\
-    g) & 0xc0 & 12 & 0x008a & 0x008b & 1 \\
-    h) & 0x40 & 12 & 0x008b & varies & 1 \\
-    i) & 0x40 & 12 & 0x008c & 0x0010 & 1 \\
-    j) & 0xc0 & 12 & 0x008e & 0 & 1 \\
+    f) & 0x40 (outgoing) & 12 & 0x0089 & 0xf49c & 1 \\
+    g) & 0xc0 (incoming) & 12 & 0x008a & 0x008b & 1 \\
+    h) & 0x40 (outgoing) & 12 & 0x008b & varies & 1 \\
+    i) & 0x40 (outgoing) & 12 & 0x008c & 0x0010 & 1 \\
+    j) & 0xc0 (incoming) & 12 & 0x008e & 0 & 1 \\
   \end{tabular}
 \end{table}
 
-The data payload sent / received varies between different transfers
-with the same parameters.
+In addition to the parameters, control transfers have a data payload that is {\it wLength} bytes long \autoref{table:ctrltransfer}. The actual commands regarding what the device should do are encoded in this data payload.
 
 \subsection{Transaction patterns}
 
+All traffic during idling and scanning can be modelled by transactions: Each transaction
+starts with the same header. After that, six parameter bytes are sent and the
+device response is queried. The rest depends on the transaction type, there
+are four types of transaction: The most basic does not do anything besides sending parameters and querying the response. One kind of transaction transmits additional parameter bytes, another reads some more bytes of device status and the fourth kind is used
+for retrieving image data.
+
 \subsubsection{Header}
+
+Every transaction begins with the same header that consists of these 11 control transfers:
 
 \begin{table}[H]
   \caption{Header structure for all three transaction types}
   \centering
   \begin{tabular}{c | c | c}
-    Nr. & Combination & Data payload \\ \hline
+    Nr. & Parameters \autoref{table:paramcombos} & Data payload \\ \hline
     1. & e) & 0xff \\
     2. & e) & 0xaa \\
     3. & e) & 0x55 \\
@@ -1139,9 +1158,27 @@ with the same parameters.
     10. & d) & 0x04 \\
     11. & e) & 0xff \\
   \end{tabular}
+  \label{table:transheader}
 \end{table}
 
-\subsubsection{Basic transaction}
+\subsection{Basic transaction}
+
+This type of transaction has the simplest structure. It is used only for a handful of tasks like
+checking device readiness at critical points and the actual "start scan" command.
+
+\subsubsection{Arguments}
+
+\begin{table}[H]
+  \caption{Arguments of the basic transaction}
+  \centering
+  \begin{tabular}{c | c | p{5cm}}
+    Argument & Byte count & Description \\ \hline
+    
+    Main parameters & 6 & add some description \\
+  \end{tabular}
+\end{table}
+
+\subsubsection{Structure}
 
 \begin{enumerate}
   \item Header
@@ -1151,7 +1188,19 @@ with the same parameters.
         for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
 \end{enumerate}
 
-\subsubsection{Extra parameter transaction}
+\begin{table}[H]
+  \caption{Structure of the basic transaction}
+  \centering
+  \begin{tabular}{c | c | c | p{4cm}}
+    Stage & Packet count & Transfer parameters & Data payload \\ \hline
+    
+    Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & Main parameters \\
+    Device response & 2 & b) in \autoref{table:paramcombos} & See the extra text \\
+  \end{tabular}
+\end{table}
+
+\subsection{Data transaction}
 
 \begin{enumerate}
   \item Header
@@ -1164,7 +1213,7 @@ with the same parameters.
         for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
 \end{enumerate}
 
-\subsubsection{Data read transaction}
+\subsection{Read transaction}
 
 \begin{enumerate}
   \item Header
@@ -1181,7 +1230,7 @@ with the same parameters.
         for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
 \end{enumerate}
 
-\subsubsection{Image retrieval transaction}
+\subsection{Image transaction}
 
 This is similar to the data read transaction.
 
@@ -1203,14 +1252,24 @@ This is similar to the data read transaction.
         for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
 \end{enumerate}
 
-\subsection{Initiating a scan}
+\subsection{Device readiness response}
 
-\subsubsection{Timing}
+\subsection{Timing}
+
+\subsection{Performing a scan}
+
+\begin{figure}[H]
+  \caption{Timing of packets during scan}
+  \centering
+  \includegraphics[width=\textwidth]{images/time_diagram.pdf}
+\end{figure}
 
 \subsection{Receiving the image}
 
 \section{Image processing}
 \label{sec:imgproc}
+
+\section{SANE}
 
 \newcounter{firstbib}
 \pagebreak

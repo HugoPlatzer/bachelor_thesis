@@ -13,10 +13,19 @@ def plotValues(values, maxNumber, label):
   plt.plot(xval, yval, label = label)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-i", "--inputFile", help = "pcap file", type = str, required = True)
-parser.add_argument("-n", "--numbers", help = "maximum packet number per segment", type = int, nargs = "+", required = True)
-parser.add_argument("-l", "--labels", help = "strings to describe each segment", type = str, nargs = "+", required = True)
-parser.add_argument("-o", "--outputFile", help = "image file", type = str, required = True)
+parser.add_argument("-i", "--inputFile",
+                    help = "pcap file", type = str, required = True)
+parser.add_argument("-n", "--numbers",
+                    help = "maximum packet number per segment",
+                    type = int, nargs = "+", required = True)
+parser.add_argument("-al", "--axisLabels",
+                    help = "strings to label the x and y axis",
+                    type = str, nargs = 2, required = True)
+parser.add_argument("-ll", "--legendLabels",
+                    help = "strings to label each segment in the legend",
+                    type = str, nargs = "+", required = True)
+parser.add_argument("-o", "--outputFile",
+                    help = "image file", type = str, required = True)
 args = parser.parse_args()
 
 cmdline = "tshark -r {} -e _ws.col.Time -Tfields"
@@ -27,12 +36,10 @@ for l in check_output(cmdline, shell = True).splitlines():
   values.append((float(l), len(values) + 1))
 
 fig, ax = plt.subplots()
-ax.set_xlabel("Zeit (Sekunden)")
-ax.set_ylabel("Paketnummer")
-
+ax.set_xlabel(args.axisLabels[0])
+ax.set_ylabel(args.axisLabels[1])
 for i, n in enumerate(args.numbers):
-  plotValues(values, n, args.labels[i])
+  plotValues(values, n, args.legendLabels[i])
 
-plt.tight_layout()
 plt.legend()
-plt.savefig(args.outputFile)
+plt.savefig(args.outputFile, bbox_inches = "tight", pad_inches = 0)
