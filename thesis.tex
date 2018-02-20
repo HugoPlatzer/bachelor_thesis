@@ -7,6 +7,7 @@
 \usepackage{multirow}
 \usepackage{hyperref}
 \usepackage{subfig}
+\usepackage{amsmath}
 
 \begin{document}
 
@@ -794,6 +795,7 @@ The passthrough is limited to devices with a specified vendor / product ID combi
 new devices can be added by selecting the machine and clicking (Settings $\,\to\,$ USB).
 
 \section{Image extraction}
+\label{sec:extract}
 
 As a first step, I wanted to reconstruct the transmitted image from the
 sniffed communication during a scan. This is done without interaction between
@@ -1085,6 +1087,11 @@ dev.read(endpoint, size, timeout)
 dev.write(endpoint, data, timeout)
 \end{center}
 
+PyUSB was used to create a simple scanning program {\it scanInteractive.py}
+which performs a scan with certain parameters, does basic image processing
+(see \ref{sec:extract}) and displays the image building up row by row
+as data is received from the scanner.
+
 \subsection{Vendor-specific control transfers}
 
 USB traffic starts when the scanner software loads and continues
@@ -1127,15 +1134,22 @@ startup:
   \end{tabular}
 \end{table}
 
-In addition to the parameters, control transfers have a data payload that is {\it wLength} bytes long \autoref{table:ctrltransfer}. The actual commands regarding what the device should do are encoded in this data payload.
+In addition to the parameters, control transfers have a data payload that is {\it wLength} bytes long \autoref{table:ctrltransfer}.
+The actual commands regarding what the device should do are encoded in this data payload.
+As all but one parameter combination has a one-byte payload, most commands are transferred
+one byte after another, doing one control transfer for each byte.
+
+\subsubsection{Main parameters}
+\label{ssec:image_param}
 
 \subsection{Transaction patterns}
 
 All traffic during idling and scanning can be modelled by transactions: Each transaction
 starts with the same header. After that, six parameter bytes are sent and the
 device response is queried. The rest depends on the transaction type, there
-are four types of transaction: The most basic does not do anything besides sending parameters and querying the response. One kind of transaction transmits additional parameter bytes, another reads some more bytes of device status and the fourth kind is used
-for retrieving image data.
+are four types of transaction: The most basic does not do anything besides sending parameters and querying the response.
+One kind of transaction transmits additional parameter bytes, another reads more detailed device status
+and the fourth kind is used for retrieving image data.
 
 \subsubsection{Header}
 
@@ -1161,102 +1175,289 @@ Every transaction begins with the same header that consists of these 11 control 
   \label{table:transheader}
 \end{table}
 
+\subsection{Device readiness query}
+\label{ssec:devready}
+
+At the end of each transaction, but also at other points (like before
+sending extra parameters) the software has to ask for a device response.
+
+This is done using a control transfer with parameter combination b) in \autoref{table:paramcombos}.
+At most points, when doing a readiness query, there is only one response from the
+device that should occur during proper operation. All other responses indicate some
+sort of failure, usually incorrect commands that have been sent by the software.
+
+\begin{table}[H]
+  \caption{Expected responses at various points}
+  \centering
+  \begin{tabular}{p{9cm} | l}
+    Point & Response \\ \hline
+    Extra parameter transaction, before sending extra parameters & {\tt 0x00} \\
+    Read transaction, before doing bulk read & {\tt 0x01} \\
+    Image transaction, before doing bulk reads & {\tt 0x01} \\
+    End of transaction & see \autoref{table:devready_end} \\
+  \end{tabular}
+\end{table}
+
+At the end of a transaction, somewhat different responses are expected.
+The first response should be {\tt 0x03}. After that, the response control transfer
+is repeated. The second response can be:
+
+\begin{table}[H]
+  \caption{Responses at the end of a transaction}
+  \centering
+  \begin{tabular}{l | p{9cm}}
+    Response & Meaning \\ \hline
+    {\tt 0x00} & OK. Continue with next transaction. \\
+    {\tt 0x02} & Failure due to wrong commands sent by software. Should not happen during normal operation. \\
+    {\tt 0x08} & Device not ready yet. Repeat transaction before continuing to next one. \\
+  \end{tabular}
+  \label{table:devready_end}
+\end{table}
+
+\subsection{Reading from the bulk endpoint}
+\label{ssec:bulkread}
+
+For a read transaction or image transaction, data needs to be read from the bulk endpoint of the device.
+This has to be done using a special pattern:
+
+First, a control transfer (combination a) in \autoref{table:paramcombos}) is
+performed with the following 8-byte payload (hex): {\tt 00000000xxyy0000},
+where the number of bytes to be read ($c$, $1 \leq c \leq 65520$) from the bulk endpoint is encoded
+in little-endian format, i.e. bytes at offset 4 and 5 ({\tt xx} and {\tt yy}) are set such that
+$c = 256 * \texttt{yy} + \texttt{xx}$.
+
+Then the actual bulk read transfer of $c$ bytes from endpoint 1 can happen. The vendor software
+splits large transfers into multiple smaller transfers, but this does not seem
+to be neccessary.
+
 \subsection{Basic transaction}
 
 This type of transaction has the simplest structure. It is used only for a handful of tasks like
 checking device readiness at critical points and the actual "start scan" command.
 
-\subsubsection{Arguments}
-
-\begin{table}[H]
-  \caption{Arguments of the basic transaction}
-  \centering
-  \begin{tabular}{c | c | p{5cm}}
-    Argument & Byte count & Description \\ \hline
-    
-    Main parameters & 6 & add some description \\
-  \end{tabular}
-\end{table}
-
 \subsubsection{Structure}
-
-\begin{enumerate}
-  \item Header
-  \item Six parameter bytes, each of which is sent using a control transfer, combination c).
-        Only bytes 1 and 6 are set.
-  \item Two 1-byte status reads using combination b). The response for the first read is always 0x03,
-        for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
-\end{enumerate}
 
 \begin{table}[H]
   \caption{Structure of the basic transaction}
   \centering
-  \begin{tabular}{c | c | c | p{4cm}}
-    Stage & Packet count & Transfer parameters & Data payload \\ \hline
+  \begin{tabular}{p{3cm} | p{1.5cm} | p{3cm} | p{3cm}}
+    Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
     Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & Main parameters \\
-    Device response & 2 & b) in \autoref{table:paramcombos} & See the extra text \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{ssec:basic_param} \\
+    Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
   \end{tabular}
 \end{table}
 
-\subsection{Data transaction}
+\subsubsection{Main parameters}
+\label{ssec:basic_param}
 
-\begin{enumerate}
-  \item Header
-  \item Six parameter bytes, each of which is sent using a control transfer, combination c).
-        Only bytes 1 and 5 are set.
-        The fifth byte represents the number of bytes in step 4.
-  \item One 1-byte status read using combination b). Response should be 0x00.
-  \item Extra parameter bytes, each of which is sent using a control transfer, combination c).
-  \item Two 1-byte status reads using combination b). The response for the first read is always 0x03,
-        for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
-\end{enumerate}
+\begin{table}[H]
+  \caption{Observed values for the "Main parameters" bytestring}
+  \centering
+  \begin{tabular}{c | p{7cm}}
+    Value (hex) & Description \\ \hline
+    {\tt 000000000000} & Used to wait for device readiness at various points while preparing to scan. The transaction is repeated
+                         until the device readiness query returns the right response.
+                         \\
+    {\tt 1b0000000100} & The actual "start scan" command. Is issued after transmitting all scan parameters
+                         before receiving the image data. After recieving this command, the scanner
+                         starts to make noise and eventually moves the scan head. \\
+  \end{tabular}
+\end{table}
+
+\subsection{Extra parameter transaction}
+
+This transaction is used to set parameters while preparing a scan.
+The bytestring of the "Main parameter" stage defines the purpose of the transaction
+(e.g. setting resolution / exposure parameters). The "Extra parameter" stage
+transfers the values of the parameters that should be set.
+
+\subsubsection{Structure}
+
+\begin{table}[H]
+  \caption{Structure of the extra parameter transaction}
+  \centering
+  \begin{tabular}{p{3cm} | p{1.5cm} | p{3cm} | p{3cm}}
+    Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
+    
+    Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{ssec:param_param} \\
+    Device response & 1 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready}, {\tt 0x00} expected \\
+    Extra parameters & varies, see \ref{ssec:param_param} & c) in \autoref{table:paramcombos} & see \ref{ssec:param_extra} \\
+    Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
+  \end{tabular}
+\end{table}
+
+\subsubsection{Main parameters}
+\label{ssec:param_param}
+
+Only bytes at offset 0 and 4 are set. The byte at offset 0 identifies the
+purpose of this transaction (e.g. set resolution, scan area). The byte value at offset 4 equals
+the number of bytes that are later transferred in the "Extra parameter"
+stage.
+
+Sometimes, the same byte 0 (purpose) is used with varying bytes 4 (length).
+It is unclear whether such extra parameter bytestrings of different lengths
+are related to each other. Usually, only one of these lengths is used to transmit
+a string that actually carries relevant information (i.e. it changes when
+changing settings in the vendor software).
+
+\begin{table}[H]
+  \caption{Observed values for the "Main parameters" bytestring}
+  \centering
+  \begin{tabular}{c | p{7cm}}
+    Value (hex) & Description \\ \hline
+    {\tt 0a0000000600} & Unclear purpose \\
+    {\tt 0a0000000800} & Unclear purpose \\
+    {\tt 0a0000000e00} & Scan area \\
+    {\tt 150000001000} & Resolution, color mode \\
+    {\tt dc0000001d00} & Exposure / gain \\
+  \end{tabular}
+\end{table}
+
+\subsubsection{Extra parameters}
+\label{ssec:param_extra}
+
+For three main parameter strings, the extra parameter string varies
+with different scan settings. The meaning of some bytes in these strings
+can be discovered by varying one setting and observing the change in the
+string. For each of these three parameters, an example string from an actual
+scan is analyzed:
+
+\paragraph{0a0000000e00}
+
+\paragraph{150000001000}
+
+\begin{table}[H]
+  \caption{Decoding extra parameters for "0a0000000e00"}
+  \centering
+  \begin{tabular}{p{1cm} | p{1cm} | p{7cm}}
+    Offset & Value (hex) & Description \\ \hline
+    0-1 & {\tt ffd3} & Some random text. \\
+  \end{tabular}
+\end{table}
+
+\paragraph{dc0000001d00}
 
 \subsection{Read transaction}
 
-\begin{enumerate}
-  \item Header
-  \item Six parameter bytes, each of which is sent using a control transfer, combination c).
-        Only bytes 1, 4, and 5 are set.
-        The fourth and fifth byte represent the number of bytes to be read from the bulk endpoint
-        in big-endian format.
-  \item One 1-byte status read using combination b). Response should be 0x01.
-  \item The number of bytes to be read is once more transmitted using combination a), of the 8
-        byte payload, bytes 5 and 6 represent this number, this time in little-endian format, other
-        bytes are zero.
-  \item Bulk transfer from endpoint 1, reading the number of bytes as agreed on before.
-  \item Two 1-byte status reads using combination b). The response for the first read is always 0x03,
-        for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
-\end{enumerate}
+This is used to read device status from the bulk endpoint.
+
+\subsubsection{Structure}
+
+\begin{table}[H]
+  \caption{Structure of the read transaction}
+  \centering
+  \begin{tabular}{p{3cm} | p{1.5cm} | p{3cm} | p{3cm}}
+    Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
+    
+    Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{ssec:read_param} \\
+    Device response & 1 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready}, {\tt 0x01} expected \\
+    Bulk read & see \ref{ssec:read_param} & see \ref{ssec:bulkread} & see \ref{ssec:bulkread} \\
+    Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
+  \end{tabular}
+\end{table}
+
+\subsubsection{Main parameters}
+\label{ssec:read_param}
+
+Many different main parameter combinations are used for status reads. As the returned
+information is not critical for basic scanning functionality, the bytestrings are
+not studied in detail.
+
+Bytes at offset 0, 3, 4 can be set. Bytes 3 and 4 specify the number of bytes to
+be read from the bulk endpoint: $256 * b_3 + b_4$.
+
+Similar to the parameter transaction, sometimes the same byte 0 (purpose)
+is used with different bytes 3-4 (length).
+
+\begin{table}[H]
+  \caption{Observed values for the "Main parameters" bytestring}
+  \centering
+  \begin{tabular}{c | p{7cm}}
+    Value (hex) & Description \\ \hline
+    {\tt 030000000e00} & Used during scan preparation \\
+    {\tt 080000008000} & Used during scan preparation \\
+    {\tt 0f0000001200} & Used during scan preparation \\
+    {\tt 18000014dc00} & Used during scan preparation \\
+    {\tt d70000006700} & Used during scan preparation \\
+    {\tt dd0000001200} & This is sent in regular intervals by the vendor software while the scanner idles,
+                         probably to keep informed about device status.\\
+
+  \end{tabular}
+\end{table}
 
 \subsection{Image transaction}
 
-This is similar to the data read transaction.
+The image transaction is used for receiving the calibration and the main image.
 
-\begin{enumerate}
-  \item Header
-  \item Six parameter bytes, each of which is sent using a control transfer, combination c).
-        Only bytes 1 and 5 are set.
-        Byte 1 is 0x08 and byte 5 the number of lines to be received.
-  \item One 1-byte status read using combination b). Response should be 0x01.
-  
-  \item The number of bytes to be read next is transmitted using combination a), of the 8
-        byte payload, bytes 5 and 6 represent the number in little-endian format, other
-        bytes are zero.
-  \item Bulk transfer from endpoint 1, reading the number of bytes as agreed on before.
-  
-  \item Steps 5 and 6 are repeated until all bytes of image data are read.
-  
-  \item Two 1-byte status reads using combination b). The response for the first read is always 0x03,
-        for the second read it varies (0x00 means success, others like 0x08 mean some sort of problem).
-\end{enumerate}
+\subsubsection{Structure}
 
-\subsection{Device readiness response}
+\begin{table}[H]
+  \caption{Structure of the image transaction}
+  \centering
+  \begin{tabular}{p{3cm} | p{1.5cm} | p{3cm} | p{3cm}}
+    Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
+    
+    Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{ssec:image_param} \\
+    Device response & 1 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
+    Bulk reads & see \ref{ssec:image_bulk} & see \ref{ssec:bulkread} & see \ref{ssec:bulkread} \\
+    Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
+  \end{tabular}
+\end{table}
+
+\subsubsection{Main parameters}
+\label{ssec:image_param}
+
+An image transaction has the parameter string (hex) {\tt 08000000xx00}.
+The byte at offset 4 represents the number of lines of the image that
+should be received.
+
+An image transaction that transfers for example 14 lines would be identical
+up to the main parameter stage
+to an extra parameter transaction with main parameter string {\tt 080000000e00}.
+The device response after the main parameter stage however has to be different
+(0x00 for extra parameter, 0x01 for image). This shows that the device has
+to consider context when analyzing the meaning of a transaction's main parameters
+({\tt 080000000e00} means "set scan area" while preparing the scan but
+"transfer 14 lines" after the scan has started).
+
+\subsubsection{Bulk reads}
+\label{ssec:image_bulk}
+
+In this stage, the image data is transferred using one ore more
+bulk reads (see \ref{ssec:bulkread}).
+
+For this, the amount of bytes per line of the image $c_l$ needs to be known
+(see \ref{}). This is multiplied by the number of lines $l$ to be transferred
+to get the total amount of bytes to be transferred:
+
+\begin{center}
+\begin{tabular}{l}
+$ c = c_l * l $
+\end{tabular}
+\end{center}
+
+This amount gets divided into 65520 ({\tt 0xfff0}) byte chunks plus a possible rest:
+
+\begin{center}
+\begin{tabular}{l}
+$n = \lfloor \frac{c}{65520} \rfloor $ \\
+$m = c \mod 65520$ \\
+\end{tabular}
+\end{center}
+
+The data is transferred in $n$ 65520-byte reads followed by one $m$-byte
+read (if m is nonzero).
+
+\subsection{Receiving the calibration image}
+
+\subsection{Receiving the main image}
 
 \subsection{Timing}
-
-\subsection{Performing a scan}
 
 \begin{figure}[H]
   \caption{Timing of packets during scan}
@@ -1264,7 +1465,8 @@ This is similar to the data read transaction.
   \includegraphics[width=\textwidth]{images/time_diagram.pdf}
 \end{figure}
 
-\subsection{Receiving the image}
+\subsection{An actual scan}
+
 
 \section{Image processing}
 \label{sec:imgproc}
