@@ -8,6 +8,7 @@
 \usepackage{hyperref}
 \usepackage{subfig}
 \usepackage{amsmath}
+\usepackage{csquotes}
 
 \begin{document}
 
@@ -1139,9 +1140,6 @@ The actual commands regarding what the device should do are encoded in this data
 As all but one parameter combination has a one-byte payload, most commands are transferred
 one byte after another, doing one control transfer for each byte.
 
-\subsubsection{Main parameters}
-\label{ssec:image_param}
-
 \subsection{Transaction patterns}
 
 All traffic during idling and scanning can be modelled by transactions: Each transaction
@@ -1179,45 +1177,41 @@ Every transaction begins with the same header that consists of these 11 control 
 \label{ssec:devready}
 
 At the end of each transaction, but also at other points (like before
-sending extra parameters) the software has to ask for a device response.
+sending extra parameters, before transferring image data) the software has to ask for a device response.
 
 This is done using a control transfer with parameter combination b) in \autoref{table:paramcombos}.
-At most points, when doing a readiness query, there is only one response from the
-device that should occur during proper operation. All other responses indicate some
-sort of failure, usually incorrect commands that have been sent by the software.
 
 \begin{table}[H]
-  \caption{Expected responses at various points}
+  \caption{Device readiness responses}
   \centering
-  \begin{tabular}{p{9cm} | l}
-    Point & Response \\ \hline
-    Extra parameter transaction, before sending extra parameters & {\tt 0x00} \\
-    Read transaction, before doing bulk read & {\tt 0x01} \\
-    Image transaction, before doing bulk reads & {\tt 0x01} \\
-    End of transaction & see \autoref{table:devready_end} \\
+  \begin{tabular}{p{1.5cm} | p{9cm}}
+    Response & Meaning \\ \hline
+    {\tt 0x00} & OK, returned inside extra parameter transaction (before sending extra parameters) \\
+    {\tt 0x01} & OK, returned in status /i mage transaction, before doing bulk reads \\
+    {\tt 0x03} & Read another response byte, see \autoref{table:devready_2} \\
   \end{tabular}
 \end{table}
 
-At the end of a transaction, somewhat different responses are expected.
-The first response should be {\tt 0x03}. After that, the response control transfer
-is repeated. The second response can be:
+When the first response byte is {\tt 0x03}, the control transfer needs to be repeated for another
+response byte. Such a two-byte response means the transaction is now complete (if in the middle
+of an image / status transaction, do not continue with this transaction, but repeat the transaction from the start).
 
 \begin{table}[H]
-  \caption{Responses at the end of a transaction}
+  \caption{Second response byte}
   \centering
   \begin{tabular}{l | p{9cm}}
     Response & Meaning \\ \hline
     {\tt 0x00} & OK. Continue with next transaction. \\
     {\tt 0x02} & Failure due to wrong commands sent by software. Should not happen during normal operation. \\
-    {\tt 0x08} & Device not ready yet. Repeat transaction before continuing to next one. \\
+    {\tt 0x08} & Device not ready yet. Repeat transaction. \\
   \end{tabular}
-  \label{table:devready_end}
+  \label{table:devready_2}
 \end{table}
 
 \subsection{Reading from the bulk endpoint}
 \label{ssec:bulkread}
 
-For a read transaction or image transaction, data needs to be read from the bulk endpoint of the device.
+For a status transaction or image transaction, data needs to be read from the bulk endpoint of the device.
 This has to be done using a special pattern:
 
 First, a control transfer (combination a) in \autoref{table:paramcombos}) is
@@ -1255,7 +1249,7 @@ checking device readiness at critical points and the actual "start scan" command
 \begin{table}[H]
   \caption{Observed values for the "Main parameters" bytestring}
   \centering
-  \begin{tabular}{c | p{7cm}}
+  \begin{tabular}{c | p{9cm}}
     Value (hex) & Description \\ \hline
     {\tt 000000000000} & Used to wait for device readiness at various points while preparing to scan. The transaction is repeated
                          until the device readiness query returns the right response.
@@ -1322,25 +1316,100 @@ changing settings in the vendor software).
 For three main parameter strings, the extra parameter string varies
 with different scan settings. The meaning of some bytes in these strings
 can be discovered by varying one setting and observing the change in the
-string. For each of these three parameters, an example string from an actual
+string. Most of the information presented here, however,
+is taken from comments in the code of the SANE backend for this device.
+For each of the three parameters, an example string from an actual
 scan is analyzed:
 
 \paragraph{0a0000000e00}
 
-\paragraph{150000001000}
+This parameter string is used to set the boundaries of the scan
+frame / scan area. The corresponding extra parameter bytestring
+consists of 5 2-byte little-endian values:
 
 \begin{table}[H]
   \caption{Decoding extra parameters for "0a0000000e00"}
   \centering
   \begin{tabular}{p{1cm} | p{1cm} | p{7cm}}
     Offset & Value (hex) & Description \\ \hline
-    0-1 & {\tt ffd3} & Some random text. \\
+    0-1 & {\tt 1200} & Constant representing "scan frame" \\
+    2-3 & {\tt 0a00} & Size of rest of frame (10 bytes), constant \\
+    4-5 & {\tt 8000} & Index of frame, constant \\
+    6-7 & {\tt 6f02} & X coordinate of top left corner of area (units unknown) \\
+    8-9 & {\tt 0f00} & Y coordinate of top left corner of area (units unknown) \\
+    10-11 & {\tt 2829} & X coordinate of bottom right corner of area (units unknown) \\
+    12-13 & {\tt f819} & Y coordinate of bottom right corner of area (units unknown) \\
   \end{tabular}
+  
+  \vspace{5mm}
+  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
 \end{table}
 
-\paragraph{dc0000001d00}
+The ratio of x distance to y distance in this example is:
 
-\subsection{Read transaction}
+$\frac{\textrm{0x2928} - \textrm{0x026f}}{\textrm{0x19f8} - \textrm{0x000f}} = \frac{9913}{6633} = 1.494$.
+
+This matches the proportions of a 35mm film frame: $\frac{36 \textrm{mm}}{24 \textrm{mm}} = 1.5$.
+
+\paragraph{150000001000} This is used to set many different scan parameters
+such as resolution, color mode, color depth etc. Multi-byte
+values are in little-endian format.
+
+\begin{table}[H]
+  \caption{Decoding extra parameters for "150000001000"}
+  \centering
+  \begin{tabular}{p{1cm} | p{1cm} | p{7cm}}
+    Offset & Value (hex) & Description \\ \hline
+    0-1 & {\tt 000f} & Constant representing "scan parameters" \\
+    2-3 & {\tt b004} & Scan resolution (in dots per inch) \\
+    4 & {\tt 80} & Color mode ({\tt 80} - RGB, {\tt 90} - RGB + infrared) \\
+    5 & {\tt 80} & Color depth ({\tt 04} - 8 bit, {\tt 20} - 16 bit) \\
+    6 & {\tt 04} & Color format \\
+    7 & {\tt 00} & unused \\
+    8 & {\tt 01} & Byte order of pixel value ({\tt 01} - little endian) \\
+    9 & {\tt 00} & Bitmap for various quality settings ({\tt 80} - fast infrared,
+                                                        {\tt 08} - skip calibration,
+                                                        {\tt 02} - sharpen) \\
+    10-11 & {\tt 0000} & unused \\
+    12 & {\tt 01} & halftone pattern \\
+    13 & {\tt 80} & line threshold \\
+    14-15 & {\tt 1000} & unknown \\
+  \end{tabular}
+  
+  \vspace{5mm}
+  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+\end{table}
+
+\paragraph{dc0000001d00} This is used to set some parameters such as exposure time
+per channel and digitizer gain / offset. Multi-byte
+values are in little-endian format.
+
+\begin{table}[H]
+  \caption{Decoding extra parameters for "dc0000001d00"}
+  \centering
+  \begin{tabular}{p{1cm} | p{2.5cm} | p{7cm}}
+    Offset & Value (hex) & Description \\ \hline
+    0-5 & {\tt 7e26661c1515} & exposure time for red, green, blue channel
+                               (one 16-bit little-endian value per channel) \\
+    6-8 & {\tt 171411} & Digitizer offset for red, green, blue channel
+                               (one 8-bit value per channel) \\
+    9-11 & {\tt 000000} & unused \\
+    12-14 & {\tt 212121} & Digitizer gain for red, green, blue channel
+                               (one 8-bit value per channel) \\
+    15 & {\tt 07} & light \\
+    16 & {\tt 00} & extra entries \\
+    17 & {\tt 00} & double times \\
+    18-19 & {\tt 790b} & Exposure time for infrared channel \\
+    20-21 & {\tt 1400} & Digitizer offset for infrared channel \\
+    22 & {\tt 0f} & Digitizer gain for infrared channel \\
+    23-28 & {\tt 000000000000} & unused \\
+  \end{tabular}
+  
+  \vspace{5mm}
+  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+\end{table}
+
+\subsection{Status transaction}
 
 This is used to read device status from the bulk endpoint.
 
@@ -1363,30 +1432,53 @@ This is used to read device status from the bulk endpoint.
 \subsubsection{Main parameters}
 \label{ssec:read_param}
 
-Many different main parameter combinations are used for status reads. As the returned
-information is not critical for basic scanning functionality, the bytestrings are
-not studied in detail.
+Many different main parameter combinations are used for status reads. As most of the returned
+information is not critical for basic scanning functionality, not all bytestrings are
+studied in detail.
 
 Bytes at offset 0, 3, 4 can be set. Bytes 3 and 4 specify the number of bytes to
 be read from the bulk endpoint: $256 * b_3 + b_4$.
-
-Similar to the parameter transaction, sometimes the same byte 0 (purpose)
-is used with different bytes 3-4 (length).
 
 \begin{table}[H]
   \caption{Observed values for the "Main parameters" bytestring}
   \centering
   \begin{tabular}{c | p{7cm}}
     Value (hex) & Description \\ \hline
-    {\tt 030000000e00} & Used during scan preparation \\
-    {\tt 080000008000} & Used during scan preparation \\
-    {\tt 0f0000001200} & Used during scan preparation \\
-    {\tt 18000014dc00} & Used during scan preparation \\
-    {\tt d70000006700} & Used during scan preparation \\
-    {\tt dd0000001200} & This is sent in regular intervals by the vendor software while the scanner idles,
-                         probably to keep informed about device status.\\
+    {\tt 030000000e00} & Unknown purpose \\
+    {\tt 080000008000} & Unknown purpose \\
+    {\tt 0f0000001200} & Main image parameters \\
+    {\tt 18000014dc00} & Mask specifying which pixels of the sensor contribute to the output data (useful for calibration) \\
+    {\tt d70000006700} & Gain / offset values \\
+    {\tt dd0000001200} & Basic scanner status. Sent in regular intervals by the vendor software while the scanner is idle. \\
 
   \end{tabular}
+\end{table}
+
+\paragraph{0f0000001200}
+\label{p:imageparam_query}
+
+This parameter string is used to receive information about the image produced by the scanner.
+It contains the image width / height, this is needed to use the proper image transaction
+parameters. Multi-byte values are in little-endian format.
+
+\begin{table}[H]
+  \caption{Decoding status response for "0f0000001200"}
+  \centering
+  \begin{tabular}{p{1cm} | p{2cm} | p{7cm}}
+    Offset & Value (hex) & Description \\ \hline
+    0-1 & {\tt 7406} & Line width (pixels) \\
+    2-3 & {\tt 2c04} & Number of lines in the image \\
+    4-5 & {\tt e80c} & Number of bytes in the image \\
+    6 & {\tt 08} & Filter offset 1 \\
+    7 & {\tt 08} & Filter offset 2 \\
+    8-11 & {\tt 00000000} & Exposure period \\
+    12-13 & {\tt 7266} & SCSI transfer rate \\
+    14-15 & {\tt 0000} & Number of lines in buffer right now \\
+    16-17 & {\tt 0000} & unused \\
+  \end{tabular}
+  
+  \vspace{5mm}
+  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
 \end{table}
 
 \subsection{Image transaction}
@@ -1425,6 +1517,13 @@ to consider context when analyzing the meaning of a transaction's main parameter
 ({\tt 080000000e00} means "set scan area" while preparing the scan but
 "transfer 14 lines" after the scan has started).
 
+
+
+\blockquote[{\cite[\texttt{pieusb\_scancmd.c}]{sane_code}}]
+{This is a SCSI READ command (code 0x08).
+ It is distinguished from the other READ commands by the context
+ in which it is issued: \\ see \texttt{sanei\_pieusb\_cmd\_start\_scan()}}
+
 \subsubsection{Bulk reads}
 \label{ssec:image_bulk}
 
@@ -1432,7 +1531,7 @@ In this stage, the image data is transferred using one ore more
 bulk reads (see \ref{ssec:bulkread}).
 
 For this, the amount of bytes per line of the image $c_l$ needs to be known
-(see \ref{}). This is multiplied by the number of lines $l$ to be transferred
+(see \ref{p:imageparam_query}). This is multiplied by the number of lines $l$ to be transferred
 to get the total amount of bytes to be transferred:
 
 \begin{center}
@@ -1455,7 +1554,35 @@ read (if m is nonzero).
 
 \subsection{Receiving the calibration image}
 
+The size and format of the calibration image does not depend on the scanner settings.
+On this scanner, it has 180 (45 per channel) lines of 5341 16-bit pixels (10682 bytes).
+The total calibration image size is 1922760 bytes.
+
+The lines follow a RGBI channel interleaving (see \ref{sec:extract}).
+
+In the actual scan (\ref{ssec:actualscan}), at first 4 lines get transferred, then 172, then the last 4.
+
 \subsection{Receiving the main image}
+
+When receiving the main image, it is essential to know how many lines the image
+has and how many bytes there are per line. These values are used to generate image transactions.
+
+The number of lines $l$ gets divided into 255-line chunks plus a possible rest:
+
+\begin{center}
+\begin{tabular}{l}
+$n = \lfloor \frac{c}{255} \rfloor $ \\
+$m = c \mod 255$ \\
+\end{tabular}
+\end{center}
+
+The image is transferred in $n$ 255-line image transactions followed by one $m$-line
+image transaction (if m is nonzero). Each mage transactions itself of course needs
+to be adjusted to its line count and the number of bytes per line.
+
+If the data is read faster than the scanner can produce it, the device readiness
+response in the middle of the image transaction will return a busy status. In this case,
+just repeat this image transaction until the scanner is ready.
 
 \subsection{Timing}
 
@@ -1466,7 +1593,7 @@ read (if m is nonzero).
 \end{figure}
 
 \subsection{An actual scan}
-
+\label{ssec:actualscan}
 
 \section{Image processing}
 \label{sec:imgproc}
@@ -1496,16 +1623,13 @@ read (if m is nonzero).
 \renewcommand{\refname}{Links}
 \begin{thebibliography}{}
   \setcounter{enumiv}{\value{firstbib}}
-  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{Scanner}
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{The device}
   
   \bibitem{rcs}
   \url{https://reflecta.de/en/products/detail/~id.15/reflecta-CrystalScan-7200.html}
   
   \bibitem{rcs_review}
   \url{http://www.filmscanner.info/en/ReflectaCrystalScan7200.html}
-  
-  \bibitem{saneproject}
-  \url{http://www.sane-project.org/}
   
   \bibitem{vuescan}
   \url{https://www.hamrick.com/}
@@ -1569,6 +1693,16 @@ read (if m is nonzero).
   \bibitem{pyusb}
   \url{https://github.com/pyusb/pyusb} Control USB devices from Python.
   Has a great tutorial on using the software.
+  
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{SANE}
+  
+  \bibitem{saneproject}
+  \url{http://www.sane-project.org/}
+  
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep} Code repository (Git):
+  
+  \bibitem{sane_code}
+  \url{https://gitlab.com/sane-project/backends/tree/master/backend}
 \end{thebibliography}
 
 
