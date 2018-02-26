@@ -1225,6 +1225,7 @@ splits large transfers into multiple smaller transfers, but this does not seem
 to be neccessary.
 
 \subsection{Basic transaction}
+\label{ssec:basic_trans}
 
 This type of transaction has the simplest structure. It is used only for a handful of tasks like
 checking device readiness at critical points and the actual "start scan" command.
@@ -1343,6 +1344,7 @@ consists of 5 2-byte little-endian values:
   
   \vspace{5mm}
   Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+  \label{table:param0a}
 \end{table}
 
 The ratio of x distance to y distance in this example is:
@@ -1378,6 +1380,7 @@ values are in little-endian format.
   
   \vspace{5mm}
   Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+  \label{table:param15}
 \end{table}
 
 \paragraph{dc0000001d00} This is used to set some parameters such as exposure time
@@ -1407,9 +1410,11 @@ values are in little-endian format.
   
   \vspace{5mm}
   Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+  \label{table:paramdc}
 \end{table}
 
 \subsection{Status transaction}
+\label{ssec:read_trans}
 
 This is used to read device status from the bulk endpoint.
 
@@ -1452,10 +1457,10 @@ be read from the bulk endpoint: $256 * b_3 + b_4$.
     {\tt dd0000001200} & Basic scanner status. Sent in regular intervals by the vendor software while the scanner is idle. \\
 
   \end{tabular}
+  \label{table:read_param}
 \end{table}
 
 \paragraph{0f0000001200}
-\label{p:imageparam_query}
 
 This parameter string is used to receive information about the image produced by the scanner.
 It contains the image width / height, this is needed to use the proper image transaction
@@ -1479,6 +1484,7 @@ parameters. Multi-byte values are in little-endian format.
   
   \vspace{5mm}
   Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+  \label{table:imageparam_query}
 \end{table}
 
 \subsection{Image transaction}
@@ -1531,7 +1537,7 @@ In this stage, the image data is transferred using one ore more
 bulk reads (see \ref{ssec:bulkread}).
 
 For this, the amount of bytes per line of the image $c_l$ needs to be known
-(see \ref{p:imageparam_query}). This is multiplied by the number of lines $l$ to be transferred
+(see \autoref{table:imageparam_query}). This is multiplied by the number of lines $l$ to be transferred
 to get the total amount of bytes to be transferred:
 
 \begin{center}
@@ -1553,6 +1559,7 @@ The data is transferred in $n$ 65520-byte reads followed by one $m$-byte
 read (if m is nonzero).
 
 \subsection{Receiving the calibration image}
+\label{ssec:rcv_calibimage}
 
 The size and format of the calibration image does not depend on the scanner settings.
 On this scanner, it has 180 (45 per channel) lines of 5341 16-bit pixels (10682 bytes).
@@ -1563,6 +1570,7 @@ The lines follow a RGBI channel interleaving (see \ref{sec:extract}).
 In the actual scan (\ref{ssec:actualscan}), at first 4 lines get transferred, then 172, then the last 4.
 
 \subsection{Receiving the main image}
+\label{ssec:rcv_mainimage}
 
 When receiving the main image, it is essential to know how many lines the image
 has and how many bytes there are per line. These values are used to generate image transactions.
@@ -1586,14 +1594,156 @@ just repeat this image transaction until the scanner is ready.
 
 \subsection{Timing}
 
+Suppose you have a recording of all USB traffic that happened during a scan.
+It would not be sufficient to just replay all the recorded outgoing packets
+at once (and wait for incoming packets at the right points).
+
+This is due to the importance of timing. At certain points, the device
+is not immediately ready for the next command. The most important point
+where this is the case is after starting the scan before doing the first
+image transaction. To ensure device readiness, a basic query (\ref{ssec:basic_trans})
+is used. The device response (\ref{ssec:devready}) in this query returns "busy" if the device
+is not ready yet. After receiving a busy response, the software should sleep
+for a bit (the vendor software uses a 1.5 second interval) and repeat the basic transaction
+until the device responds that it's not busy.
+
+Something similar happens when doing image transactions faster than the device
+can scan the lines. Before the bulk read stage, the device responds "busy"
+and the image transaction should be repeated from the start (\ref{ssec:rcv_mainimage}).
+
 \begin{figure}[H]
   \caption{Timing of packets during scan}
   \centering
   \includegraphics[width=\textwidth]{images/time_diagram.pdf}
+  \label{time_diagram}
 \end{figure}
+
+This diagram illustrates the rate at which packets are transmitted
+during a simple scan (no prescan, no calibration) with the vendor-supplied
+(CyberView X5) software.
+The scanning process can be separated into five phases:
+
+\begin{enumerate}
+
+\item During the idle phase before the scan, every 1.5 seconds a status read query
+(\ref{ssec:read_trans}) is performed.
+
+\item When the user presses "start" scan, all scan parameters being transferred
+in rapid succession causes a quick increase in packet count.
+
+\item After the parameters are sent to the device, but before the image is transferred
+the software has to wait for readiness (1.5 second waits in between a basic transaction
+which shows as a burst of packets).
+
+\item During the image transaction stage, each image transaction's header is
+transferred quickly. The transfer of the actual image lines happens without waits
+but more slowly (the curve climbs diagonally) due to the large amount of data.
+
+\item After the scan has completed and the image is fully transferred,
+the traffic returns to the idle pattern again. Interestingly, the delay
+between status queries is now slightly longer (about 2s) than before the scan.
+
+\end{enumerate}
 
 \subsection{An actual scan}
 \label{ssec:actualscan}
+
+All the USB traffic that happens during an actual scan can be represented
+using the transaction patterns described in this section. To better illustrate
+how an actual scan proceeds, I describe an example using a list of transactions.
+
+A prescan (includes receiving calibration image) was selected in the vendor software
+for its calibration image but also because its transactions can be replayed
+to the device straight after the scanner has started
+(not possible with a regular scan, the device needs to do at least one pre-scan
+after having started).
+
+\begin{table}[H]
+  \caption{Scan parameters}
+  \centering
+  \begin{tabular}{p{4cm} | p{4cm}}
+    Setting & Value \\ \hline
+    Scan mode & Pre-scan \\
+    Resolution & 300 dpi (main image), 3600 dpi (calibration image) \\
+    Color mode & RGB (main image), RGBI (calibration image) \\
+    Color depth & 1 byte per pixel (main image), 2 bytes per pixel (calibration image) \\
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \caption{Transactions of the scan}
+  \centering
+  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
+    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
+    S & {\tt dd0000001200} &  & Idle status query \autoref{table:read_param} \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+    E & {\tt 0a0000000800} & \tt 1300040002 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1300040004 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1300040008 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1400040002 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1400040004 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1400040008 006400 & \\
+    E & {\tt 0a0000000600} & \tt 9500000000 00 & \\
+    S & {\tt 080000008000} &  & \\
+    E & {\tt 0a0000000e00} & \tt 12000a0080 0000000000 b829e71a & Set scan area \autoref{table:param0a} \\
+    E & {\tt 0a0000000600} & \tt 1700020001 00 & \\
+    S & {\tt 030000000e00} &  & \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+    S & {\tt d70000006700} &  & Read gain / offset values \ref{ssec:read_param} \\
+    E & {\tt dc0000001d00} & \tt 0000000000 0000000000 0000000000 07001a790b 00fe0f0000 00000000
+                           & Set exposure settings \autoref{table:paramdc} \\
+  \end{tabular}
+  
+  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
+               S - Status, I - Image
+\end{table}
+
+\begin{table}[H]
+  \caption{Transactions of the scan (continued)}
+  \centering
+  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
+    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+    E & {\tt 150000001000} & \tt 000f2c0180 0404000100 0000008010 00 & \autoref{table:paramdc} \\
+    B & {\tt 1b0000000100} &  & Start scan \ref{ssec:basic_trans} \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 4 times until successful \\ 
+    S & {\tt d70000006700} &  & Read gain / offset values \ref{ssec:read_param} \\
+    E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
+                           & Set exposure settings \autoref{table:paramdc} \\
+    I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
+    I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image \ref{ssec:rcv_calibimage}  \\
+    S & {\tt d70000006700} &  & Read gain / offset values \ref{ssec:read_param} \\
+  \end{tabular}
+  
+  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
+               S - Status, I - Image
+\end{table}
+
+\begin{table}[H]
+  \caption{Transactions of the scan (continued)}
+  \centering
+  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
+    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
+    E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
+                           & Set exposure settings \autoref{table:paramdc} \\
+    I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
+    S & {\tt 18000014dc00} &  & Read row mask \ref{ssec:read_param} \\
+    S & {\tt 0f0000001200} &  & Get size of the main image \autoref{table:imageparam_query}.
+                                Returned status is {\tt bc011f01bc01}... This means the
+                                image has 287 * 3 (color channels) = 861 lines of 444 bytes each. \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 3 times until successful \\
+    I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image \ref{ssec:rcv_mainimage}.
+                                Repeated 3 times.
+                                In this case, they are transferred in chunks of 216 lines. It would also
+                                be fine to use the simpler scheme with 255 lines / transaction. \\
+    I & {\tt 08000000d500} &  & Transfer the rest, that is 213 lines / 94572 bytes of the main image. \\
+  \end{tabular}
+  
+  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
+               S - Status, I - Image
+\end{table}
 
 \section{Image processing}
 \label{sec:imgproc}
