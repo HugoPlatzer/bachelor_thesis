@@ -1745,10 +1745,67 @@ after having started).
                S - Status, I - Image
 \end{table}
 
+\section{SANE}
+
+SANE (abbreviated for "Scanner Access Now Easy") is the standard software package
+for accessing scanners in Linux-like operating systems. SANE was created
+because previous scanner software packages were often specific to a single device / vendor.
+Its most notable feature is the separation between backend (device driver) 
+and frontend (user scanning software).
+
+SANE contains many different backends for devices of different manufacturers.
+A lot of these drivers were not provided by manufacturers but instead
+developed by hobbyists using various reverse-engineering procedures.
+
+Another unique feature is {\it saned}, which is a server daemon that allows
+scanning over a network. This is desirable since one can share a scanner
+among multiple machines in the same location. When using {\it saned}, a
+special {\it net} backend is used on the client machine to make
+the remote scanner accessible just like a local one in the user's preferred frontend.
+
+SANE frontends include {\it scanimage} for scanning on the command line,
+{\it xsane} for a graphical interface and a web application that can be served
+on a network and accessed via web browser, this is another way of providing shared
+scanner access.
+
+\subsection{Architecture}
+
+As mentioned before, SANE consists of backends (that manage devices) and frontends
+(that provide applications). Any backend can be combined with any frontend
+thanks to the SANE interface.
+
+The SANE interface is an application programming interface (API) consisting
+of specified C procedures that are implemented by backends and called by frontends.
+Frontend and backend can be combined either by static or dynamic linking.
+To make a frontend support multiple backends, the frontend can be linked to a
+meta-backend that finds out which backend is suitable for the currently attatched
+scanner, loads it via dynamic linking, and then mimics the behavior
+of the loaded backend.
+
+
+
+\subsubsection{Developing a driver / backend}
+
+\subsection{SANE and the CrystalScan 7200}
+
+\subsubsection{pieusb}
+
+\subsubsection{Fixing I/O errors}
+
+\subsubsection{Supported features}
+
 \section{Image processing}
 \label{sec:imgproc}
 
-\section{SANE}
+\subsection{Calibration}
+
+\subsection{Invert, Contrast, brightness, gamma}
+
+\subsection{Invert, Saturation, color balance}
+
+\subsection{Infrared denoise}
+
+\subsection{Automatic cropping}
 
 \newcounter{firstbib}
 \pagebreak
