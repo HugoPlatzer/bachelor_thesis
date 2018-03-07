@@ -1768,23 +1768,35 @@ SANE frontends include {\it scanimage} for scanning on the command line,
 on a network and accessed via web browser, this is another way of providing shared
 scanner access.
 
-\subsection{Architecture}
+\subsection{The SANE standard}
 
 As mentioned before, SANE consists of backends (that manage devices) and frontends
 (that provide applications). Any backend can be combined with any frontend
-thanks to the SANE interface.
+thanks to the SANE interface / standard. In theory there could be multiple independent
+implementations of this standard, however only the official SANE package is
+commonly used.
 
 The SANE interface is an application programming interface (API) consisting
-of specified C procedures that are implemented by backends and called by frontends.
+of specified C procedures / types that are implemented by backends and called by frontends.
 Frontend and backend can be combined either by static or dynamic linking.
 To make a frontend support multiple backends, the frontend can be linked to a
 meta-backend that finds out which backend is suitable for the currently attatched
 scanner, loads it via dynamic linking, and then mimics the behavior
-of the loaded backend.
+of the suitable backend.
+
+Many backend procedures return a value of type {\it SANE\_Status} to indicate
+success or various kinds of failure.
+
+The standard defines various primitive data types ({\it SANE\_Byte,
+SANE\_Word, SANE\_Char, SANE\_String}) which have certain guaranteed qualities
+like minimum number of bytes, endianness etc. to migitate differences in
+C compilers and hardware. Then there is the {\it SANE\_Handle} data type,
+which is used for accessing a scanner using the backend.
 
 
+\cite{sane_standard}
 
-\subsubsection{Developing a driver / backend}
+\subsection{Developing a driver / backend}
 
 \subsection{SANE and the CrystalScan 7200}
 
@@ -1851,11 +1863,11 @@ of the loaded backend.
                    \url{http://www.usb.org/developers/docs/usb20_docs/}
 
   \bibitem{usbhid}
-  \url{http://www.usb.org/developers/hidpage/HID1_11.pdf}
+  \url{http://www.usb.org/developers/hidpage/HID1_11.pdf} \\
   USB HID Device Class Definition. Describes the structure of HID reports.
   
   \bibitem{usbusage}
-  \url{http://www.usb.org/developers/hidpage/Hut1_12v2.pdf}
+  \url{http://www.usb.org/developers/hidpage/Hut1_12v2.pdf} \\
   USB HID Usage Tables. Describes the meaning of bytes in HID reports.
 
   \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{USB sniffing}
@@ -1865,21 +1877,21 @@ of the loaded backend.
   \url{https://www.totalphase.com/solutions/apps/usb-analyzer-benefits/}
 
   \bibitem{usbmon_others}
-  \url{http://permalink.gmane.org/gmane.linux.usb.general/101338}
+  \url{http://permalink.gmane.org/gmane.linux.usb.general/101338} \\
   Others describing issues with {\it} usbmon truncating payloads
   
   \bibitem{debkernel}
   \url{https://www.debian.org/releases/stretch/amd64/ch08s06.html.en}
 
   \bibitem{wireshark}
-  \url{https://www.wireshark.org/}
+  \url{https://www.wireshark.org/} \\
   Homepage of the Wireshark network protocol analyzer
   
   \bibitem{wireshark_tshark}
   \url{https://www.wireshark.org/docs/man-pages/tshark.html}
   
   \bibitem{wireshark_userguide}
-  \url{https://www.wireshark.org/docs/wsug_html}
+  \url{https://www.wireshark.org/docs/wsug_html} \\
   Wireshark User's Guide
 
   \bibitem{vbox}
@@ -1898,18 +1910,29 @@ of the loaded backend.
   \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{Developing USB drivers}
 
   \bibitem{pyusb}
-  \url{https://github.com/pyusb/pyusb} Control USB devices from Python.
-  Has a great tutorial on using the software.
+  \url{https://github.com/pyusb/pyusb} \\
+  Control USB devices from Python. Has a great tutorial on using the software.
   
   \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{SANE}
   
   \bibitem{saneproject}
   \url{http://www.sane-project.org/}
   
-  \item[]\hspace{-\labelwidth}\hspace{-\labelsep} Code repository (Git):
+  \bibitem{sane_standard}
+  \url{http://www.sane-project.org/sane.pdf} \\
+  The SANE standard
+  
+  \bibitem{sane_develop}
+  \url{http://sane-project.org/backend-writing.txt} \\
+  General guidelines on writing SANE backends
+  
+  \bibitem{sane_develop_re}
+  \url{http://www.meier-geinitz.de/sane/misc/develop.html} \\
+  How to develop SANE backends without documentation (using reverse engineering)
   
   \bibitem{sane_code}
-  \url{https://gitlab.com/sane-project/backends/tree/master/backend}
+  \url{https://gitlab.com/sane-project/backends/tree/master/backend} \\
+  Code repository (Git)
 \end{thebibliography}
 
 
