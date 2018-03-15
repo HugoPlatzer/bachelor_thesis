@@ -1768,6 +1768,13 @@ SANE frontends include {\it scanimage} for scanning on the command line,
 on a network and accessed via web browser, this is another way of providing shared
 scanner access.
 
+\begin{figure}[H]
+  \caption{Example SANE hierarchy}
+  \centering
+  \includegraphics[width=\textwidth]{images/sane_hierarchy.jpg}
+  \label{time_diagram}
+\end{figure}
+
 \subsection{The SANE standard}
 
 As mentioned before, SANE consists of backends (that manage devices) and frontends
@@ -1784,19 +1791,164 @@ meta-backend that finds out which backend is suitable for the currently attatche
 scanner, loads it via dynamic linking, and then mimics the behavior
 of the suitable backend.
 
-Many backend procedures return a value of type {\it SANE\_Status} to indicate
-success or various kinds of failure.
+\cite[3.1]{sane_standard}
 
-The standard defines various primitive data types ({\it SANE\_Byte,
-SANE\_Word, SANE\_Char, SANE\_String}) which have certain guaranteed qualities
+\subsubsection{Primitive types}
+
+The standard defines various primitive data types
+({\it SANE\_Bool, SANE\_Byte, SANE\_Word, SANE\_Fixed, SANE\_String})
+which have certain guaranteed qualities
 like minimum number of bytes, endianness etc. to migitate differences in
-C compilers and hardware. Then there is the {\it SANE\_Handle} data type,
-which is used for accessing a scanner using the backend.
+C compilers and hardware.
 
+There is also an enum type {\it SANE\_Status} which operations use to report back on
+status.
 
-\cite{sane_standard}
+\subsubsection{Device descriptor}
+
+The device descriptor contains identifying information about a scanner (name / model),
+is returned by the {\it sane\_get\_devices} procedure and is used to obtain a device handle
+from the {\it sane\_open} procedure.
+
+\subsubsection{Scanner handle}
+
+The scanner handle is a pointer that is returned by {\it sane\_open} and is used to
+control the scanner using SANE operations (get / set options, start scan).
+
+\subsubsection{Options}
+
+Options are a powerful feature of the SANE standard in that the same type and procedures
+are used to control every setting on a device: basic ones like resolution or scan area, but also
+device-specific settings; this is independent of manufacturer / backend.
+
+The option descriptor is a struct type with various components specifying an option's
+meaning and its possible values: name (unique identifier),
+title (human-readable name), description, type (bool / string etc.), unit (pixels / millimeters etc.)
+and constraints (f.e. a range of possible coordinate values in a dimension,
+a list of allowed string values).
+
+\cite[4.2.9]{sane_standard}
+
+Every device handle has a certain number of option descriptors associated
+with it. An option descriptor can be fetched with the {\it sane\_get\_option\_descriptor}
+procedure by specifying the index of the option.
+Backends can define any number of custom option descriptors, but some
+descriptors' meaning is specified in the standard:
+
+\begin{table}[H]
+  \caption{Special option descriptors specified in the SANE standard}
+  \centering
+  \begin{tabular}{p{3cm} | p{8cm}}
+    Name & Description \\ \hline
+      Option count & Always available at index 0. Tells how many options
+                            there are in total. \\
+      {\it resolution} & Scan resolution (in dpi) \\
+      {\it preview} & Bool type, trade scan quality for speed when enabled \\
+      Scan area & Four options ({\it tl-x, tl-y, br-x, br-y}) that give
+                  the coordinates of a rectangle delimiting the scan area. \\
+  \end{tabular}
+\end{table}
+
+\cite[4.5]{sane_standard}
+
+Options values are queried/set using the {\it sane\_control\_option} procedure
+specifying the option index and a generic pointer to load / store the value.
+This also reports back on how well the request could be met (f.e. a resolution could
+not be set exactly) and whether the changed setting has changed the availablility
+of other options.
+
+\cite[4.4]{sane_standard}
+
+\subsubsection{Operations}
+
+The standard specifies various procedures for initialization, configuring options,
+scanning and retrievig data.
+
+\begin{table}[H]
+  \caption{Operations defined in the SANE standard (not exhaustive)}
+  \centering
+  \begin{tabular}{l | p{8cm}}
+    Name & Description \\ \hline
+    \it sane\_init & Must be called before using other procedures of the backend \\
+    \it sane\_get\_devices & Get a list of device descriptors, one for each device
+                             the backend has found. \\
+    \it sane\_open & Initialize the device with a specified descriptor. Returns \\
+    \it sane\_close & Free scanner handle \\
+    \it sane\_exit & Free data in backend \\
+    \it sane\_get\_option\_descriptor & Get the option descriptor at the speficied index. \\
+    \it sane\_control\_option & Set or retrieve an option value at the specified option index. \\
+    \it sane\_get\_parameters & Get parameters (format / dimensions) of image returned by {\it sane\_read}. \\
+    \it sane\_start & Start scanning \\
+    \it sane\_read & Read retrieved image bytes \\
+    \it sane\_cancel & Cancel a scan in progress \\
+  \end{tabular}
+\end{table}
+
+\cite[4.3]{sane_standard}
+
+When using SANE, typical code flow might look as follows:
+
+\begin{figure}[H]
+  \caption{Typical code flow when using SANE}
+  \centering
+  \includegraphics[width=0.95\textwidth]{images/sane_codeflow.jpg}
+  \label{time_diagram}
+\end{figure}
+
+\cite[4.4]{sane_standard}
+
+\subsubsection{Network protocol}
+
+This specifies how a SANE daemon should communicate with a client, possibly on a
+remote machine. This protocol is done in a RPC (remote-procedure-call) style:
+The client calls procedures on the server in a similar fashion to how they are
+called locally: The parameters are encoded in a packet, sent over the network,
+unpacked at the server, the procedure is executed there, the return value takes
+the reverse direction.
+
+The exact encoding of packets is not specified (TCP/IP is not the only possible
+transport layer), for compatibility it seems reasonable to consider the official
+implementations of {\it saned} ( server) and the {\it net} backend (client) .
+
+\cite[5]{sane_standard}
 
 \subsection{Developing a driver / backend}
+
+The SANE developers give some tips on writing a backend \cite{sane_develop}:
+
+\begin{itemize}
+  \item First, one should acquire information on how the device is controlled. This
+        can be official documentation released by the manufacturer or obtained via
+        various kinds of reverse engineering (software, firmware, sniffing, hardware...).
+  \item It is advisable to first write a minimal, working standalone scanning program not part of SANE.
+        This makes debugging easier.
+  \item After the standalone program is working, one can start developing the backend:
+        If the standalone program is already written in C, its code can be copied
+        into the backend files and called by the public backend procedures.
+\end{itemize}
+
+\cite{sane_develop_re} is focused on reverse-engineering
+Windows-only scanners for SANE. Despite being somewhat outdated and referring mostly
+to older SCSI scanners, the website provides useful information:
+
+\begin{itemize}
+  \item As an alternative to sniffing, Windows drivers could be disassembled
+        using special toolkits
+  \item There is sniffing software running inside Windows (as an alternative to
+        the Linux-based sniffing used here)
+  \item Write down information about every scan run performed to keep track which
+        settings give which recording
+  \item Change only one option per scan run so the changes in traffic can be correlated
+        with that option
+  \item Keep scan area small to reduce recording size
+  \item Constant bursts of traffic while idling may indicate polling for a pressed "start
+        scan" button on the device
+  \item Modern USB scanners have two levels of communication: One is how to set parameter
+        strings and another is the meaning of the bytes inside the parameter string.
+        Try to understand the first level first.
+  \item If large chunks of data are transmitted, think about their meaning:
+        What the driver sends could be firmware code, calibration data, motor acceleration data, gamma tables. The device could send calibration data or actual image data.
+\end{itemize}
 
 \subsection{SANE and the CrystalScan 7200}
 
