@@ -1954,7 +1954,23 @@ to older SCSI scanners, the website provides useful information:
 
 \subsubsection{pieusb}
 
+{\it pieusb} is a SANE backend that supports the CrystalScan 7200 among
+other scanners sold under the Reflecta brand. Development began
+in 2012 by Klaus Kaempf et al., in 2015 it got merged into mainline SANE code.
+Supported devices include:
+
+\begin{itemize}
+  \item Reflecta CrystalScan 7200
+  \item Reflecta ProScan 7200
+  \item Reflecta 6000 Multiple Slide Scanner
+\end{itemize}
+
+The version of SANE / pieusb used here is {\bf 1.0.25-4.1}, as is part of
+Debian 9 (Stretch).
+
 \subsubsection{Fixing I/O errors}
+
+For my device, scanning unfortunately did not work as-is. When
 
 \subsubsection{Supported features}
 
@@ -1963,9 +1979,9 @@ to older SCSI scanners, the website provides useful information:
 
 \subsection{Calibration}
 
-\subsection{Invert, Contrast, brightness, gamma}
+\subsection{Local pixelwise operations}
 
-\subsection{Invert, Saturation, color balance}
+\subsubsection{Color negative film}
 
 \subsection{Infrared denoise}
 
