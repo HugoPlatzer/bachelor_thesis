@@ -2067,7 +2067,42 @@ file is not larger than when scanning without IR.
 
 \subsection{Calibration}
 
-\subsection{Local pixelwise operations}
+\subsection{Point operations}
+
+Point operations are a special class of image processing operations where the output value
+at any pixel only depends on the input value at that pixel (so the operation
+can be described as a function from the channel levels to the channel levels) \cite{pointwise_gimp}.
+For all described operations, if the output value lies outside $[0, 1]$,
+it is clipped to the respective limit.
+
+\subsubsection{Brightness}
+
+Adjusting brightness means adding an absolute number to each pixel value.
+To increase the brightness by $k$, a function $f(b) = b + k$ is used.
+
+\begin{figure}[H]
+  \caption{Brightness operation ($k = 0.3$)}
+\end{figure}
+
+\subsubsection{Contrast}
+
+Changing contrast means compressing the brightness function so that its climb
+is steeper at the middle.
+To increase the contrast by a factor $k$, a function $f(b) = (b - 0.5) * k + 0.5$ is used.
+The brightness function gets centered around zero, steepened by factor k, then moved
+back.
+
+\begin{figure}[H]
+  \caption{Contrast operation ($k = 1.5$)}
+\end{figure}
+
+\subsubsection{Gamma}
+
+\subsubsection{Levels}
+
+\subsubsection{Color balance}
+
+\subsubsection{Negative film}
 
 \subsubsection{Color negative film}
 
@@ -2189,6 +2224,11 @@ file is not larger than when scanning without IR.
   \bibitem{sane_code}
   \url{https://gitlab.com/sane-project/backends/tree/master/backend} \\
   Code repository (Git)
+  
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{Image processing}
+  
+  \bibitem{pointwise_gimp}
+  \url{https://pippin.gimp.org/image-processing/chap_point.html}
 \end{thebibliography}
 
 
