@@ -9,6 +9,7 @@
 \usepackage{subfig}
 \usepackage{amsmath}
 \usepackage{csquotes}
+\usepackage{listings}
 
 \begin{document}
 
@@ -1746,6 +1747,7 @@ after having started).
 \end{table}
 
 \section{SANE}
+\label{sec:sane}
 
 SANE (abbreviated for "Scanner Access Now Easy") is the standard software package
 for accessing scanners in Linux-like operating systems. SANE was created
@@ -1776,6 +1778,7 @@ scanner access.
 \end{figure}
 
 \subsection{The SANE standard}
+\label{ssec:sanestd}
 
 As mentioned before, SANE consists of backends (that manage devices) and frontends
 (that provide applications). Any backend can be combined with any frontend
@@ -1965,14 +1968,99 @@ Supported devices include:
   \item Reflecta 6000 Multiple Slide Scanner
 \end{itemize}
 
-The version of SANE / pieusb used here is {\bf 1.0.25-4.1}, as is part of
+The version of SANE / {\it pieusb} used here is {\bf 1.0.25-4.1}, as is part of
 Debian 9 (Stretch).
+
+To use the {\it pieusb} driver, it must be enabled when compiling SANE
+(environment variable {\it BACKENDS}) and enabled in the dynamic loader backend
+\ref{sec:sane} ({\it dll.conf}).
 
 \subsubsection{Fixing I/O errors}
 
-For my device, scanning unfortunately did not work as-is. When
+For my device, scanning unfortunately did not work as-is. When testing operation
+using {\it scanimage}, an "Error during device I/O" was reported. To find the
+cause of such problems, SANE can provide useful debugging output. This is controlled
+using environment variables to set a debugging verbosity level for various SANE
+subsystems. In this case, {\it SANE\_DEBUG\_PIEUSB=255} was set before running
+{\it scanimage} to get all possible messages from the driver.
+
+\begin{figure}[H]
+  \begin{lstlisting}[language={}]
+  [pieusb] sanei_pieusb_command() finished with state 4
+  [pieusb] sanei_pieusb_cmd_17 failed: 0x04
+  [pieusb] sane_start(): sanei_pieusb_cmd_17 failed: 4
+  scanimage: sane_start: Error during device I/O
+  \end{lstlisting}
+  
+  \caption{Log of scanimage (unpatched SANE)}
+\end{figure}
+
+This shows the error happened in {\it sane\_start}, while calling {\it sanei\_pieusb\_cmd\_17}.
+This is only done once in {\it sane\_start}:
+
+\begin{figure}[H]
+  \begin{lstlisting}[language=C, breaklines=true, numbers=left, firstnumber=998]
+  if (status.pieusb_status != PIEUSB_STATUS_GOOD) {
+    DBG (DBG_error, "sane_start(): sanei_pieusb_cmd_17 failed: %d\n", status.pieusb_status);
+    return SANE_STATUS_IO_ERROR;
+  }
+  \end{lstlisting}
+  \caption{First point of failure in pieusb.c}
+\end{figure}
+
+{\it sanei\_pieusb\_cmd\_17} does not transfer any scanning parameters, but it is
+performed presumably because the vendor software also performs it. The lines
+were commented out, SANE recompiled and {\it scanimage} run again:
+
+\begin{figure}[H]
+  \begin{lstlisting}[language={}]
+  [pieusb] 	sanei_pieusb_command() finished with state 4
+  [pieusb] sane_start(): sanei_pieusb_cmd_slide failed: 4
+  scanimage: sane_start: Error during device I/O
+  \end{lstlisting}
+  \caption{Log of scanimage (after first patch)}
+\end{figure}
+
+{\it sanei\_pieusb\_cmd\_slide} is called to turn on some lamp on the device:
+
+\begin{figure}[H]
+  \begin{lstlisting}[language=C, breaklines=true, numbers=left, firstnumber=1046]
+    sanei_pieusb_cmd_slide (scanner->device_number, SLIDE_LAMP_ON, &status);
+    if (status.pieusb_status != PIEUSB_STATUS_GOOD) {
+      DBG (DBG_error, "sane_start(): sanei_pieusb_cmd_slide failed: %d\n", status.pieusb_status);
+      return SANE_STATUS_IO_ERROR;
+    }
+  \end{lstlisting}
+  \caption{Second point of failure in pieusb.c}
+\end{figure}
+
+This section of code was commented out as well. After this patch, the scan
+completed successfully. No problems were observed when scanning with various
+parameters, so it seems the offending commands were superfluous for my device.
+It could be that there are multiple iterations of the CrystalScan 7200 that differ
+slightly in their I/O syntax.
 
 \subsubsection{Supported features}
+
+pieusb seems to support most if not all the features of this scanner.
+The following were tested and confirmed working:
+
+\begin{itemize}
+  \item Scan resolution: 300 - 7200 dpi
+  \item Color mode: Grayscale, RGB, RGB + infrared
+  \item Bit depth (8 / 16 bit)
+  \item Limiting scan area
+  \item Exposure time, digitizer gain per channel
+  \item Basic image processing: brightness / contrast, gamma, color balance
+  \item Column brightness calibration
+  \item Automatic IR dust correction
+\end{itemize}
+
+One downside is that the IR image can not be obtained easily as an extra channel
+/ file for manual dust removal (or other uses of IR scanning). One has to rely
+on SANE's internal IR processing routines. It is possible to scan in RGB + infrared
+mode and apply no processing, but there seems to be a problem with output as the
+file is not larger than when scanning without IR.
 
 \section{Image processing}
 \label{sec:imgproc}
@@ -2066,7 +2154,7 @@ For my device, scanning unfortunately did not work as-is. When
   \url{https://www.virtualbox.org/}
 
   \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{Vendor-supplied scanner software}
-
+[language=Python, firstline=37, lastline=45]
   \bibitem{cvx5}
   \url{https://reflecta.de/de/downloads/drivers2/~nm.50~nc.108/Treiber-und-Software.html}
 
