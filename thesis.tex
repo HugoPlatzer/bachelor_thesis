@@ -2088,23 +2088,37 @@ To increase the brightness by $k$, a function $f(b) = b + k$ is used.
 
 Changing contrast means compressing the brightness function so that its climb
 is steeper at the middle.
-To increase the contrast by a factor $k$, a function $f(b) = (b - 0.5) * k + 0.5$ is used.
+To increase the contrast by a factor $k > 0$, a function $f(b) = (b - 0.5) * k + 0.5$ is used.
 The brightness function gets centered around zero, steepened by factor k, then moved
 back.
 
 \begin{figure}[H]
-  \caption{Contrast operation ($k = 1.5$)}
+  \caption{Contrast operation ($k = 2$)}
 \end{figure}
 
 \subsubsection{Gamma}
+
+Changing gamma means bending the brightness function so more of its climb
+is in the dark / light area.
+To apply gamma correction for a $k > 0$, a function $f(b) = b^k$ is used.
+If $k < 1$, the function will be bent to the right so the majority of the climb
+happens in darker areas.
+If $k > 1$, the function will be bent to the right so the majority of the climb
+happens in darker areas.
+
+Different image recording (film, digital sensors) and image display (screen, print)
+technologies have a different inherent gamma function (their input-output response curve)
+and gamma correction is neccessary to make images look good on different media.
+
+\begin{figure}[H]
+  \caption{Gamma operation ($k = 2$)}
+\end{figure}
 
 \subsubsection{Levels}
 
 \subsubsection{Color balance}
 
 \subsubsection{Negative film}
-
-\subsubsection{Color negative film}
 
 \subsection{Infrared denoise}
 
