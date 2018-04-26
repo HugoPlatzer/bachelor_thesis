@@ -17,6 +17,12 @@
 \author{Hugo Platzer \\ University of Salzburg, Austria}
 \maketitle
 
+\begin{abstract}
+The USB communication of a film scanner (Reflecta CrystalScan 7200) with the supplied vendor software is recorded and analyzed. As a first stage, the transferred image is reconstructed from the recording.  After that, a program that closely models that communication is created to perform scanning without the vendor software. Patterns in the transferred data are studied so scan parameters can be customized.
+The popular SANE framework contains a driver for this device, which is however not compatible out-of-the-box.
+Using minor code modifications, this driver is made usable. Finally, image processing operations relevant to scanning, in particular those used for infrared dust removal are described.
+\end{abstract}
+
 \section{Introduction}
 
 For many vendors of consumer electronic devices,
@@ -2080,10 +2086,6 @@ it is clipped to the respective limit.
 Adjusting brightness means adding an absolute number to each pixel value.
 To increase the brightness by $k$, a function $f(b) = b + k$ is used.
 
-\begin{figure}[H]
-  \caption{Brightness operation ($k = 0.3$)}
-\end{figure}
-
 \subsubsection{Contrast}
 
 Changing contrast means compressing the brightness function so that its climb
@@ -2091,10 +2093,6 @@ is steeper at the middle.
 To increase the contrast by a factor $k > 0$, a function $f(b) = (b - 0.5) * k + 0.5$ is used.
 The brightness function gets centered around zero, steepened by factor k, then moved
 back.
-
-\begin{figure}[H]
-  \caption{Contrast operation ($k = 2$)}
-\end{figure}
 
 \subsubsection{Gamma}
 
@@ -2110,15 +2108,45 @@ Different image recording (film, digital sensors) and image display (screen, pri
 technologies have a different inherent gamma function (their input-output response curve)
 and gamma correction is neccessary to make images look good on different media.
 
-\begin{figure}[H]
-  \caption{Gamma operation ($k = 2$)}
-\end{figure}
-
 \subsubsection{Levels}
 
-\subsubsection{Color balance}
+A level operation stretches a certain section of the brightness range to
+the full brightness range. Typical sensor output only has a small range of values
+(this allows it to record images of various sources without risking clipping),
+so it has to be stretched to look appealing.
+
+It can be represented by $f(b) = \frac{b - k_1}{k_2 - k_1}$ where $k_1$ is the lower
+and $k_2$ the upper limit of the input values.
+
+Level stretching is also used to correct color balance. Improper color balance may
+be caused by different light sources (white balance) or by sensor or film sensitivity
+differences on different channels.
+
+A simple, automatic method to adjust levels for all channels is to analyze the range
+most pixel values are contained in for that channel, using that as level bounds.
+This gives good results for scans of color negative film.
 
 \subsubsection{Negative film}
+
+For negative film, the brightness of the image gets lower as the brightness of the
+source increases. To make a scan of negative film look normal it needs to be inverted:
+$f(b) = 1 - b$.
+
+Color negative film also has an orange mask (base color) that was introduced to improve
+the spectral response of the dyes. This can be easily removed with appropriate
+level operations:
+
+\begin{figure}[H]
+  \centering
+  (a) \includegraphics[width=4cm]{images/imgop_color1.jpg} \hspace{0.5cm}
+  (b) \includegraphics[width=4cm]{images/imgop_color2.jpg}
+  
+  (c) \includegraphics[width=4cm]{images/imgop_color_h.jpg} \hspace{0.5cm}
+  (d) \includegraphics[width=4cm]{images/imgop_color3.jpg}
+  \caption{Color-correcting a negative film scan. (a) raw scan, (b) after inverting, 
+           (c) histogram of (b), shows limited range of values, (d) after stretching levels per channel
+           to actual value range}
+\end{figure}
 
 \subsection{Infrared denoise}
 
