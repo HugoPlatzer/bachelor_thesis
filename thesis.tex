@@ -18,9 +18,9 @@
 \maketitle
 
 \begin{abstract}
-The USB communication of a film scanner (Reflecta CrystalScan 7200) with the supplied vendor software is recorded and analyzed. As a first stage, the transferred image is reconstructed from the recording.  After that, a program that closely models that communication is created to perform scanning without the vendor software. Patterns in the transferred data are studied so scan parameters can be customized.
+An open-source driver for a film scanner (Reflecta CrystalScan 7200) is created using reverse engineering techniques. For this, the USB communication between the device and the supplied vendor software is recorded and analyzed. As a first stage, the transferred image is reconstructed from the recording.  After that, a program that closely models that communication is created to perform scanning without the vendor software. Patterns in the transferred data are studied so scan parameters can be customized.
 The popular SANE framework contains a driver for this device, which is however not compatible out-of-the-box.
-Using minor code modifications, this driver is made usable. Finally, image processing operations relevant to scanning, in particular those used for infrared dust removal are described.
+Using minor code modifications, the SANE driver is made usable. Finally, image processing operations relevant to scanning, in particular those used for infrared dust removal are described.
 \end{abstract}
 
 \section{Introduction}
