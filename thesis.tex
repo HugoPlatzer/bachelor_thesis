@@ -1075,14 +1075,39 @@ The correct width was found to be $(115 - 44) \cdot 300 + 166 - 102 = 21364$ pix
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=12cm]{images/extract_calib2.jpg}
-  \caption{Calibration image, chosen width: 21364 pixels}
+  \includegraphics[width=12cm, height=2cm]{images/extract_calib2.jpg}
+  \caption{Calibration image, width: 21364 pixels}
 \end{figure}
 
-The calibration image has the same channel interleaving pattern as the regular one,
-so we extract the different channels using different line offsets.
-This means the line width of each channel
-is 1/4, so 5341 pixels.
+The calibration image has the same channel interleaving pattern as the regular one.
+Since we aligned the beginning of a line of some color channel with the next line of that channel,
+the 4 channels are side by side.
+We extract the different channels by dividing the line width by 4 (5341 pixels)
+and using different line offsets.
+The final parameters are:
+
+\begin{table}[H]
+  \caption{Parameters for the calibration image}
+  \centering
+  \begin{tabular}{c | c | c | c | c | c | c}
+    channel & byteOffset & byteNth & lineLength & lineOffset & lineNth & lineMax \\ \hline
+    red & 441 & 2 & 5341 & 0 & 4 & 44 \\
+    green & 441 & 2 & 5341 & 1 & 4 & 44 \\
+    blue & 441 & 2 & 5341 & 2 & 4 & 44 \\
+    infrared & 441 & 2 & 5341 & 3 & 4 & 44 \\
+  \end{tabular}
+\end{table}
+
+
+\begin{figure}[H]
+    \centering
+    \subfloat[red]{{\includegraphics[height=1cm]{images/extract_calib3r.jpg} }}
+    \subfloat[green]{{\includegraphics[height=1cm]{images/extract_calib3g.jpg} }}
+    
+    \subfloat[blue]{{\includegraphics[height=1cm]{images/extract_calib3b.jpg} }}
+    \subfloat[infrared]{{\includegraphics[height=1cm]{images/extract_calib3i.jpg} }}
+    \caption{Calibration images for all four channels}
+\end{figure}
 
 Applying the calibration image to the actual scan is shown in \ref{ssec:imgproc_calib}.
 
