@@ -900,6 +900,7 @@ it performs the following steps:
 \end{enumerate}
 
 \subsection{Results}
+\label{ssec:extract_results}
 
 \begin{figure}[H]
   \caption{Transferred bytes, line width 1644}
@@ -1041,6 +1042,49 @@ CyberView also removes dust using the infrared channel (called Digital ICE).
 
 \subsection{Calibration image}
 \label{ssec:calibration}
+
+The extracted image has some level of vertical stripes, i.e the brightness is
+slightly different per column. This is caused by slight differences in sensitivity
+among pixels of the line sensor.
+To correct this, the scanner scans a small area where there is only the white background.
+This image can be used to "subtract" (actually it's a division operation) the unwanted
+brightness differences from the actual scan.
+The calibration image is transferred before the other scans: \ref{ssec:extract_results}
+
+As for the regular scan, we need to identify the right offsets, width, height, and
+extract the channels. As these parameters do not vary with scan parameters and the
+calibration image covers the whole sensor width, this only
+has to be done once. This however means the image needs to be adapted (cropped, downscaled)
+based on the vertical area and resolution of the actual scan.
+
+Determining the line width is harder because we don't have a rough guess like the
+vendor software image width and there is no image to orient by. It helps that there
+is a pattern (darker pixel) at the start of each line. So we can extract the image
+with any line size and count the difference in rows and columns between two successive
+line starts. We then get the line width by $w_{correct} = (y_b - y_a) \cdot w_{chosen} + x_b - x_a$.
+where $y_a, x_a$ are the row and column of the point of the first line start pattern
+and $y_b, x_b$ for the second.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=12cm]{images/extract_calib1.jpg}
+  \caption{Determining the correct line width for the calibration image (chosen width: 300 pixels)}
+\end{figure}
+
+The correct width was found to be $(115 - 44) \cdot 300 + 166 - 102 = 21364$ pixels.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=12cm]{images/extract_calib2.jpg}
+  \caption{Calibration image, chosen width: 21364 pixels}
+\end{figure}
+
+The calibration image has the same channel interleaving pattern as the regular one,
+so we extract the different channels using different line offsets.
+This means the line width of each channel
+is 1/4, so 5341 pixels.
+
+Applying the calibration image to the actual scan is shown in \ref{ssec:imgproc_calib}.
 
 \section{Controlling the device}
 
@@ -1635,7 +1679,7 @@ The scanning process can be separated into five phases:
 \item During the idle phase before the scan, every 1.5 seconds a status read query
 (\ref{ssec:read_trans}) is performed.
 
-\item When the user presses "start" scan, all scan parameters being transferred
+\item When the user presses "start scan", all scan parameters being transferred
 in rapid succession causes a quick increase in packet count.
 
 \item After the parameters are sent to the device, but before the image is transferred
@@ -2072,6 +2116,7 @@ file is not larger than when scanning without IR.
 \label{sec:imgproc}
 
 \subsection{Calibration}
+\label{ssec:imgproc_calib}
 
 \subsection{Point operations}
 
