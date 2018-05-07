@@ -2143,6 +2143,42 @@ file is not larger than when scanning without IR.
 \subsection{Calibration}
 \label{ssec:imgproc_calib}
 
+Due to uneven sensitivity among pixels of the line sensor, the columns of the raw image
+have uneven brightness, which is noticeable especially in uniform-colored areas.
+To correct this, the scanner performs a calibration scan on just the white background,
+which can be used to "subtract" the artifacts from the actual scan.
+Retrieving the calibration image is described in \ref{ssec:rcv_calibimage}, extracting it
+from a capture file in \ref{ssec:calibration}. For my device the calibration image is always
+$5341$ pixels wide and x pixels long (for each of the 4 channels red, green, blue, infrared,
+which are contained in a line-interleaved pattern just like the regular image).
+
+As the calibration image is always recorded for the full sensor resolution, differences in
+scan area (vertical crop) and resolution need to be accounted for. The device convieniently
+provides a buffer that contains a bitmask specifying which pixels of the sensor are part of the
+resulting image. Only taking the columns of the calibration image where this mask is set to 1
+gives it the same width as the actual image and properly aligns the two images.
+Retrieving this bitmask is specified in \ref{ssec:read_param}.
+
+Also, the calibration image needs to be scaled to the same number of rows as the actual scan.
+To do this, it seems reasonable to compute the average of all rows (reduces noise) and repeat
+that one row to the desired height.
+
+To remove the stripes from the actual scan, a division operation is performed, i.e.
+$b'_{x} = \frac{b_{x}}{c_{x}}$, where $b'_{x}$ is the corrected brightness, $b_x$
+the original brightness and $c_{x}$ the brightness of the calibration scan at the point $x$,
+assuming these values are normalized to $[0, 1]$. Division is the correct operation because
+any obstacle blocking some light multiplies the brightness by some factor $< 1$. When
+starting with full brightness 1, the brightness passing through is exactly that factor.
+Dividing by that factor will give the brightness before the obstacle for any value.
+
+\begin{figure}[H]
+    \centering
+    \subfloat[before calibration]{{\includegraphics[width=0.33\textwidth]{images/calib_a.jpg} }}
+    \subfloat[calibration image]{{\includegraphics[width=0.33\textwidth]{images/calib_b.jpg} }}
+    \subfloat[division $a / b$]{{\includegraphics[width=0.33\textwidth]{images/calib_c.jpg} }}
+    \caption{Applying calibration (blue channel)}
+\end{figure}
+
 \subsection{Point operations}
 
 Point operations are a special class of image processing operations where the output value
