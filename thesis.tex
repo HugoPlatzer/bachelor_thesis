@@ -2258,6 +2258,50 @@ level operations:
 
 \subsection{Automatic cropping}
 
+Since the actual image on the film strip is only part of what the scanner sees,
+one wants to limit the scan area so it does not include anything except the image,
+but includes as much of the image as possible. An alternative is to scan the full area
+and crop the resulting image afterwards. This has the advantage that it can be
+automated in a program that operates on, say, each scan of one frame of a film strip.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=6cm]{images/crop_1.jpg}
+  \caption{Full-area scan and suitable crop frame (in blue)}
+\end{figure}
+
+\subsubsection{Algorithm}
+
+As a proof-of-concept for automated cropping, a Python / OpenCV \cite{opencv}
+script was created. These steps are performed to get from the raw RGB scan
+to the coordinates of the crop rectangle:
+
+\begin{enumerate}
+\item {\bf Grayscale conversion} This gets us from three to one channel to simplify
+operations. It can be done by simply averaging the red, green, blue values at
+each pixel.
+
+\item {\bf Histogram equalization}
+
+\item {\bf Thresholding}
+
+\item {\bf Edge detection}
+
+\item {\bf Line detection (Hough transform)}
+
+\item {\bf Separate horziontal / vertical lines}
+
+\item {\bf Intersect lines}
+
+\item {\bf Classify intersections into corners}
+
+\item {\bf One point per corner}
+
+\item {\bf Crop rectangle}
+\end{enumerate}
+
+\subsubsection{Performance}
+
 \newcounter{firstbib}
 \pagebreak
 
@@ -2377,6 +2421,9 @@ level operations:
   
   \bibitem{pointwise_gimp}
   \url{https://pippin.gimp.org/image-processing/chap_point.html}
+  
+  \bibitem{opencv}
+  \url{https://opencv.org/}
 \end{thebibliography}
 
 
