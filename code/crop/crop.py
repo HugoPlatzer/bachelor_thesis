@@ -92,9 +92,6 @@ def cropImage(args):
   np.seterr(all = "ignore")
   img = cv.imread(args.inputFile)
   gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-  if not args.slideFilm:
-    gray = 255 - gray
-  gray = cv.equalizeHist(gray)
   ret, thresh = cv.threshold(gray, args.threshold, 255, cv.THRESH_BINARY)
   edges = cv.Laplacian(thresh, 0)
   lines = cv.HoughLines(edges, args.rhoGranularity, args.thetaGranularity,
@@ -126,8 +123,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("-i", "--inputFile", required = True)
 parser.add_argument("-o", "--outputFile", required = True)
 parser.add_argument("-v", "--visualize", action = "store_true")
-parser.add_argument("-s", "--slideFilm", action = "store_true")
-parser.add_argument("-t", "--threshold", type = int, default = 70)
+parser.add_argument("-t", "--threshold", type = int, default = 110)
 parser.add_argument("-rg", "--rhoGranularity", type = int, default = 1)
 parser.add_argument("-tg", "--thetaGranularity", type = float, default = 0.001)
 parser.add_argument("-ht", "--houghThreshold", type = int, default = 150)
