@@ -2264,12 +2264,6 @@ but includes as much of the image as possible. An alternative is to scan the ful
 and crop the resulting image afterwards. This has the advantage that it can be
 automated in a program that operates on, say, each scan of one frame of a film strip.
 
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=6cm]{images/crop_1.jpg}
-  \caption{Full-area scan and suitable crop frame (in blue)}
-\end{figure}
-
 \subsubsection{Algorithm}
 
 As a proof-of-concept for automated cropping, a Python / OpenCV \cite{opencv}
@@ -2277,30 +2271,101 @@ script was created. These steps are performed to get from the raw RGB scan
 to the coordinates of the crop rectangle:
 
 \begin{enumerate}
-\item {\bf Grayscale conversion} This gets us from three to one channel to simplify
-operations. It can be done by simply averaging the red, green, blue values at
-each pixel.
+\item {\bf Grayscale conversion}
 
-\item {\bf Histogram equalization}
+This reduces the image from three to one channel
+to simplify operations. It can be done by simply averaging the red, green, blue values at
+each pixel.
 
 \item {\bf Thresholding}
 
+The grayscale image is converted into a binary image
+by making each pixel below a specified threshold black, above white. The threshold
+should be around the brightness of the unexposed sections of the film, so that these
+are white and the exposed image a black rectangle (for negative film). This value
+has to be adjusted based on the type of film being scanned, but can be kept constant
+for all images on the same film.
+
 \item {\bf Edge detection}
+
+For the line decection step, we want only the border
+pixels between light and dark areas to be white. This is done by applying a
+Laplace operator \ref{} to the threshold image.
 
 \item {\bf Line detection (Hough transform)}
 
+To identify lines of the image border
+in the edge image, a linear Hough transform \ref{} is used. Lines are described
+in a form with two parameters $\rho, \theta$. The line is the points $(x, y)$
+fulfilling the equation $\rho = x \cos \theta + y \sin \theta$. $\rho$ is the
+perpendicular distance from the origin to the line and $\theta$ the angle
+between the $x$ axis and a line perpendicular to the line. This has the
+advantage that $\theta$ stays in the range $[0, \pi]$ for any line (for lines passing
+above the origin, a negative $\rho$ is used).
+
+A 2D accumulator matrix for all possible values of $\rho, \theta$ in this image with some
+granularity is created. For each white pixel in the image and each value of $\theta$ in the
+matrix, $\rho$ is computed so that the line $\rho, \theta$ goes through that pixel.
+For each $\rho, \theta$ pair of a line going through the pixel, its cell in the matrix
+is incremented. After having processed all pixels, the cells with values above some
+threshold are parameters of lines found in the image.
+
 \item {\bf Separate horziontal / vertical lines}
+
+For computing intersection points between lines, it is necessary to separate
+horizontal from vertical lines because lines that are almost parallel have
+undesired intersection points. Lines with a $\theta$ around 0 or around $\pi$
+are vertical, those with a $\theta$ around $\frac{\pi}{2}$ are horizontal.
 
 \item {\bf Intersect lines}
 
+Each horizontal line is intersected with each vertical line.
+The intersection point $(x, y)$ for two lines in $\rho_1, \theta_1, \rho_2, \theta_2$
+can be computed by solving the linear system
+$\begin{pmatrix} \cos \theta_1 \sin \theta_1 \\ \cos \theta_2 \sin \theta_2 \end{pmatrix}
+\begin{pmatrix} x \\ y \end{pmatrix} = \begin{pmatrix} \rho_1 \\ \rho_2 \end{pmatrix}$.
+
 \item {\bf Classify intersections into corners}
 
-\item {\bf One point per corner}
+Intersections are divided into the 4 corners by splitting the image in half
+horizontally and vertically. Intersections that are not close to any corner are discarded.
+One dummy point per corner (at the very corner) is inserted to make the algorithm
+work even if not all corners of the frame are visible.
+For each corner, the point with the greatest distance to the corner is selected
+to make sure the crop frame is inside the image frame.
 
 \item {\bf Crop rectangle}
+
+The $x$ limits of the crop frame are from the maximum $x$ of the top left and bottom left
+corner point to the minimum $x$ of the top right and bottom right corner point.
+The $y$ limits of the crop frame are from the maximum $y$ of the top left and top right
+corner point to the minimum $y$ of the bottom left and bottom right corner point.
+This accounts for the crop points not being a straight rectangle for example because
+the image is slightly rotated.
+
 \end{enumerate}
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=8cm]{images/crop_steps/step6.jpg}
+  \caption{Applying crop algorithm to image}
+\end{figure}
+
 \subsubsection{Performance}
+
+This algorithm uses rather basic image processing operations, but given
+the correct parameters (threshold, hough granularity / sensitivity) seems to
+work reliably on images with strong exposure where there is a significant brightness
+difference along the entire border of the frame, which seems to include the
+majority of daylight photos. For an image that however has little to no exposure
+and therefore no strong brightness change on some side, thresholding will not give
+a good edge and the line will not be found. Also, when scanning slide film in plastic
+frames, the scanner does not pick up a significant brightness change between
+the frame and dark sections of the image (it has problems differentiating high density
+values). To properly crop these images as well, a more advanced procedure possibly
+utilizing machine learning techniques could be used. When only a few images are
+cropped incorrectly however, one can manually review all images after applying the
+algorithm and still enjoy significant time savings compared to cropping every image manually.
 
 \newcounter{firstbib}
 \pagebreak
@@ -2320,6 +2385,11 @@ each pixel.
   \bibitem{usbmon} The usbmon: USB monitoring framework. Pete Zaitcev,
   Proceedings of the Linux Symposium, Volume Two, July 20-23 2005.
   \setcounter{firstbib}{\value{enumiv}}
+  
+  \bibitem{hough} Use of the Hough transformation to detect lines and curves in pictures.
+  Richard O. Duda, Peter E. Hart, Communications of the ACM, Volume 15 Issue 1, Jan. 1972,
+  pages 11-15.
+  
 \end{thebibliography}
 
 \renewcommand{\refname}{Links}
