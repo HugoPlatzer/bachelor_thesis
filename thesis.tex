@@ -2290,12 +2290,12 @@ for all images on the same film.
 
 For the line decection step, we want only the border
 pixels between light and dark areas to be white. This is done by applying a
-Laplace operator \ref{} to the threshold image.
+Laplace operator \cite{opencv_gradient} to the threshold image.
 
 \item {\bf Line detection (Hough transform)}
 
 To identify lines of the image border
-in the edge image, a linear Hough transform \ref{} is used. Lines are described
+in the edge image, a linear Hough transform \cite{houghtransform} is used. Lines are described
 in a form with two parameters $\rho, \theta$. The line is the points $(x, y)$
 fulfilling the equation $\rho = x \cos \theta + y \sin \theta$. $\rho$ is the
 perpendicular distance from the origin to the line and $\theta$ the angle
@@ -2367,6 +2367,10 @@ utilizing machine learning techniques could be used. When only a few images are
 cropped incorrectly however, one can manually review all images after applying the
 algorithm and still enjoy significant time savings compared to cropping every image manually.
 
+\section{Summary}
+
+
+
 \newcounter{firstbib}
 \pagebreak
 
@@ -2386,7 +2390,9 @@ algorithm and still enjoy significant time savings compared to cropping every im
   Proceedings of the Linux Symposium, Volume Two, July 20-23 2005.
   \setcounter{firstbib}{\value{enumiv}}
   
-  \bibitem{hough} Use of the Hough transformation to detect lines and curves in pictures.
+  \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{Image processing}
+  
+  \bibitem{houghtransform} Use of the Hough transformation to detect lines and curves in pictures.
   Richard O. Duda, Peter E. Hart, Communications of the ACM, Volume 15 Issue 1, Jan. 1972,
   pages 11-15.
   
@@ -2451,7 +2457,6 @@ algorithm and still enjoy significant time savings compared to cropping every im
   \url{https://www.virtualbox.org/}
 
   \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{Vendor-supplied scanner software}
-[language=Python, firstline=37, lastline=45]
   \bibitem{cvx5}
   \url{https://reflecta.de/de/downloads/drivers2/~nm.50~nc.108/Treiber-und-Software.html}
 
@@ -2494,6 +2499,9 @@ algorithm and still enjoy significant time savings compared to cropping every im
   
   \bibitem{opencv}
   \url{https://opencv.org/}
+  
+  \bibitem{opencv_gradient}
+  \url{https://docs.opencv.org/3.0-beta/doc/py_tutorials/py_imgproc/py_gradients/py_gradients.html}
 \end{thebibliography}
 
 
