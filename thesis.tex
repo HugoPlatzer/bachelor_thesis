@@ -2254,7 +2254,96 @@ level operations:
            to actual value range}
 \end{figure}
 
-\subsection{Infrared denoise}
+\subsection{Infrared dust / scratch removal}
+
+Dust and scratches are an undesired artifact of scanning film material. Depending
+on the condition the film is in, dust particles can be very noticeable on the scans
+especially in areas of uniform color like the sky.
+
+To deal with this, a technique often called Digital ICE was developed. It involves
+scanning the film in the infrared spectrum in addition to the red, green, blue bands.
+As the dyes in color film are mostly transparent to infrared, the infrared image
+only shows the dust and scratches against a uniformly colored background.
+From the IR image, a binary mask set at these pixels affected by dust / scratches
+is created. This mask is used together with an inpainting algorithm to interpolate
+the pixels affected by dust.
+
+\begin{figure}[H]
+  \centering
+  (a) \includegraphics[width=5cm]{images/inpaint_1.jpg} \hspace{0.5cm}
+  (b) \includegraphics[width=5cm]{images/inpaint_2.jpg}
+  \caption{(a) Crop of slide film scan affected by dust. (b) Infrared channel}
+\end{figure}
+
+\subsubsection{Creating a mask}
+
+The simple way of finding which pixels are affected by dust is apply a binary
+threshold: pixels below a certain infrared brightness are considered
+dust. The threshold value could be static or dynamic (adjusting so that for example 10\% of
+the image is masked). Dynamic thresholds can adjust to different scanner settings /
+film types, but they may over/underreact on images with unusually large / small amounts
+of dust.
+
+Finding scratches is not so easy as they don't have a strong brightness difference
+from the unaffected pixels. To find them, an edge detector such as Difference-of-Gaussians
+plus thresholding could be utilized.
+
+It may also be desirable to use dilation to grow the areas of affected pixels somewhat
+so the pixels just outside the mask are certainly unaffected and not harming the inpainting process.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=6cm]{images/inpaint_3.jpg}
+  \caption{Mask on top on image (in red) showing which pixels are affected by dust}
+\end{figure}
+
+\subsubsection{Inpainting}
+
+Inpainting refers to the procedure of filling in certain masked, unknown
+pixel values in an image using the remaining, known pixels such that the
+result appears as natural as possible. Manual inpainting was a useful skill long before
+the advent of digital imaging to restore old paintings / photographs or
+to manipulate images by for example removing a person from it. Automatic inpainting
+is an active research area in image processing and there is no single algorithm
+that can claim to be the best in all scenarios.
+
+The possibly simplest inpainting algorithm that gives decent results is called
+diffusion. Its idea is to let image information flow from the edges of the mask
+into the inpainted area until an equilibrium is reached. The steps performed are
+typically:
+
+\begin{enumerate}
+  \item Blur a copy of the image by convolving it with a 3x3 kernel. Some mention
+        a special choice of kernel is critical, but a simple
+        $K = \begin{pmatrix} \frac{1}{9} & \frac{1}{9} & \frac{1}{9} \\
+                            \frac{1}{9} & \frac{1}{9} & \frac{1}{9} \\
+                            \frac{1}{9} & \frac{1}{9} & \frac{1}{9} \\ \end{pmatrix}$
+        seems to provide as good results as any other.
+  
+  \item Combine the unblurred and blurred images by taking from the blurred only
+        where inpainting should be performed.
+        
+  \item Repeat steps 1-2 for as many iterations as necessary until there is no
+        significant change. This depends on the diameter of the areas to be inpainted.
+        For typical dust / scratch inpainting at full resolution of the scanner,
+        this takes around 1000 iterations.
+\end{enumerate}
+
+The diffusion algorithm is easy to implement, fast, and predictable in its behavior.
+It is however limited in that inpainted areas don't carry texture from the image
+and appear somewhat blurred. This makes it unsuitable for removal of larger objects.
+More advanced inpainting algorithms consider the neighborhood of the pixel to be inpainted
+and search for pixels with similar neighborhood in the image, allowing texture to be propagated.
+Since dust particles typically cover only small, stripe-like areas diffusion does provide
+very acceptable results.
+
+\begin{figure}[H]
+  \centering
+  (a) \includegraphics[width=4cm]{images/inpaint_4a.jpg} \hspace{0.5cm}
+  (b) \includegraphics[width=4cm]{images/inpaint_4b.jpg} \hspace{0.5cm} \\
+  (c) \includegraphics[width=4cm]{images/inpaint_4c.jpg}
+  \caption{(a) Image after doing diffusion for (a) 1 iteration, (b) 10 iterations, (c)100 iterations}
+\end{figure}
 
 \subsection{Automatic cropping}
 
