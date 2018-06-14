@@ -11,6 +11,7 @@
 \usepackage{csquotes}
 \usepackage{listings}
 
+
 \begin{document}
 
 \title{Developing a driver for a film scanner by means of USB sniffing and reverse engineering}
@@ -1305,6 +1306,7 @@ to be neccessary.
 
 This type of transaction has the simplest structure. It is used only for a handful of tasks like
 checking device readiness at critical points and the actual "start scan" command.
+Details about the transaction parameters can be found in \ref{appendix_basic}.
 
 \subsubsection{Structure}
 
@@ -1315,27 +1317,11 @@ checking device readiness at critical points and the actual "start scan" command
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
     Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{ssec:basic_param} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{appendix_basic} \\
     Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
   \end{tabular}
 \end{table}
 
-\subsubsection{Main parameters}
-\label{ssec:basic_param}
-
-\begin{table}[H]
-  \caption{Observed values for the "Main parameters" bytestring}
-  \centering
-  \begin{tabular}{c | p{9cm}}
-    Value (hex) & Description \\ \hline
-    {\tt 000000000000} & Used to wait for device readiness at various points while preparing to scan. The transaction is repeated
-                         until the device readiness query returns the right response.
-                         \\
-    {\tt 1b0000000100} & The actual "start scan" command. Is issued after transmitting all scan parameters
-                         before receiving the image data. After recieving this command, the scanner
-                         starts to make noise and eventually moves the scan head. \\
-  \end{tabular}
-\end{table}
 
 \subsection{Extra parameter transaction}
 
@@ -1343,6 +1329,7 @@ This transaction is used to set parameters while preparing a scan.
 The bytestring of the "Main parameter" stage defines the purpose of the transaction
 (e.g. setting resolution / exposure parameters). The "Extra parameter" stage
 transfers the values of the parameters that should be set.
+Details about the transaction parameters can be found in \ref{appendix_extra}.
 
 \subsubsection{Structure}
 
@@ -1353,146 +1340,18 @@ transfers the values of the parameters that should be set.
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
     Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{ssec:param_param} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{appendix_extra} \\
     Device response & 1 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready}, {\tt 0x00} expected \\
-    Extra parameters & varies, see \ref{ssec:param_param} & c) in \autoref{table:paramcombos} & see \ref{ssec:param_extra} \\
+    Extra parameters & varies, see \ref{appendix_extra} & c) in \autoref{table:paramcombos} & see \ref{appendix_extra} \\
     Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
   \end{tabular}
-\end{table}
-
-\subsubsection{Main parameters}
-\label{ssec:param_param}
-
-Only bytes at offset 0 and 4 are set. The byte at offset 0 identifies the
-purpose of this transaction (e.g. set resolution, scan area). The byte value at offset 4 equals
-the number of bytes that are later transferred in the "Extra parameter"
-stage.
-
-Sometimes, the same byte 0 (purpose) is used with varying bytes 4 (length).
-It is unclear whether such extra parameter bytestrings of different lengths
-are related to each other. Usually, only one of these lengths is used to transmit
-a string that actually carries relevant information (i.e. it changes when
-changing settings in the vendor software).
-
-\begin{table}[H]
-  \caption{Observed values for the "Main parameters" bytestring}
-  \centering
-  \begin{tabular}{c | p{7cm}}
-    Value (hex) & Description \\ \hline
-    {\tt 0a0000000600} & Unclear purpose \\
-    {\tt 0a0000000800} & Unclear purpose \\
-    {\tt 0a0000000e00} & Scan area \\
-    {\tt 150000001000} & Resolution, color mode \\
-    {\tt dc0000001d00} & Exposure / gain \\
-  \end{tabular}
-\end{table}
-
-\subsubsection{Extra parameters}
-\label{ssec:param_extra}
-
-For three main parameter strings, the extra parameter string varies
-with different scan settings. The meaning of some bytes in these strings
-can be discovered by varying one setting and observing the change in the
-string. Most of the information presented here, however,
-is taken from comments in the code of the SANE backend for this device.
-For each of the three parameters, an example string from an actual
-scan is analyzed:
-
-\paragraph{0a0000000e00}
-
-This parameter string is used to set the boundaries of the scan
-frame / scan area. The corresponding extra parameter bytestring
-consists of 5 2-byte little-endian values:
-
-\begin{table}[H]
-  \caption{Decoding extra parameters for "0a0000000e00"}
-  \centering
-  \begin{tabular}{p{1cm} | p{1cm} | p{7cm}}
-    Offset & Value (hex) & Description \\ \hline
-    0-1 & {\tt 1200} & Constant representing "scan frame" \\
-    2-3 & {\tt 0a00} & Size of rest of frame (10 bytes), constant \\
-    4-5 & {\tt 8000} & Index of frame, constant \\
-    6-7 & {\tt 6f02} & X coordinate of top left corner of area (units unknown) \\
-    8-9 & {\tt 0f00} & Y coordinate of top left corner of area (units unknown) \\
-    10-11 & {\tt 2829} & X coordinate of bottom right corner of area (units unknown) \\
-    12-13 & {\tt f819} & Y coordinate of bottom right corner of area (units unknown) \\
-  \end{tabular}
-  
-  \vspace{5mm}
-  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
-  \label{table:param0a}
-\end{table}
-
-The ratio of x distance to y distance in this example is:
-
-$\frac{\textrm{0x2928} - \textrm{0x026f}}{\textrm{0x19f8} - \textrm{0x000f}} = \frac{9913}{6633} \approx 1.494$.
-
-This matches the proportions of a 35mm film frame: $\frac{36 \textrm{mm}}{24 \textrm{mm}} = 1.5$.
-
-\paragraph{150000001000} This is used to set many different scan parameters
-such as resolution, color mode, color depth etc. Multi-byte
-values are in little-endian format.
-
-\begin{table}[H]
-  \caption{Decoding extra parameters for "150000001000"}
-  \centering
-  \begin{tabular}{p{1cm} | p{1cm} | p{7cm}}
-    Offset & Value (hex) & Description \\ \hline
-    0-1 & {\tt 000f} & Constant representing "scan parameters" \\
-    2-3 & {\tt b004} & Scan resolution (in dots per inch) \\
-    4 & {\tt 80} & Color mode ({\tt 80} - RGB, {\tt 90} - RGB + infrared) \\
-    5 & {\tt 80} & Color depth ({\tt 04} - 8 bit, {\tt 20} - 16 bit) \\
-    6 & {\tt 04} & Color format \\
-    7 & {\tt 00} & unused \\
-    8 & {\tt 01} & Byte order of pixel value ({\tt 01} - little endian) \\
-    9 & {\tt 00} & Bitmap for various quality settings ({\tt 80} - fast infrared,
-                                                        {\tt 08} - skip calibration,
-                                                        {\tt 02} - sharpen) \\
-    10-11 & {\tt 0000} & unused \\
-    12 & {\tt 01} & halftone pattern \\
-    13 & {\tt 80} & line threshold \\
-    14-15 & {\tt 1000} & unknown \\
-  \end{tabular}
-  
-  \vspace{5mm}
-  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
-  \label{table:param15}
-\end{table}
-
-\paragraph{dc0000001d00} This is used to set some parameters such as exposure time
-per channel and digitizer gain / offset. Multi-byte
-values are in little-endian format.
-
-\begin{table}[H]
-  \caption{Decoding extra parameters for "dc0000001d00"}
-  \centering
-  \begin{tabular}{p{1cm} | p{2.5cm} | p{7cm}}
-    Offset & Value (hex) & Description \\ \hline
-    0-5 & {\tt 7e26661c1515} & exposure time for red, green, blue channel
-                               (one 16-bit little-endian value per channel) \\
-    6-8 & {\tt 171411} & Digitizer offset for red, green, blue channel
-                               (one 8-bit value per channel) \\
-    9-11 & {\tt 000000} & unused \\
-    12-14 & {\tt 212121} & Digitizer gain for red, green, blue channel
-                               (one 8-bit value per channel) \\
-    15 & {\tt 07} & light \\
-    16 & {\tt 00} & extra entries \\
-    17 & {\tt 00} & double times \\
-    18-19 & {\tt 790b} & Exposure time for infrared channel \\
-    20-21 & {\tt 1400} & Digitizer offset for infrared channel \\
-    22 & {\tt 0f} & Digitizer gain for infrared channel \\
-    23-28 & {\tt 000000000000} & unused \\
-  \end{tabular}
-  
-  \vspace{5mm}
-  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
-  \label{table:paramdc}
 \end{table}
 
 \subsection{Status transaction}
 \label{ssec:read_trans}
 
 This is used to read device status from the bulk endpoint.
+Details about the transaction parameters can be found in \ref{appendix_status}.
 
 \subsubsection{Structure}
 
@@ -1503,65 +1362,13 @@ This is used to read device status from the bulk endpoint.
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
     Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{ssec:read_param} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{appendix_status} \\
     Device response & 1 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready}, {\tt 0x01} expected \\
-    Bulk read & see \ref{ssec:read_param} & see \ref{ssec:bulkread} & see \ref{ssec:bulkread} \\
+    Bulk read & see \ref{appendix_status} & see \ref{ssec:bulkread} & see \ref{ssec:bulkread} \\
     Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
   \end{tabular}
 \end{table}
 
-\subsubsection{Main parameters}
-\label{ssec:read_param}
-
-Many different main parameter combinations are used for status reads. As most of the returned
-information is not critical for basic scanning functionality, not all bytestrings are
-studied in detail.
-
-Bytes at offset 0, 3, 4 can be set. Bytes 3 and 4 specify the number of bytes to
-be read from the bulk endpoint: $256 * b_3 + b_4$.
-
-\begin{table}[H]
-  \caption{Observed values for the "Main parameters" bytestring}
-  \centering
-  \begin{tabular}{c | p{7cm}}
-    Value (hex) & Description \\ \hline
-    {\tt 030000000e00} & Unknown purpose \\
-    {\tt 080000008000} & Unknown purpose \\
-    {\tt 0f0000001200} & Main image parameters \\
-    {\tt 18000014dc00} & Mask specifying which pixels of the sensor contribute to the output data (useful for calibration) \\
-    {\tt d70000006700} & Gain / offset values \\
-    {\tt dd0000001200} & Basic scanner status. Sent in regular intervals by the vendor software while the scanner is idle. \\
-
-  \end{tabular}
-  \label{table:read_param}
-\end{table}
-
-\paragraph{0f0000001200}
-
-This parameter string is used to receive information about the image produced by the scanner.
-It contains the image width / height, this is needed to use the proper image transaction
-parameters. Multi-byte values are in little-endian format.
-
-\begin{table}[H]
-  \caption{Decoding status response for "0f0000001200"}
-  \centering
-  \begin{tabular}{p{1cm} | p{2cm} | p{7cm}}
-    Offset & Value (hex) & Description \\ \hline
-    0-1 & {\tt 7406} & Line width (pixels) \\
-    2-3 & {\tt 2c04} & Number of lines in the image \\
-    4-5 & {\tt e80c} & Number of bytes in the image \\
-    6 & {\tt 08} & Filter offset 1 \\
-    7 & {\tt 08} & Filter offset 2 \\
-    8-11 & {\tt 00000000} & Exposure period \\
-    12-13 & {\tt 7266} & SCSI transfer rate \\
-    14-15 & {\tt 0000} & Number of lines in buffer right now \\
-    16-17 & {\tt 0000} & unused \\
-  \end{tabular}
-  
-  \vspace{5mm}
-  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
-  \label{table:imageparam_query}
-\end{table}
 
 \subsection{Image transaction}
 
@@ -1726,7 +1533,7 @@ between status queries is now slightly longer (about 2s) than before the scan.
 
 All the USB traffic that happens during an actual scan can be represented
 using the transaction patterns described in this section. To better illustrate
-how an actual scan proceeds, I describe an example using a list of transactions.
+how an actual scan proceeds, an example using a list of transactions is described.
 
 A prescan (includes receiving calibration image) was selected in the vendor software
 for its calibration image but also because its transactions can be replayed
@@ -1734,92 +1541,8 @@ to the device straight after the scanner has started
 (not possible with a regular scan, the device needs to do at least one pre-scan
 after having started).
 
-\begin{table}[H]
-  \caption{Scan parameters}
-  \centering
-  \begin{tabular}{p{4cm} | p{4cm}}
-    Setting & Value \\ \hline
-    Scan mode & Pre-scan \\
-    Resolution & 300 dpi (main image), 3600 dpi (calibration image) \\
-    Color mode & RGB (main image), RGBI (calibration image) \\
-    Color depth & 1 byte per pixel (main image), 2 bytes per pixel (calibration image) \\
-    \end{tabular}
-\end{table}
-
-\begin{table}[H]
-  \caption{Transactions of the scan}
-  \centering
-  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
-    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
-    S & {\tt dd0000001200} &  & Idle status query \autoref{table:read_param} \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
-    E & {\tt 0a0000000800} & \tt 1300040002 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1300040004 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1300040008 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1400040002 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1400040004 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1400040008 006400 & \\
-    E & {\tt 0a0000000600} & \tt 9500000000 00 & \\
-    S & {\tt 080000008000} &  & \\
-    E & {\tt 0a0000000e00} & \tt 12000a0080 0000000000 b829e71a & Set scan area \autoref{table:param0a} \\
-    E & {\tt 0a0000000600} & \tt 1700020001 00 & \\
-    S & {\tt 030000000e00} &  & \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
-    S & {\tt d70000006700} &  & Read gain / offset values \ref{ssec:read_param} \\
-    E & {\tt dc0000001d00} & \tt 0000000000 0000000000 0000000000 07001a790b 00fe0f0000 00000000
-                           & Set exposure settings \autoref{table:paramdc} \\
-  \end{tabular}
-  
-  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
-               S - Status, I - Image
-\end{table}
-
-\begin{table}[H]
-  \caption{Transactions of the scan (continued)}
-  \centering
-  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
-    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
-    E & {\tt 150000001000} & \tt 000f2c0180 0404000100 0000008010 00 & \autoref{table:paramdc} \\
-    B & {\tt 1b0000000100} &  & Start scan \ref{ssec:basic_trans} \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 4 times until successful \\ 
-    S & {\tt d70000006700} &  & Read gain / offset values \ref{ssec:read_param} \\
-    E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
-                           & Set exposure settings \autoref{table:paramdc} \\
-    I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
-    I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image \ref{ssec:rcv_calibimage}  \\
-    S & {\tt d70000006700} &  & Read gain / offset values \ref{ssec:read_param} \\
-  \end{tabular}
-  
-  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
-               S - Status, I - Image
-\end{table}
-
-\begin{table}[H]
-  \caption{Transactions of the scan (continued)}
-  \centering
-  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
-    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
-    E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
-                           & Set exposure settings \autoref{table:paramdc} \\
-    I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
-    S & {\tt 18000014dc00} &  & Read row mask \ref{ssec:read_param} \\
-    S & {\tt 0f0000001200} &  & Get size of the main image \autoref{table:imageparam_query}.
-                                Returned status is {\tt bc011f01bc01}... This means the
-                                image has 287 * 3 (color channels) = 861 lines of 444 bytes each. \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 3 times until successful \\
-    I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image \ref{ssec:rcv_mainimage}.
-                                Repeated 3 times.
-                                In this case, they are transferred in chunks of 216 lines. It would also
-                                be fine to use the simpler scheme with 255 lines / transaction. \\
-    I & {\tt 08000000d500} &  & Transfer the rest, that is 213 lines / 94572 bytes of the main image. \\
-  \end{tabular}
-  
-  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
-               S - Status, I - Image
-\end{table}
+The scan parameters and USB traffic (modeled in these transactions) can be found
+in \ref{appendix_actualscan}.
 
 \section{SANE}
 \label{sec:sane}
@@ -2157,7 +1880,7 @@ scan area (vertical crop) and resolution need to be accounted for. The device co
 provides a buffer that contains a bitmask specifying which pixels of the sensor are part of the
 resulting image. Only taking the columns of the calibration image where this mask is set to 1
 gives it the same width as the actual image and properly aligns the two images.
-Retrieving this bitmask is specified in \ref{ssec:read_param}.
+Retrieving this bitmask is specified in \ref{appendix_status}.
 
 Also, the calibration image needs to be scaled to the same number of rows as the actual scan.
 To do this, it seems reasonable to compute the average of all rows (reduces noise) and repeat
@@ -2256,11 +1979,11 @@ level operations:
 
 \subsection{Infrared dust / scratch removal}
 
-Dust and scratches are an undesired artifact of scanning film material. Depending
+Dust and scratches are an undesired but hardly avoidable artifact on scanned film material. Depending
 on the condition the film is in, dust particles can be very noticeable on the scans
 especially in areas of uniform color like the sky.
 
-To deal with this, a technique often called Digital ICE was developed. It involves
+To deal with this, a technique often called Digital ICE \cite{inpainting_dice} was developed. It involves
 scanning the film in the infrared spectrum in addition to the red, green, blue bands.
 As the dyes in color film are mostly transparent to infrared, the infrared image
 only shows the dust and scratches against a uniformly colored background.
@@ -2305,10 +2028,10 @@ result appears as natural as possible. Manual inpainting was a useful skill long
 the advent of digital imaging to restore old paintings / photographs or
 to manipulate images by for example removing a person from it. Automatic inpainting
 is an active research area in image processing and there is no single algorithm
-that can claim to be the best in all scenarios.
+that can claim to be the best in all scenarios. \cite{inpainting_survey}
 
 The possibly simplest inpainting algorithm that gives decent results is called
-diffusion. Its idea is to let image information flow from the edges of the mask
+diffusion \cite{inpainting_diffusion}. Its idea is to let image information flow from the edges of the mask
 into the inpainted area until an equilibrium is reached. The steps performed are
 typically:
 
@@ -2458,7 +2181,322 @@ algorithm and still enjoy significant time savings compared to cropping every im
 
 \section{Summary}
 
+\begin{itemize}
+\item There are various patterns in which the color channel lines can be interleaved,
+not just the described RGBI order. The order is chosen based 
 
+\item
+The scanner has a maximum advertised resolution of 7200 dpi. The maximum line width
+however is 5341 px, giving a horizontal resolution of only
+$\frac{5341 \text{px} \cdot 25.4 \text{mm per inch}}{36 \text{mm scan area}} \approx 3768$
+dpi. The 7200 dpi are only achieved in vertical direction: In a scanner,
+vertical resolution can easily be increased by letting the scan head run slower, but
+the maximum horizontal resolution is limited by the amount of pixels in the line sensor.
+This means the resulting image has twice as many lines of the same width (compared to a 3600 dpi scan).
+The image should be downscaled vertically by 50 percent to fix the stretching. The differences
+in actual image detail at the two resolutions are small.
+
+\item
+After idling for about 10 minutes, the background lamp of the scanner switches off and the
+device is sent into standby mode. Before sending scan commands as usual, it needs to be
+woken up with a special control transfer sequence.
+\end{itemize}
+
+\appendix
+\section*{Appendices}
+\addcontentsline{toc}{section}{Appendices}
+\renewcommand{\thesubsection}{\Alph{subsection}}
+
+
+\subsection{Meaning of bytes in control transfer}
+
+\subsubsection{Basic transaction}
+\label{appendix_basic}
+
+\begin{table}[H]
+  \caption{Observed values for the "Main parameters" bytestring}
+  \centering
+  \begin{tabular}{c | p{9cm}}
+    Value (hex) & Description \\ \hline
+    {\tt 000000000000} & Used to wait for device readiness at various points while preparing to scan. The transaction is repeated
+                         until the device readiness query returns the right response.
+                         \\
+    {\tt 1b0000000100} & The actual "start scan" command. Is issued after transmitting all scan parameters
+                         before receiving the image data. After recieving this command, the scanner
+                         starts to make noise and eventually moves the scan head. \\
+  \end{tabular}
+\end{table}
+
+\subsubsection{Extra parameter transaction}
+\label{appendix_extra}
+
+\begin{table}[H]
+  \caption{Observed values for the "Main parameters" bytestring}
+  \centering
+  \begin{tabular}{c | p{7cm}}
+    Value (hex) & Description \\ \hline
+    {\tt 0a0000000600} & Unclear purpose \\
+    {\tt 0a0000000800} & Unclear purpose \\
+    {\tt 0a0000000e00} & Scan area \\
+    {\tt 150000001000} & Resolution, color mode \\
+    {\tt dc0000001d00} & Exposure / gain \\
+  \end{tabular}
+\end{table}
+
+Only bytes at offset 0 and 4 are set. The byte at offset 0 identifies the
+purpose of this transaction (e.g. set resolution, scan area). The byte value at offset 4 equals
+the number of bytes that are later transferred in the "Extra parameter"
+stage.
+
+Sometimes, the same byte 0 (purpose) is used with varying bytes 4 (length).
+It is unclear whether such extra parameter bytestrings of different lengths
+are related to each other. Usually, only one of these lengths is used to transmit
+a string that actually carries relevant information (i.e. it changes when
+changing settings in the vendor software).
+
+For three main parameter strings, the extra parameter string varies
+with different scan settings. The meaning of some bytes in these strings
+can be discovered by varying one setting and observing the change in the
+string. Most of the information presented here, however,
+is taken from comments in the code of the SANE backend for this device.
+For each of the three parameters, an example string from an actual
+scan is analyzed:
+
+\paragraph{0a0000000e00}
+
+This parameter string is used to set the boundaries of the scan
+frame / scan area. The corresponding extra parameter bytestring
+consists of 5 2-byte little-endian values:
+
+\begin{table}[H]
+  \caption{Decoding extra parameters for "0a0000000e00"}
+  \centering
+  \begin{tabular}{p{1cm} | p{1cm} | p{7cm}}
+    Offset & Value (hex) & Description \\ \hline
+    0-1 & {\tt 1200} & Constant representing "scan frame" \\
+    2-3 & {\tt 0a00} & Size of rest of frame (10 bytes), constant \\
+    4-5 & {\tt 8000} & Index of frame, constant \\
+    6-7 & {\tt 6f02} & X coordinate of top left corner of area (units unknown) \\
+    8-9 & {\tt 0f00} & Y coordinate of top left corner of area (units unknown) \\
+    10-11 & {\tt 2829} & X coordinate of bottom right corner of area (units unknown) \\
+    12-13 & {\tt f819} & Y coordinate of bottom right corner of area (units unknown) \\
+  \end{tabular}
+  
+  \vspace{5mm}
+  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+  \label{table:param0a}
+\end{table}
+
+The ratio of x distance to y distance in this example is:
+
+$\frac{\textrm{0x2928} - \textrm{0x026f}}{\textrm{0x19f8} - \textrm{0x000f}} = \frac{9913}{6633} \approx 1.494$.
+
+This matches the proportions of a 35mm film frame: $\frac{36 \textrm{mm}}{24 \textrm{mm}} = 1.5$.
+
+\paragraph{150000001000} This is used to set many different scan parameters
+such as resolution, color mode, color depth etc. Multi-byte
+values are in little-endian format.
+
+\begin{table}[H]
+  \caption{Decoding extra parameters for "150000001000"}
+  \centering
+  \begin{tabular}{p{1cm} | p{1cm} | p{7cm}}
+    Offset & Value (hex) & Description \\ \hline
+    0-1 & {\tt 000f} & Constant representing "scan parameters" \\
+    2-3 & {\tt b004} & Scan resolution (in dots per inch) \\
+    4 & {\tt 80} & Color mode ({\tt 80} - RGB, {\tt 90} - RGB + infrared) \\
+    5 & {\tt 80} & Color depth ({\tt 04} - 8 bit, {\tt 20} - 16 bit) \\
+    6 & {\tt 04} & Color format \\
+    7 & {\tt 00} & unused \\
+    8 & {\tt 01} & Byte order of pixel value ({\tt 01} - little endian) \\
+    9 & {\tt 00} & Bitmap for various quality settings ({\tt 80} - fast infrared,
+                                                        {\tt 08} - skip calibration,
+                                                        {\tt 02} - sharpen) \\
+    10-11 & {\tt 0000} & unused \\
+    12 & {\tt 01} & halftone pattern \\
+    13 & {\tt 80} & line threshold \\
+    14-15 & {\tt 1000} & unknown \\
+  \end{tabular}
+  
+  \vspace{5mm}
+  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+  \label{table:param15}
+\end{table}
+
+\paragraph{dc0000001d00} This is used to set some parameters such as exposure time
+per channel and digitizer gain / offset. Multi-byte
+values are in little-endian format.
+
+\begin{table}[H]
+  \caption{Decoding extra parameters for "dc0000001d00"}
+  \centering
+  \begin{tabular}{p{1cm} | p{2.5cm} | p{7cm}}
+    Offset & Value (hex) & Description \\ \hline
+    0-5 & {\tt 7e26661c1515} & exposure time for red, green, blue channel
+                               (one 16-bit little-endian value per channel) \\
+    6-8 & {\tt 171411} & Digitizer offset for red, green, blue channel
+                               (one 8-bit value per channel) \\
+    9-11 & {\tt 000000} & unused \\
+    12-14 & {\tt 212121} & Digitizer gain for red, green, blue channel
+                               (one 8-bit value per channel) \\
+    15 & {\tt 07} & light \\
+    16 & {\tt 00} & extra entries \\
+    17 & {\tt 00} & double times \\
+    18-19 & {\tt 790b} & Exposure time for infrared channel \\
+    20-21 & {\tt 1400} & Digitizer offset for infrared channel \\
+    22 & {\tt 0f} & Digitizer gain for infrared channel \\
+    23-28 & {\tt 000000000000} & unused \\
+  \end{tabular}
+  
+  \vspace{5mm}
+  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+  \label{table:paramdc}
+\end{table}
+
+\subsubsection{Status transaction}
+\label{appendix_status}
+\begin{table}[H]
+  \caption{Observed values for the "Main parameters" bytestring}
+  \centering
+  \begin{tabular}{c | p{7cm}}
+    Value (hex) & Description \\ \hline
+    {\tt 030000000e00} & Unknown purpose \\
+    {\tt 080000008000} & Unknown purpose \\
+    {\tt 0f0000001200} & Main image parameters \\
+    {\tt 18000014dc00} & Mask specifying which pixels of the sensor contribute to the output data (useful for calibration) \\
+    {\tt d70000006700} & Gain / offset values \\
+    {\tt dd0000001200} & Basic scanner status. Sent in regular intervals by the vendor software while the scanner is idle. \\
+
+  \end{tabular}
+  \label{table:read_param}
+\end{table}
+
+Many different main parameter combinations are used for status reads. As most of the returned
+information is not critical for basic scanning functionality, not all bytestrings are
+studied in detail.
+
+Bytes at offset 0, 3, 4 can be set. Bytes 3 and 4 specify the number of bytes to
+be read from the bulk endpoint: $256 * b_3 + b_4$.
+
+\paragraph{0f0000001200}
+
+This parameter string is used to receive information about the image produced by the scanner.
+It contains the image width / height, this is needed to use the proper image transaction
+parameters. Multi-byte values are in little-endian format.
+
+\begin{table}[H]
+  \caption{Decoding status response for "0f0000001200"}
+  \centering
+  \begin{tabular}{p{1cm} | p{2cm} | p{7cm}}
+    Offset & Value (hex) & Description \\ \hline
+    0-1 & {\tt 7406} & Line width (pixels) \\
+    2-3 & {\tt 2c04} & Number of lines in the image \\
+    4-5 & {\tt e80c} & Number of bytes in the image \\
+    6 & {\tt 08} & Filter offset 1 \\
+    7 & {\tt 08} & Filter offset 2 \\
+    8-11 & {\tt 00000000} & Exposure period \\
+    12-13 & {\tt 7266} & SCSI transfer rate \\
+    14-15 & {\tt 0000} & Number of lines in buffer right now \\
+    16-17 & {\tt 0000} & unused \\
+  \end{tabular}
+  
+  \vspace{5mm}
+  Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
+  \label{table:imageparam_query}
+\end{table}
+
+\subsubsection{Image transaction}
+\label{appendix_image}
+
+\subsection{USB traffic during an example scan}
+\label{appendix_actualscan}
+
+\begin{table}[H]
+  \caption{Scan parameters}
+  \centering
+  \begin{tabular}{p{4cm} | p{4cm}}
+    Setting & Value \\ \hline
+    Scan mode & Pre-scan \\
+    Resolution & 300 dpi (main image), 3600 dpi (calibration image) \\
+    Color mode & RGB (main image), RGBI (calibration image) \\
+    Color depth & 1 byte per pixel (main image), 2 bytes per pixel (calibration image) \\
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \caption{Transactions of the scan}
+  \centering
+  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
+    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
+    S & {\tt dd0000001200} &  & Idle status query \autoref{appendix_status} \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+    E & {\tt 0a0000000800} & \tt 1300040002 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1300040004 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1300040008 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1400040002 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1400040004 006400 & \\
+    E & {\tt 0a0000000800} & \tt 1400040008 006400 & \\
+    E & {\tt 0a0000000600} & \tt 9500000000 00 & \\
+    S & {\tt 080000008000} &  & \\
+    E & {\tt 0a0000000e00} & \tt 12000a0080 0000000000 b829e71a & Set scan area \autoref{table:param0a} \\
+    E & {\tt 0a0000000600} & \tt 1700020001 00 & \\
+    S & {\tt 030000000e00} &  & \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+    S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
+    E & {\tt dc0000001d00} & \tt 0000000000 0000000000 0000000000 07001a790b 00fe0f0000 00000000
+                           & Set exposure settings \autoref{table:paramdc} \\
+  \end{tabular}
+  
+  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
+               S - Status, I - Image
+\end{table}
+
+\begin{table}[H]
+  \caption{Transactions of the scan (continued)}
+  \centering
+  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
+    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+    E & {\tt 150000001000} & \tt 000f2c0180 0404000100 0000008010 00 & \autoref{table:paramdc} \\
+    B & {\tt 1b0000000100} &  & Start scan \ref{ssec:basic_trans} \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 4 times until successful \\ 
+    S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
+    E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
+                           & Set exposure settings \autoref{table:paramdc} \\
+    I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
+    I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image \ref{ssec:rcv_calibimage}  \\
+    S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
+  \end{tabular}
+  
+  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
+               S - Status, I - Image
+\end{table}
+
+\begin{table}[H]
+  \caption{Transactions of the scan (continued)}
+  \centering
+  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
+    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
+    E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
+                           & Set exposure settings \autoref{table:paramdc} \\
+    I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
+    S & {\tt 18000014dc00} &  & Read row mask \ref{appendix_status} \\
+    S & {\tt 0f0000001200} &  & Get size of the main image \autoref{table:imageparam_query}.
+                                Returned status is {\tt bc011f01bc01}... This means the
+                                image has 287 * 3 (color channels) = 861 lines of 444 bytes each. \\
+    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 3 times until successful \\
+    I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image \ref{ssec:rcv_mainimage}.
+                                Repeated 3 times.
+                                In this case, they are transferred in chunks of 216 lines. It would also
+                                be fine to use the simpler scheme with 255 lines / transaction. \\
+    I & {\tt 08000000d500} &  & Transfer the rest, that is 213 lines / 94572 bytes of the main image. \\
+  \end{tabular}
+  
+  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
+               S - Status, I - Image
+\end{table}
 
 \newcounter{firstbib}
 \pagebreak
@@ -2477,7 +2515,6 @@ algorithm and still enjoy significant time savings compared to cropping every im
   
   \bibitem{usbmon} The usbmon: USB monitoring framework. Pete Zaitcev,
   Proceedings of the Linux Symposium, Volume Two, July 20-23 2005.
-  \setcounter{firstbib}{\value{enumiv}}
   
   \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{Image processing}
   
@@ -2485,6 +2522,13 @@ algorithm and still enjoy significant time savings compared to cropping every im
   Richard O. Duda, Peter E. Hart, Communications of the ACM, Volume 15 Issue 1, Jan. 1972,
   pages 11-15.
   
+  \bibitem{inpainting_survey} A survey of inpainting algorithms. Marcelo Bertalmıo, Vicent Caselles, Simon Masnou,
+  Guillermo Sapiro:
+  \url{http://math.univ-lyon1.fr/homes-www/masnou/fichiers/publications/survey.pdf}
+  
+  \bibitem{inpainting_diffusion} Fast Digital Image Inpainting: Manuel M. Oliveira, Brian Bowen, Richard McKenna, Yu-Sung Chang. Proceedings of the International Conference on Visualization, Imaging and Image Processing (VIIP 2001).
+  
+  \setcounter{firstbib}{\value{enumiv}}
 \end{thebibliography}
 
 \renewcommand{\refname}{Links}
@@ -2585,6 +2629,9 @@ algorithm and still enjoy significant time savings compared to cropping every im
   
   \bibitem{pointwise_gimp}
   \url{https://pippin.gimp.org/image-processing/chap_point.html}
+  
+  \bibitem{inpainting_dice}
+  \url{http://asf.com/products/ice/FilmICESpecs/}
   
   \bibitem{opencv}
   \url{https://opencv.org/}
