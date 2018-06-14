@@ -82,6 +82,7 @@ In my case, I recorded and analyzed the activity on the USB bus while the scanne
 was communicating with the vendor-supplied software.
 
 \section{The USB standard}
+\label{sec:usb}
 
 \subsection{Motivation}
 
@@ -594,6 +595,7 @@ USB sniffing is the process of recording communication on the USB bus.
 This is useful for device developers, driver developers, keyloggers etc.
 
 \subsection{Hardware vs. software sniffing}
+\label{ssec:snifferscompared}
 
 Hardware sniffing uses a dedicated device that sits on the bus in between the
 host and device. Dedicated software is used to interpret the low-level signals
@@ -645,7 +647,7 @@ Others have faced this problem, unsure where it comes from and what to do: \cite
 \end{figure}
 
 \subsubsection{Kernel patching}
-\label{kernelpatch}
+\label{ssec:kernelpatch}
 
 Since the problem persisted when changing computers, sniffing software and target devices
 it was concluded it must be in the {\it usbmon} kernel module itself.
@@ -669,6 +671,7 @@ When running this kernel, the full 65520 bytes of payload could be captured.
 No adverse side effects were noticed.
 
 \subsection{Wireshark}
+\label{ssec:wireshark}
 
 Wireshark \cite{wireshark} is a cross-platform sniffing and packet analysis software that
 became famous as an Ethernet (network) traffic sniffer.
@@ -790,6 +793,7 @@ In \cite[p.53]{usbusage} the byte values 04 and 05 stand for the a and
 b keys respectively.
 
 \subsection{Sniffing using VirtualBox}
+\label{ssec:virtualbox}
 
 When trying to capture device communication from some operating system, it
 is convenient to take Linux as a host due to its good sniffing capabilities and
@@ -833,7 +837,7 @@ get any kind of calibration data being exchanged only during the first scan.
 Wireshark recording was started before starting the scanner software and stopped
 after the software had saved the image.
 
-It is important to use a kernel capable of recording the full payload (\autoref{kernelpatch})
+It is important to use a kernel capable of recording the full payload (\autoref{ssec:kernelpatch})
 and also to disable extra protocols in Wireshark (\autoref{nonusb}).
 
 A color slide photo of a lake, mountain peaks, green / yellow trees,
@@ -992,6 +996,7 @@ The order of channels can vary depending on how much data was skipped at the beg
 The infrared channel will be used in \autoref{sec:imgproc} to remove dust at the other color channels.
 
 \subsubsection{Channel alignment, combination, gamma correction}
+\label{sssec:channelcombine}
 
 The extracted color channels are vertically misaligned, to fix this the
 channel which is the furthest "up" (i.e. the channel for which all other channels only need
@@ -1218,6 +1223,7 @@ As all but one parameter combination has a one-byte payload, most commands are t
 one byte after another, doing one control transfer for each byte.
 
 \subsection{Transaction patterns}
+\label{ssec:transactionpatterns}
 
 All traffic during idling and scanning can be modelled by transactions: Each transaction
 starts with the same header. After that, six parameter bytes are sent and the
@@ -1572,7 +1578,7 @@ scanner access.
   \caption{Example SANE hierarchy}
   \centering
   \includegraphics[width=\textwidth]{images/sane_hierarchy.jpg}
-  \label{time_diagram}
+  \label{sane_hierarchy}
 \end{figure}
 
 \subsection{The SANE standard}
@@ -1693,7 +1699,7 @@ When using SANE, typical code flow might look as follows:
   \caption{Typical code flow when using SANE}
   \centering
   \includegraphics[width=0.95\textwidth]{images/sane_codeflow.jpg}
-  \label{time_diagram}
+  \label{sane_codeflow}
 \end{figure}
 
 \cite[4.4]{sane_standard}
@@ -1896,9 +1902,10 @@ Dividing by that factor will give the brightness before the obstacle for any val
 
 \begin{figure}[H]
     \centering
-    \subfloat[before calibration]{{\includegraphics[width=0.33\textwidth]{images/calib_a.jpg} }}
-    \subfloat[calibration image]{{\includegraphics[width=0.33\textwidth]{images/calib_b.jpg} }}
-    \subfloat[division $a / b$]{{\includegraphics[width=0.33\textwidth]{images/calib_c.jpg} }}
+    \subfloat[before calibration]{{\includegraphics[width=0.4\textwidth]{images/calib_a.jpg} }}
+    \subfloat[calibration image]{{\includegraphics[width=0.4\textwidth]{images/calib_b.jpg} }}
+    
+    \subfloat[division $a / b$]{{\includegraphics[width=0.4\textwidth]{images/calib_c.jpg} }}
     \caption{Applying calibration (blue channel)}
 \end{figure}
 
@@ -1967,17 +1974,18 @@ level operations:
 
 \begin{figure}[H]
   \centering
-  (a) \includegraphics[width=4cm]{images/imgop_color1.jpg} \hspace{0.5cm}
-  (b) \includegraphics[width=4cm]{images/imgop_color2.jpg}
+  (a) \includegraphics[width=0.4\textwidth]{images/imgop_color1.jpg} \hspace{0.5cm}
+  (b) \includegraphics[width=0.4\textwidth]{images/imgop_color2.jpg}
   
-  (c) \includegraphics[width=4cm]{images/imgop_color_h.jpg} \hspace{0.5cm}
-  (d) \includegraphics[width=4cm]{images/imgop_color3.jpg}
+  (c) \includegraphics[width=0.4\textwidth]{images/imgop_color_h.jpg} \hspace{0.5cm}
+  (d) \includegraphics[width=0.4\textwidth]{images/imgop_color3.jpg}
   \caption{Color-correcting a negative film scan. (a) raw scan, (b) after inverting, 
            (c) histogram of (b), shows limited range of values, (d) after stretching levels per channel
            to actual value range}
 \end{figure}
 
 \subsection{Infrared dust / scratch removal}
+\label{ssec:imgproc_dice}
 
 Dust and scratches are an undesired but hardly avoidable artifact on scanned film material. Depending
 on the condition the film is in, dust particles can be very noticeable on the scans
@@ -1993,8 +2001,8 @@ the pixels affected by dust.
 
 \begin{figure}[H]
   \centering
-  (a) \includegraphics[width=5cm]{images/inpaint_1.jpg} \hspace{0.5cm}
-  (b) \includegraphics[width=5cm]{images/inpaint_2.jpg}
+  (a) \includegraphics[width=0.4\textwidth]{images/inpaint_1.jpg} \hspace{0.5cm}
+  (b) \includegraphics[width=0.4\textwidth]{images/inpaint_2.jpg}
   \caption{(a) Crop of slide film scan affected by dust. (b) Infrared channel}
 \end{figure}
 
@@ -2062,13 +2070,15 @@ very acceptable results.
 
 \begin{figure}[H]
   \centering
-  (a) \includegraphics[width=4cm]{images/inpaint_4a.jpg} \hspace{0.5cm}
-  (b) \includegraphics[width=4cm]{images/inpaint_4b.jpg} \hspace{0.5cm} \\
-  (c) \includegraphics[width=4cm]{images/inpaint_4c.jpg}
+  (a) \includegraphics[width=0.4\textwidth]{images/inpaint_4a.jpg} \hspace{0.5cm}
+  (b) \includegraphics[width=0.4\textwidth]{images/inpaint_4b.jpg} \hspace{0.5cm}
+  
+  (c) \includegraphics[width=0.4\textwidth]{images/inpaint_4c.jpg}
   \caption{(a) Image after doing diffusion for (a) 1 iteration, (b) 10 iterations, (c)100 iterations}
 \end{figure}
 
 \subsection{Automatic cropping}
+\label{ssec:imgproc_crop}
 
 Since the actual image on the film strip is only part of what the scanner sees,
 one wants to limit the scan area so it does not include anything except the image,
@@ -2181,13 +2191,46 @@ algorithm and still enjoy significant time savings compared to cropping every im
 
 \section{Summary}
 
+To make the CrystalScan 7200 usable under Linux, the reverse engineering technique
+of USB sniffing was employed. For this, the USB standard was summarized with particular
+focus on the types and structure of control transfers \ref{sec:usb}. After that, various methods of
+sniffing USB traffic were compared \ref{ssec:snifferscompared}. Software sniffing is done using the usbmon
+Linux kernel module. To allow access to all of the payload of large packets / control transfers,
+a simple patch had to be applied to this kernel module \ref{ssec:kernelpatch}. Wireshark / tshark was used
+to decode raw packets and extract control transfer parameters \ref{ssec:wireshark}. The vendor-supplied
+software was run on Windows inside VirtualBox (using the USB passthrough feature)
+while letting Wireshark sniff on the Linux host \ref{ssec:virtualbox}.
+
+As a partial goal, the image was reconstructed from the captured packet stream \ref{sssec:channelcombine}.
+Then, the packet sequence was studied for patterns. All traffic could me modeled
+using four types of transaction \ref{ssec:transactionpatterns}. By trial and error the meaning of some of the bytes
+in the transaction parameters was uncovered \ref{appendix_meaning}. Keeping the importance of proper timing
+in mind, (slightly modified versions of) the packet stream could be replayed to the device
+to make a usable scanning software.
+
+The SANE Linux scanning framework's driver only needed minimal modifications
+to make it work with the scanner, most features are supported \ref{sec:sane}.
+This driver was studied to extend the description
+of the transaction parameters in the previous section.
+
+Finally, there is a lot of digital image processing required before a raw image
+from the scanner becomes usable \ref{sec:imgproc}. The basic steps include assembling the image
+from the data packets, performing shading calibration, gamma and level correction.
+To eliminate dust and scratches,a simple yet sufficient inpainting algorithm
+was presented \ref{ssec:imgproc_dice}. A method for automatically cropping
+away the unexposed area of the film was demonstrated \ref{ssec:imgproc_crop}.
+
+There are some aspects of scanner behavior that make using the device
+more complex and were not covered in this work:
+
 \begin{itemize}
 \item There are various patterns in which the color channel lines can be interleaved,
-not just the described RGBI order. The order is chosen based 
+not just the described RGBI order. The order is chosen based on the "color format" parameter
+(see \autoref{table:param15}) and possibly the resolution and color mode.
 
 \item
 The scanner has a maximum advertised resolution of 7200 dpi. The maximum line width
-however is 5341 px, giving a horizontal resolution of only
+however is 5341 pixels, giving a horizontal resolution of only
 $\frac{5341 \text{px} \cdot 25.4 \text{mm per inch}}{36 \text{mm scan area}} \approx 3768$
 dpi. The 7200 dpi are only achieved in vertical direction: In a scanner,
 vertical resolution can easily be increased by letting the scan head run slower, but
@@ -2202,6 +2245,14 @@ device is sent into standby mode. Before sending scan commands as usual, it need
 woken up with a special control transfer sequence.
 \end{itemize}
 
+There are other methods of reverse engineering that could be applied to this device:
+The scanner could be disassembled to analyze chips / components. Device firmware could
+possibly be extracted and studied. Also the vendor supplied software / drivers (CyberView X5)
+could be a target of reverse engineering. Each of these methods could give deeper insight
+into the device not possible with USB sniffing. However, the simple idea of replaying
+(perhaps slightly modified) versions of the captured packet stream to the device
+allowed development of a working basic driver with minimal effort.
+
 \appendix
 \section*{Appendices}
 \addcontentsline{toc}{section}{Appendices}
@@ -2209,6 +2260,7 @@ woken up with a special control transfer sequence.
 
 
 \subsection{Meaning of bytes in control transfer}
+\label{appendix_meaning}
 
 \subsubsection{Basic transaction}
 \label{appendix_basic}
@@ -2405,8 +2457,8 @@ parameters. Multi-byte values are in little-endian format.
   \label{table:imageparam_query}
 \end{table}
 
-\subsubsection{Image transaction}
-\label{appendix_image}
+%\subsubsection{Image transaction}
+%\label{appendix_image}
 
 \subsection{USB traffic during an example scan}
 \label{appendix_actualscan}
