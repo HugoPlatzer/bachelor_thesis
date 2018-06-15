@@ -2488,23 +2488,23 @@ parameters. Multi-byte values are in little-endian format.
   B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans} \\
   E & {\tt 150000001000} & \tt 000f2c0180 0404000100 0000008010 00 & \autoref{table:paramdc} \\
   B & {\tt 1b0000000100} &  & Start scan \autoref{ssec:basic_trans} \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, repeated 4 times until successful \\ 
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, 3rd attempt is successful \\ 
   S & {\tt d70000006700} &  & Read gain / offset values \autoref{appendix_status} \\
   E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
                          & Set exposure settings \autoref{table:paramdc} \\
   I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \autoref{ssec:rcv_calibimage} \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, repeated twice until successful \\
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, 2nd attempt is successful \\
   I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image \autoref{ssec:rcv_calibimage}  \\
   S & {\tt d70000006700} &  & Read gain / offset values \autoref{appendix_status} \\
   E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
                          & Set exposure settings \autoref{table:paramdc} \\
   I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \autoref{ssec:rcv_calibimage} \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, repeated twice until successful \\
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, 2nd attempt is successful \\
   S & {\tt 18000014dc00} &  & Read row mask \autoref{appendix_status} \\
   S & {\tt 0f0000001200} &  & Get size of the main image \autoref{table:imageparam_query}.
                               Returned status is {\tt bc011f01bc01}... This means the
                               image has 287 * 3 (color channels) = 861 lines of 444 bytes each. \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, repeated 3 times until successful \\
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, 3rd attempt is successful \\
   I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image \autoref{ssec:rcv_mainimage}.
                               Repeated 3 times.
                               In this case, they are transferred in chunks of 216 lines. It would also
@@ -2532,15 +2532,15 @@ parameters. Multi-byte values are in little-endian format.
   
   \item[]\hspace{-\labelwidth}\hspace{-\labelsep}\textbf{Image processing}
   
-  \bibitem{houghtransform} Use of the Hough transformation to detect lines and curves in pictures.
-  Richard O. Duda, Peter E. Hart, Communications of the ACM, Volume 15 Issue 1, Jan. 1972,
-  pages 11-15.
-  
   \bibitem{inpainting_survey} A survey of inpainting algorithms. Marcelo Bertalmıo, Vicent Caselles, Simon Masnou,
   Guillermo Sapiro:
   \url{http://math.univ-lyon1.fr/homes-www/masnou/fichiers/publications/survey.pdf}
   
   \bibitem{inpainting_diffusion} Fast Digital Image Inpainting: Manuel M. Oliveira, Brian Bowen, Richard McKenna, Yu-Sung Chang. Proceedings of the International Conference on Visualization, Imaging and Image Processing (VIIP 2001).
+  
+  \bibitem{houghtransform} Use of the Hough transformation to detect lines and curves in pictures.
+  Richard O. Duda, Peter E. Hart, Communications of the ACM, Volume 15 Issue 1, Jan. 1972,
+  pages 11-15.
   
   \setcounter{firstbib}{\value{enumiv}}
 \end{thebibliography}
