@@ -1054,7 +1054,7 @@ among pixels of the line sensor.
 To correct this, the scanner scans a small area where there is only the white background.
 This image can be used to "subtract" (actually it's a division operation) the unwanted
 brightness differences from the actual scan.
-The calibration image is transferred before the other scans: \ref{ssec:extract_results}
+The calibration image is transferred before the other scans: \autoref{ssec:extract_results}
 
 As for the regular scan, we need to identify the right offsets, width, height, and
 extract the channels. As these parameters do not vary with scan parameters and the
@@ -1114,7 +1114,7 @@ The final parameters are:
   \subfloat[infrared]{{\includegraphics[height=1cm]{images/extract_calib3i.jpg} }}
 \end{figure}
 
-Applying the calibration image to the actual scan is shown in \ref{ssec:imgproc_calib}.
+Applying the calibration image to the actual scan is shown in \autoref{ssec:imgproc_calib}.
 
 \section{Controlling the device}
 
@@ -1171,7 +1171,7 @@ dev.write(endpoint, data, timeout)
 
 PyUSB was used to create a simple scanning program {\it scanInteractive.py}
 which performs a scan with certain parameters, does basic image processing
-(see \ref{sec:extract}) and displays the image building up row by row
+(see \autoref{sec:extract}) and displays the image building up row by row
 as data is received from the scanner.
 
 \subsection{Vendor-specific control transfers}
@@ -1311,7 +1311,7 @@ to be necessary.
 
 This type of transaction has the simplest structure. It is used only for a handful of tasks like
 checking device readiness at critical points and the actual "start scan" command.
-Details about the transaction parameters can be found in \ref{appendix_basic}.
+Details about the transaction parameters can be found in \autoref{appendix_basic}.
 
 \subsubsection{Structure}
 
@@ -1322,8 +1322,8 @@ Details about the transaction parameters can be found in \ref{appendix_basic}.
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
     Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{appendix_basic} \\
-    Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \autoref{appendix_basic} \\
+    Device response & 2 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
   \end{tabular}
 \end{table}
 
@@ -1334,7 +1334,7 @@ This transaction is used to set parameters while preparing a scan.
 The bytestring of the "Main parameter" stage defines the purpose of the transaction
 (e.g. setting resolution / exposure parameters). The "Extra parameter" stage
 transfers the values of the parameters that should be set.
-Details about the transaction parameters can be found in \ref{appendix_extra}.
+Details about the transaction parameters can be found in \autoref{appendix_extra}.
 
 \subsubsection{Structure}
 
@@ -1345,10 +1345,10 @@ Details about the transaction parameters can be found in \ref{appendix_extra}.
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
     Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{appendix_extra} \\
-    Device response & 1 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready}, {\tt 0x00} expected \\
-    Extra parameters & varies, see \ref{appendix_extra} & c) in \autoref{table:paramcombos} & see \ref{appendix_extra} \\
-    Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \autoref{appendix_extra} \\
+    Device response & 1 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready}, {\tt 0x00} expected \\
+    Extra parameters & varies, see \autoref{appendix_extra} & c) in \autoref{table:paramcombos} & see \autoref{appendix_extra} \\
+    Device response & 2 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
   \end{tabular}
 \end{table}
 
@@ -1356,7 +1356,7 @@ Details about the transaction parameters can be found in \ref{appendix_extra}.
 \label{ssec:read_trans}
 
 This is used to read device status from the bulk endpoint.
-Details about the transaction parameters can be found in \ref{appendix_status}.
+Details about the transaction parameters can be found in \autoref{appendix_status}.
 
 \subsubsection{Structure}
 
@@ -1367,10 +1367,10 @@ Details about the transaction parameters can be found in \ref{appendix_status}.
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
     Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{appendix_status} \\
-    Device response & 1 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready}, {\tt 0x01} expected \\
-    Bulk read & see \ref{appendix_status} & see \ref{ssec:bulkread} & see \ref{ssec:bulkread} \\
-    Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \autoref{appendix_status} \\
+    Device response & 1 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready}, {\tt 0x01} expected \\
+    Bulk read & see \autoref{appendix_status} & see \autoref{ssec:bulkread} & see \autoref{ssec:bulkread} \\
+    Device response & 2 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
   \end{tabular}
 \end{table}
 
@@ -1388,10 +1388,10 @@ The image transaction is used for receiving the calibration and the main image.
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
     Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \ref{ssec:image_param} \\
-    Device response & 1 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
-    Bulk reads & see \ref{ssec:image_bulk} & see \ref{ssec:bulkread} & see \ref{ssec:bulkread} \\
-    Device response & 2 & b) in \autoref{table:paramcombos} & see \ref{ssec:devready} \\
+    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \autoref{ssec:image_param} \\
+    Device response & 1 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
+    Bulk reads & see \autoref{ssec:image_bulk} & see \autoref{ssec:bulkread} & see \autoref{ssec:bulkread} \\
+    Device response & 2 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
   \end{tabular}
 \end{table}
 
@@ -1411,18 +1411,16 @@ to consider context when analyzing the meaning of a transaction's main parameter
 ({\tt 080000000e00} means "set scan area" while preparing the scan but
 "transfer 14 lines" after the scan has started).
 
-
-
-\blockquote[{\cite[\texttt{pieusb\_scancmd.c}]{sane_code}}]
+\blockquote[{\cite[\tt pieusb\_scancmd.c, sanei\_pieusb\_cmd\_start\_scan()]{sane_code}}]
 {This is a SCSI READ command (code 0x08).
  It is distinguished from the other READ commands by the context
- in which it is issued: \\ see \texttt{sanei\_pieusb\_cmd\_start\_scan()}}
+ in which it is issued. \\}
 
 \subsubsection{Bulk reads}
 \label{ssec:image_bulk}
 
 In this stage, the image data is transferred using one ore more
-bulk reads (see \ref{ssec:bulkread}).
+bulk reads (see \autoref{ssec:bulkread}).
 
 For this, the amount of bytes per line of the image $c_l$ needs to be known
 (see \autoref{table:imageparam_query}). This is multiplied by the number of lines $l$ to be transferred
@@ -1453,9 +1451,9 @@ The size and format of the calibration image does not depend on the scanner sett
 On this scanner, it has 180 (45 per channel) lines of 5341 16-bit pixels (10682 bytes).
 The total calibration image size is 1922760 bytes.
 
-The lines follow a RGBI channel interleaving (see \ref{sec:extract}).
+The lines follow a RGBI channel interleaving (see \autoref{sec:extract}).
 
-In the actual scan (\ref{ssec:actualscan}), at first 4 lines get transferred, then 172, then the last 4.
+In the actual scan (\autoref{ssec:actualscan}), at first 4 lines get transferred, then 172, then the last 4.
 
 \subsection{Receiving the main image}
 \label{ssec:rcv_mainimage}
@@ -1489,15 +1487,15 @@ at once (and wait for incoming packets at the right points).
 This is due to the importance of timing. At certain points, the device
 is not immediately ready for the next command. The most important point
 where this is the case is after starting the scan before doing the first
-image transaction. To ensure device readiness, a basic query (\ref{ssec:basic_trans})
-is used. The device response (\ref{ssec:devready}) in this query returns "busy" if the device
+image transaction. To ensure device readiness, a basic query (\autoref{ssec:basic_trans})
+is used. The device response (\autoref{ssec:devready}) in this query returns "busy" if the device
 is not ready yet. After receiving a busy response, the software should sleep
 for a bit (the vendor software uses a 1.5 second interval) and repeat the basic transaction
 until the device responds that it's not busy.
 
 Something similar happens when doing image transactions faster than the device
 can scan the lines. Before the bulk read stage, the device responds "busy"
-and the image transaction should be repeated from the start (\ref{ssec:rcv_mainimage}).
+and the image transaction should be repeated from the start (\autoref{ssec:rcv_mainimage}).
 
 \begin{figure}[H]
   \caption{Timing of packets during scan}
@@ -1514,7 +1512,7 @@ The scanning process can be separated into five phases:
 \begin{enumerate}
 
 \item During the idle phase before the scan, every 1.5 seconds a status read query
-(\ref{ssec:read_trans}) is performed.
+(\autoref{ssec:read_trans}) is performed.
 
 \item When the user presses "start scan", all scan parameters being transferred
 in rapid succession causes a quick increase in packet count.
@@ -1547,7 +1545,7 @@ to the device straight after the scanner has started
 after having started).
 
 The scan parameters and USB traffic (modeled in these transactions) can be found
-in \ref{appendix_actualscan}.
+in \autoref{appendix_actualscan}.
 
 \section{SANE}
 \label{sec:sane}
@@ -1595,9 +1593,7 @@ Frontend and backend can be combined either by static or dynamic linking.
 To make a frontend support multiple backends, the frontend can be linked to a
 meta-backend that finds out which backend is suitable for the currently attached
 scanner, loads it via dynamic linking, and then mimics the behavior
-of the suitable backend.
-
-\cite[3.1]{sane_standard}
+of the suitable backend. \cite[3.1]{sane_standard}
 
 \subsubsection{Primitive types}
 
@@ -1631,9 +1627,7 @@ The option descriptor is a struct type with various components specifying an opt
 meaning and its possible values: name (unique identifier),
 title (human-readable name), description, type (bool / string etc.), unit (pixels / millimeters etc.)
 and constraints (f.e. a range of possible coordinate values in a dimension,
-a list of allowed string values).
-
-\cite[4.2.9]{sane_standard}
+a list of allowed string values). \cite[4.2.9]{sane_standard}
 
 Every device handle has a certain number of option descriptors associated
 with it. An option descriptor can be fetched with the {\it sane\_get\_option\_descriptor}
@@ -1642,7 +1636,7 @@ Backends can define any number of custom option descriptors, but some
 descriptors' meaning is specified in the standard:
 
 \begin{table}[H]
-  \caption{Special option descriptors specified in the SANE standard}
+  \caption{Special option descriptors specified in the SANE standard \cite[4.5]{sane_standard}}
   \centering
   \begin{tabular}{p{3cm} | p{8cm}}
     Name & Description \\ \hline
@@ -1653,17 +1647,13 @@ descriptors' meaning is specified in the standard:
       Scan area & Four options ({\it tl-x, tl-y, br-x, br-y}) that give
                   the coordinates of a rectangle delimiting the scan area. \\
   \end{tabular}
-\end{table}
-
-\cite[4.5]{sane_standard}
+\end{table} 
 
 Options values are queried/set using the {\it sane\_control\_option} procedure
 specifying the option index and a generic pointer to load / store the value.
 This also reports back on how well the request could be met (f.e. a resolution could
 not be set exactly) and whether the changed setting has changed the availability
-of other options.
-
-\cite[4.4]{sane_standard}
+of other options. \cite[4.4]{sane_standard}
 
 \subsubsection{Operations}
 
@@ -1671,7 +1661,7 @@ The standard specifies various procedures for initialization, configuring option
 scanning and retrieving data.
 
 \begin{table}[H]
-  \caption{Operations defined in the SANE standard (not exhaustive)}
+  \caption{Operations defined in the SANE standard (not exhaustive) \cite[4.3]{sane_standard}}
   \centering
   \begin{tabular}{l | p{8cm}}
     Name & Description \\ \hline
@@ -1690,18 +1680,14 @@ scanning and retrieving data.
   \end{tabular}
 \end{table}
 
-\cite[4.3]{sane_standard}
-
 When using SANE, typical code flow might look as follows:
 
 \begin{figure}[H]
-  \caption{Typical code flow when using SANE}
+  \caption{Typical code flow when using SANE \cite[4.4]{sane_standard}}
   \centering
   \includegraphics[width=0.95\textwidth]{images/sane_codeflow.jpg}
   \label{sane_codeflow}
 \end{figure}
-
-\cite[4.4]{sane_standard}
 
 \subsubsection{Network protocol}
 
@@ -1714,9 +1700,7 @@ the reverse direction.
 
 The exact encoding of packets is not specified (TCP/IP is not the only possible
 transport layer), for compatibility it seems reasonable to consider the official
-implementations of {\it saned} ( server) and the {\it net} backend (client) .
-
-\cite[5]{sane_standard}
+implementations of {\it saned} ( server) and the {\it net} backend (client). \cite[5]{sane_standard}
 
 \subsection{Developing a driver / backend}
 
@@ -1776,7 +1760,7 @@ Debian 9 (Stretch).
 
 To use the {\it pieusb} driver, it must be enabled when compiling SANE
 (environment variable {\it BACKENDS}) and enabled in the dynamic loader backend
-\ref{sec:sane} ({\it dll.conf}).
+\autoref{sec:sane} ({\it dll.conf}).
 
 \subsubsection{Fixing I/O errors}
 
@@ -1874,8 +1858,8 @@ Due to uneven sensitivity among pixels of the line sensor, the columns of the ra
 have uneven brightness, which is noticeable especially in uniform-colored areas.
 To correct this, the scanner performs a calibration scan on just the white background,
 which can be used to "subtract" the artifacts from the actual scan.
-Retrieving the calibration image is described in \ref{ssec:rcv_calibimage}, extracting it
-from a capture file in \ref{ssec:calibration}. For my device the calibration image is always
+Retrieving the calibration image is described in \autoref{ssec:rcv_calibimage}, extracting it
+from a capture file in \autoref{ssec:calibration}. For my device the calibration image is always
 $5341$ pixels wide and x pixels long (for each of the 4 channels red, green, blue, infrared,
 which are contained in a line-interleaved pattern just like the regular image).
 
@@ -1884,7 +1868,7 @@ scan area (vertical crop) and resolution need to be accounted for. The device co
 provides a buffer that contains a bitmask specifying which pixels of the sensor are part of the
 resulting image. Only taking the columns of the calibration image where this mask is set to 1
 gives it the same width as the actual image and properly aligns the two images.
-Retrieving this bitmask is specified in \ref{appendix_status}.
+Retrieving this bitmask is specified in \autoref{appendix_status}.
 
 Also, the calibration image needs to be scaled to the same number of rows as the actual scan.
 To do this, it seems reasonable to compute the average of all rows (reduces noise) and repeat
@@ -1963,7 +1947,7 @@ This gives good results for scans of color negative film.
 \subsubsection{Negative film}
 
 For negative film, the brightness of the image gets lower as the brightness of the
-source increases. To make a scan of negative film look normal it needs to be finverted:
+source increases. To make a scan of negative film look normal it needs to be inverted:
 $f(b) = 1 - b$.
 
 Color negative film also has an orange mask (base color) that was introduced to improve
@@ -2193,32 +2177,32 @@ algorithm and still enjoy significant time savings compared to cropping every im
 
 To make the CrystalScan 7200 usable under Linux, the reverse engineering technique
 of USB sniffing was employed. For this, the USB standard was summarized with particular
-focus on the types and structure of control transfers \ref{sec:usb}. After that, various methods of
-sniffing USB traffic were compared \ref{ssec:snifferscompared}. Software sniffing is done using the usbmon
+focus on the types and structure of control transfers \autoref{sec:usb}. After that, various methods of
+sniffing USB traffic were compared \autoref{ssec:snifferscompared}. Software sniffing is done using the usbmon
 Linux kernel module. To allow access to all of the payload of large packets / control transfers,
-a simple patch had to be applied to this kernel module \ref{ssec:kernelpatch}. Wireshark / tshark was used
-to decode raw packets and extract control transfer parameters \ref{ssec:wireshark}. The vendor-supplied
+a simple patch had to be applied to this kernel module \autoref{ssec:kernelpatch}. Wireshark / tshark was used
+to decode raw packets and extract control transfer parameters \autoref{ssec:wireshark}. The vendor-supplied
 software was run on Windows inside VirtualBox (using the USB passthrough feature)
-while letting Wireshark sniff on the Linux host \ref{ssec:virtualbox}.
+while letting Wireshark sniff on the Linux host \autoref{ssec:virtualbox}.
 
-As a partial goal, the image was reconstructed from the captured packet stream \ref{sssec:channelcombine}.
+As a partial goal, the image was reconstructed from the captured packet stream \autoref{sssec:channelcombine}.
 Then, the packet sequence was studied for patterns. All traffic could me modeled
-using four types of transaction \ref{ssec:transactionpatterns}. By trial and error the meaning of some of the bytes
-in the transaction parameters was uncovered \ref{appendix_meaning}. Keeping the importance of proper timing
+using four types of transaction \autoref{ssec:transactionpatterns}. By trial and error the meaning of some of the bytes
+in the transaction parameters was uncovered \autoref{appendix_meaning}. Keeping the importance of proper timing
 in mind, (slightly modified versions of) the packet stream could be replayed to the device
 to make a usable scanning software.
 
 The SANE Linux scanning framework's driver only needed minimal modifications
-to make it work with the scanner, most features are supported \ref{sec:sane}.
+to make it work with the scanner, most features are supported \autoref{sec:sane}.
 This driver was studied to extend the description
 of the transaction parameters in the previous section.
 
 Finally, there is a lot of digital image processing required before a raw image
-from the scanner becomes usable \ref{sec:imgproc}. The basic steps include assembling the image
+from the scanner becomes usable \autoref{sec:imgproc}. The basic steps include assembling the image
 from the data packets, performing shading calibration, gamma and level correction.
 To eliminate dust and scratches,a simple yet sufficient inpainting algorithm
-was presented \ref{ssec:imgproc_dice}. A method for automatically cropping
-away the unexposed area of the film was demonstrated \ref{ssec:imgproc_crop}.
+was presented \autoref{ssec:imgproc_dice}. A method for automatically cropping
+away the unexposed area of the film was demonstrated \autoref{ssec:imgproc_crop}.
 
 There are some aspects of scanner behavior that make using the device
 more complex and were not covered in this work:
@@ -2484,8 +2468,8 @@ parameters. Multi-byte values are in little-endian format.
   \endfoot
   \\ \caption*{Transaction types: B - Basic, E - Extra parameter, S - Status, I - Image} \\
   \endlastfoot
-  S & {\tt dd0000001200} &  & Idle status query \ref{appendix_status} \\
-  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+  S & {\tt dd0000001200} &  & Idle status query \autoref{appendix_status} \\
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans} \\
   E & {\tt 0a0000000800} & \tt 1300040002 006400 & \\
   E & {\tt 0a0000000800} & \tt 1300040004 006400 & \\
   E & {\tt 0a0000000800} & \tt 1300040008 006400 & \\
@@ -2497,31 +2481,31 @@ parameters. Multi-byte values are in little-endian format.
   E & {\tt 0a0000000e00} & \tt 12000a0080 0000000000 b829e71a & Set scan area \autoref{table:param0a} \\
   E & {\tt 0a0000000600} & \tt 1700020001 00 & \\
   S & {\tt 030000000e00} &  & \\
-  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
-  S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans} \\
+  S & {\tt d70000006700} &  & Read gain / offset values \autoref{appendix_status} \\
   E & {\tt dc0000001d00} & \tt 0000000000 0000000000 0000000000 07001a790b 00fe0f0000 00000000
                          & Set exposure settings \autoref{table:paramdc} \\
-  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans} \\
   E & {\tt 150000001000} & \tt 000f2c0180 0404000100 0000008010 00 & \autoref{table:paramdc} \\
-  B & {\tt 1b0000000100} &  & Start scan \ref{ssec:basic_trans} \\
-  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 4 times until successful \\ 
-  S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
+  B & {\tt 1b0000000100} &  & Start scan \autoref{ssec:basic_trans} \\
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, repeated 4 times until successful \\ 
+  S & {\tt d70000006700} &  & Read gain / offset values \autoref{appendix_status} \\
   E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
                          & Set exposure settings \autoref{table:paramdc} \\
-  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
-  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
-  I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image \ref{ssec:rcv_calibimage}  \\
-  S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
+  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \autoref{ssec:rcv_calibimage} \\
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, repeated twice until successful \\
+  I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image \autoref{ssec:rcv_calibimage}  \\
+  S & {\tt d70000006700} &  & Read gain / offset values \autoref{appendix_status} \\
   E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
                          & Set exposure settings \autoref{table:paramdc} \\
-  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
-  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
-  S & {\tt 18000014dc00} &  & Read row mask \ref{appendix_status} \\
+  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \autoref{ssec:rcv_calibimage} \\
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, repeated twice until successful \\
+  S & {\tt 18000014dc00} &  & Read row mask \autoref{appendix_status} \\
   S & {\tt 0f0000001200} &  & Get size of the main image \autoref{table:imageparam_query}.
                               Returned status is {\tt bc011f01bc01}... This means the
                               image has 287 * 3 (color channels) = 861 lines of 444 bytes each. \\
-  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 3 times until successful \\
-  I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image \ref{ssec:rcv_mainimage}.
+  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, repeated 3 times until successful \\
+  I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image \autoref{ssec:rcv_mainimage}.
                               Repeated 3 times.
                               In this case, they are transferred in chunks of 216 lines. It would also
                               be fine to use the simpler scheme with 255 lines / transaction. \\
