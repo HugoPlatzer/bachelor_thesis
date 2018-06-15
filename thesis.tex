@@ -10,7 +10,7 @@
 \usepackage{amsmath}
 \usepackage{csquotes}
 \usepackage{listings}
-
+\usepackage{longtable}
 
 \begin{document}
 
@@ -48,7 +48,7 @@ records an infrared channel of the film. The dyes in color film are transparent 
 but dust is not, so the information from this channel is useful for removing it in software.
 This scanner is connected via USB. \cite{rcs} \cite{rcs_review}
 
-\begin{figure}[!htbp]
+\begin{figure}[H]
   \caption{Reflecta CrystalScan 7200}
   \centering
   \includegraphics[width=0.5\textwidth]{images/presentation/the_scanner.jpg}
@@ -106,12 +106,6 @@ cameras and scanners. Some highlights leading to its wide adoption \cite[p. 11]{
 
 \subsection{Electrical side}
 
-\begin{figure}[!htbp]
-  \caption{USB cable cross-section \cite[p. 17]{usbstd}}
-  \centering
-  \includegraphics[width=0.5\textwidth]{images/usb_cable.jpg}
-\end{figure}
-
 A USB cable has four wires: One as ground, VBUS for a 5 V power supply and two for data transmission.
 The power line allows it to draw up to 100 mA without any configuration. This is useful for simple
 devices that are not using the data lanes, just the power, like USB lights. Also it allows for devices
@@ -119,17 +113,23 @@ not taking much power to be self-powered which eliminates the need for an extra 
 Devices can ask the host for more power (up to 500 mA), those that need even more (like a lot of scanners) need
 an external supply. \cite[p. 17f.]{usbstd}
 
+\begin{figure}[H]
+  \caption{USB cable cross-section \cite[p. 17]{usbstd}}
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/usb_cable.jpg}
+\end{figure}
+
 \subsection{Signaling}
 
 \subsubsection{Low-level states}
 
 USB is a serial bus which means there is only a single path for data transmission.
-Differential signalling across the D- and D+ wires is used, which means the difference in voltage
+Differential signaling across the D- and D+ wires is used, which means the difference in voltage
 across the two wires (rather than some absolute) determines the state. This is beneficial because
 noise during transmission should affect both lines equally, not changing the difference.
 Higher frequencies and thus data rates become possible.
 
-\begin{table}[!htbp]
+\begin{table}[H]
   \caption{USB speed modes \cite[p. 159]{usbstd}}
   \centering
   \begin{tabular}{l | l | l}
@@ -140,7 +140,7 @@ Higher frequencies and thus data rates become possible.
   \end{tabular}
 \end{table}
 
-\begin{table}[!htbp]
+\begin{table}[H]
   \caption{Low-level data line states (only applies to Full Speed) \cite[p. 145]{usbstd}}
   \centering
   \begin{tabular}{l | l}
@@ -182,7 +182,7 @@ to the host as a direct response to a request made by it before.
 USB uses NRZI encoding for the transmitted data: A zero is represented by a change to
 the opposite state while a one is represented by staying in the same state.
 
-\begin{figure}[!htbp]
+\begin{figure}[H]
   \caption{NRZI bitstream encoding \cite[p. 157]{usbstd}}
   \centering
   \includegraphics[width=0.5\textwidth]{images/nrzi_encoding.jpg}
@@ -207,7 +207,7 @@ and thus how the rest of the packet data should be interpreted. The PID is 4 bit
 discard a faulty packet. There are 17 different packet types (PRE and ERR have the same ID,
 some are only relevant for High Speed) \cite[p. 195]{usbstd}:
 
-\begin{table}[!htbp]
+\begin{table}[H]
   \caption{USB packet types; notice how the least-significant two bits identify the packet category \cite[p. 196]{usbstd}}
   \centering
   \begin{tabular}{l | l | l | p{5cm}}
@@ -277,7 +277,7 @@ Transfers are the abstraction level of data exchange as seen at the software
 side of the host. From the host's perspective, a transfer transmits a string of
  bytes from / to the device. A transfer is directed to one of the device's endpoints,
 each of them has one of four transfer types plus a transfer direction
-asscociated with it during device configuration.
+associated with it during device configuration.
 Transfers are composed of transactions, which usually consist of three
 packets \cite[p. 209ff.]{usbstd}:
 
@@ -398,7 +398,7 @@ in the USB standard.
 
 \subsubsection {Bulk transfer}
 
-Bulk transfers are used to transmit large amouts of data with guaranteed delivery
+Bulk transfers are used to transmit large amounts of data with guaranteed delivery
 and low overhead but no latency / bandwidth constraints.
 Compared to control transfers, they are stream-based. This means there is no defined message
 format or size. For an IN endpoint, the host would poll the device endpoint for data until it receives
@@ -408,7 +408,7 @@ smaller packet at the end) or a zero-size data transaction. To avoid data packet
 alternate between the DATA0 / DATA1 PIDs. A single bulk endpoint is only for incoming
 or only for outgoing transfers.
 The host schedules them at times when the bus bandwidth is not used by other transfer types.
-Typical uses for bulk transfers are transferring data from/to an external harddrive,
+Typical uses for bulk transfers are transferring data from/to an external hard disk,
 to a printer or from a scanner. \cite[p. 52ff.]{usbstd}
 
 \subsubsection {Interrupt transfer}
@@ -419,7 +419,7 @@ attempt is made as often as specified in the endpoint descriptor (1 - 100 ms).
 Despite the name, interrupt transfers have nothing to do with hardware interrupts.
 All communication on the USB bus is initiated by the host, so it has to poll the device
 for data.
-Typical uses for interrupt transfers are receiving keypresses from keyboards and
+Typical uses for interrupt transfers are receiving key presses from keyboards and
 movements from mice. \cite[p. 48ff.]{usbstd}
 
 \subsubsection {Isochronous transfer}
@@ -526,7 +526,7 @@ Only one configuration can be active at a time.
 \subsubsection{Interface descriptor}
 
 Interfaces are sets of related endpoints that together provide a certain feature
-of the device. Deiices can have multiple active interfaces at the same time.
+of the device. Devices can have multiple active interfaces at the same time.
 Additionally, interfaces can have alternate settings that change its endpoints' characteristics.
 \cite[p. 244]{usbstd}
 
@@ -842,7 +842,7 @@ and also to disable extra protocols in Wireshark (\autoref{nonusb}).
 
 A color slide photo of a lake, mountain peaks, green / yellow trees,
 reflections in the water and sky was used as target.
-It allows one to easily know which channel (when having them as separate greyscale images)
+It allows one to easily know which channel (when having them as separate grayscale images)
 is red, green or blue and provides a good impression of overall image quality.
 
 \subsection{Looking at the capture}
@@ -936,13 +936,12 @@ to synchronize the start of a line in the recreated image
 with the start of a line in the scanned image. This can be done quickly using bisection:
 
 \begin{figure}[H]
-    \centering
-    \subfloat[offset too low: 0]{{\includegraphics[height=6cm]{images/extract_3.jpg} }}
-    \hspace{3em}
-    \subfloat[offset too high: 600]{{\includegraphics[height=6cm]{images/extract_4.jpg} }}
-    \caption{Bisecting the correct byte offset}
-    \label{extraction_first}
-
+  \caption{Bisecting the correct byte offset}
+  \centering
+  \subfloat[offset too low: 0]{{\includegraphics[height=6cm]{images/extract_3.jpg} }}
+  \hspace{3em}
+  \subfloat[offset too high: 600]{{\includegraphics[height=6cm]{images/extract_4.jpg} }}
+  \label{extraction_first}
 \end{figure}
 
 If the offset is slightly too low, the rightmost part of the image will be moved to the very left.
@@ -980,13 +979,13 @@ line offset of 840 is incremented by 0, 1, 2 and 3 to get four separate
 color channel images:
 
 \begin{figure}[H]
-    \centering
-    \subfloat[offset 840]{{\includegraphics[height=3.5cm]{images/extract_6a.jpg} }} \quad
-    \subfloat[offset 841]{{\includegraphics[height=3.5cm]{images/extract_6b.jpg} }}
-    
-    \subfloat[offset 842]{{\includegraphics[height=3.5cm]{images/extract_6c.jpg} }} \quad
-    \subfloat[offset 843]{{\includegraphics[height=3.5cm]{images/extract_6d.jpg} }}
-    \caption{Four different line offsets / color channels}
+  \caption{Four different line offsets / color channels}
+  \centering
+  \subfloat[offset 840]{{\includegraphics[height=3.5cm]{images/extract_6a.jpg} }} \quad
+  \subfloat[offset 841]{{\includegraphics[height=3.5cm]{images/extract_6b.jpg} }}
+  
+  \subfloat[offset 842]{{\includegraphics[height=3.5cm]{images/extract_6c.jpg} }} \quad
+  \subfloat[offset 843]{{\includegraphics[height=3.5cm]{images/extract_6d.jpg} }}
 \end{figure}
 
 Thanks to the choice of image scanned, knowing which offset corresponds to what color channel
@@ -1034,11 +1033,11 @@ then a mapping $x \mapsto x^{\frac{1}{2}}$ is applied, then the values are
 converted back to the range $[0, 255]$. This is the resulting 1045x1060 color image:
 
 \begin{figure}[H]
-    \centering
-    \subfloat[extracted from capture]{{\includegraphics[height=5cm]{images/extract_7a.jpg} }}
-    
-    \subfloat[saved by CyberView X5]{{\includegraphics[height=5cm]{images/extract_7b.jpg} }}
-    \caption{Extracted image compared to the scanner software}
+  \caption{Extracted image compared to vendor software output}
+  \centering
+  \subfloat[extracted from capture]{{\includegraphics[width=0.6\textwidth]{images/extract_7a.jpg} }}
+  
+  \subfloat[saved by CyberView X5]{{\includegraphics[width=0.6\textwidth]{images/extract_7b.jpg} }}
 \end{figure}
 
 The color balance / saturation / contrast is different to the original because of postprocessing
@@ -1072,17 +1071,17 @@ where $y_a, x_a$ are the row and column of the point of the first line start pat
 and $y_b, x_b$ for the second.
 
 \begin{figure}[H]
+  \caption{Determining the correct line width for the calibration image (chosen width: 300 pixels)}
   \centering
   \includegraphics[width=12cm]{images/extract_calib1.jpg}
-  \caption{Determining the correct line width for the calibration image (chosen width: 300 pixels)}
 \end{figure}
 
 The correct width was found to be $(115 - 44) \cdot 300 + 166 - 102 = 21364$ pixels.
 
 \begin{figure}[H]
+  \caption{Calibration image, width: 21364 pixels}
   \centering
   \includegraphics[width=12cm, height=2cm]{images/extract_calib2.jpg}
-  \caption{Calibration image, width: 21364 pixels}
 \end{figure}
 
 The calibration image has the same channel interleaving pattern as the regular one.
@@ -1106,13 +1105,13 @@ The final parameters are:
 
 
 \begin{figure}[H]
-    \centering
-    \subfloat[red]{{\includegraphics[height=1cm]{images/extract_calib3r.jpg} }}
-    \subfloat[green]{{\includegraphics[height=1cm]{images/extract_calib3g.jpg} }}
-    
-    \subfloat[blue]{{\includegraphics[height=1cm]{images/extract_calib3b.jpg} }}
-    \subfloat[infrared]{{\includegraphics[height=1cm]{images/extract_calib3i.jpg} }}
-    \caption{Calibration images for all four channels}
+  \caption{Calibration images for all four channels}
+  \centering
+  \subfloat[red]{{\includegraphics[height=1cm]{images/extract_calib3r.jpg} }}
+  \subfloat[green]{{\includegraphics[height=1cm]{images/extract_calib3g.jpg} }}
+  
+  \subfloat[blue]{{\includegraphics[height=1cm]{images/extract_calib3b.jpg} }}
+  \subfloat[infrared]{{\includegraphics[height=1cm]{images/extract_calib3i.jpg} }}
 \end{figure}
 
 Applying the calibration image to the actual scan is shown in \ref{ssec:imgproc_calib}.
@@ -1148,7 +1147,7 @@ dev.ctrl\_transfer(self, bmRequestType, bRequest, wValue, wIndex, data\_or\_wLen
 \end{center}
 
 {\it bmRequestType, bRequest, wValue, wIndex, wLength} are described in \autoref{table:ctrltransfer}.
-timeout specifies the number of milliseconds after which the transfer is cancelled if
+timeout specifies the number of milliseconds after which the transfer is canceled if
 still not completed.
 
 For host-to-device control transfers, {\it data\_or\_wLength} contains the data payload
@@ -1225,7 +1224,7 @@ one byte after another, doing one control transfer for each byte.
 \subsection{Transaction patterns}
 \label{ssec:transactionpatterns}
 
-All traffic during idling and scanning can be modelled by transactions: Each transaction
+All traffic during idling and scanning can be modeled by transactions: Each transaction
 starts with the same header. After that, six parameter bytes are sent and the
 device response is queried. The rest depends on the transaction type, there
 are four types of transaction: The most basic does not do anything besides sending parameters and querying the response.
@@ -1305,7 +1304,7 @@ $c = 256 * \texttt{yy} + \texttt{xx}$.
 
 Then the actual bulk read transfer of $c$ bytes from endpoint 1 can happen. The vendor software
 splits large transfers into multiple smaller transfers, but this does not seem
-to be neccessary.
+to be necessary.
 
 \subsection{Basic transaction}
 \label{ssec:basic_trans}
@@ -1594,7 +1593,7 @@ The SANE interface is an application programming interface (API) consisting
 of specified C procedures / types that are implemented by backends and called by frontends.
 Frontend and backend can be combined either by static or dynamic linking.
 To make a frontend support multiple backends, the frontend can be linked to a
-meta-backend that finds out which backend is suitable for the currently attatched
+meta-backend that finds out which backend is suitable for the currently attached
 scanner, loads it via dynamic linking, and then mimics the behavior
 of the suitable backend.
 
@@ -1605,7 +1604,7 @@ of the suitable backend.
 The standard defines various primitive data types
 ({\it SANE\_Bool, SANE\_Byte, SANE\_Word, SANE\_Fixed, SANE\_String})
 which have certain guaranteed qualities
-like minimum number of bytes, endianness etc. to migitate differences in
+like minimum number of bytes, endianness etc. to mitigate differences in
 C compilers and hardware.
 
 There is also an enum type {\it SANE\_Status} which operations use to report back on
@@ -1661,7 +1660,7 @@ descriptors' meaning is specified in the standard:
 Options values are queried/set using the {\it sane\_control\_option} procedure
 specifying the option index and a generic pointer to load / store the value.
 This also reports back on how well the request could be met (f.e. a resolution could
-not be set exactly) and whether the changed setting has changed the availablility
+not be set exactly) and whether the changed setting has changed the availability
 of other options.
 
 \cite[4.4]{sane_standard}
@@ -1669,7 +1668,7 @@ of other options.
 \subsubsection{Operations}
 
 The standard specifies various procedures for initialization, configuring options,
-scanning and retrievig data.
+scanning and retrieving data.
 
 \begin{table}[H]
   \caption{Operations defined in the SANE standard (not exhaustive)}
@@ -1682,7 +1681,7 @@ scanning and retrievig data.
     \it sane\_open & Initialize the device with a specified descriptor. Returns \\
     \it sane\_close & Free scanner handle \\
     \it sane\_exit & Free data in backend \\
-    \it sane\_get\_option\_descriptor & Get the option descriptor at the speficied index. \\
+    \it sane\_get\_option\_descriptor & Get the option descriptor at the specified index. \\
     \it sane\_control\_option & Set or retrieve an option value at the specified option index. \\
     \it sane\_get\_parameters & Get parameters (format / dimensions) of image returned by {\it sane\_read}. \\
     \it sane\_start & Start scanning \\
@@ -1789,27 +1788,26 @@ subsystems. In this case, {\it SANE\_DEBUG\_PIEUSB=255} was set before running
 {\it scanimage} to get all possible messages from the driver.
 
 \begin{figure}[H]
+  \caption{Log of scanimage (unpatched SANE)}
   \begin{lstlisting}[language={}]
   [pieusb] sanei_pieusb_command() finished with state 4
   [pieusb] sanei_pieusb_cmd_17 failed: 0x04
   [pieusb] sane_start(): sanei_pieusb_cmd_17 failed: 4
   scanimage: sane_start: Error during device I/O
   \end{lstlisting}
-  
-  \caption{Log of scanimage (unpatched SANE)}
 \end{figure}
 
 This shows the error happened in {\it sane\_start}, while calling {\it sanei\_pieusb\_cmd\_17}.
 This is only done once in {\it sane\_start}:
 
 \begin{figure}[H]
+  \caption{First point of failure in pieusb.c}
   \begin{lstlisting}[language=C, breaklines=true, numbers=left, firstnumber=998]
   if (status.pieusb_status != PIEUSB_STATUS_GOOD) {
     DBG (DBG_error, "sane_start(): sanei_pieusb_cmd_17 failed: %d\n", status.pieusb_status);
     return SANE_STATUS_IO_ERROR;
   }
   \end{lstlisting}
-  \caption{First point of failure in pieusb.c}
 \end{figure}
 
 {\it sanei\_pieusb\_cmd\_17} does not transfer any scanning parameters, but it is
@@ -1817,17 +1815,18 @@ performed presumably because the vendor software also performs it. The lines
 were commented out, SANE recompiled and {\it scanimage} run again:
 
 \begin{figure}[H]
+  \caption{Log of scanimage (after first patch)}
   \begin{lstlisting}[language={}]
   [pieusb] 	sanei_pieusb_command() finished with state 4
   [pieusb] sane_start(): sanei_pieusb_cmd_slide failed: 4
   scanimage: sane_start: Error during device I/O
   \end{lstlisting}
-  \caption{Log of scanimage (after first patch)}
 \end{figure}
 
 {\it sanei\_pieusb\_cmd\_slide} is called to turn on some lamp on the device:
 
 \begin{figure}[H]
+  \caption{Second point of failure in pieusb.c}
   \begin{lstlisting}[language=C, breaklines=true, numbers=left, firstnumber=1046]
     sanei_pieusb_cmd_slide (scanner->device_number, SLIDE_LAMP_ON, &status);
     if (status.pieusb_status != PIEUSB_STATUS_GOOD) {
@@ -1835,7 +1834,6 @@ were commented out, SANE recompiled and {\it scanimage} run again:
       return SANE_STATUS_IO_ERROR;
     }
   \end{lstlisting}
-  \caption{Second point of failure in pieusb.c}
 \end{figure}
 
 This section of code was commented out as well. After this patch, the scan
@@ -1882,7 +1880,7 @@ $5341$ pixels wide and x pixels long (for each of the 4 channels red, green, blu
 which are contained in a line-interleaved pattern just like the regular image).
 
 As the calibration image is always recorded for the full sensor resolution, differences in
-scan area (vertical crop) and resolution need to be accounted for. The device convieniently
+scan area (vertical crop) and resolution need to be accounted for. The device conveniently
 provides a buffer that contains a bitmask specifying which pixels of the sensor are part of the
 resulting image. Only taking the columns of the calibration image where this mask is set to 1
 gives it the same width as the actual image and properly aligns the two images.
@@ -1901,12 +1899,12 @@ starting with full brightness 1, the brightness passing through is exactly that 
 Dividing by that factor will give the brightness before the obstacle for any value.
 
 \begin{figure}[H]
-    \centering
-    \subfloat[before calibration]{{\includegraphics[width=0.4\textwidth]{images/calib_a.jpg} }}
-    \subfloat[calibration image]{{\includegraphics[width=0.4\textwidth]{images/calib_b.jpg} }}
-    
-    \subfloat[division $a / b$]{{\includegraphics[width=0.4\textwidth]{images/calib_c.jpg} }}
-    \caption{Applying calibration (blue channel)}
+  \caption{Applying calibration (blue channel)}
+  \centering
+  \subfloat[before calibration]{{\includegraphics[width=0.5\textwidth]{images/calib_a.jpg} }}
+  \subfloat[calibration image]{{\includegraphics[width=0.5\textwidth]{images/calib_b.jpg} }}
+  
+  \subfloat[division $a / b$]{{\includegraphics[width=0.5\textwidth]{images/calib_c.jpg} }}
 \end{figure}
 
 \subsection{Point operations}
@@ -1942,7 +1940,7 @@ happens in darker areas.
 
 Different image recording (film, digital sensors) and image display (screen, print)
 technologies have a different inherent gamma function (their input-output response curve)
-and gamma correction is neccessary to make images look good on different media.
+and gamma correction is necessary to make images look good on different media.
 
 \subsubsection{Levels}
 
@@ -1965,23 +1963,24 @@ This gives good results for scans of color negative film.
 \subsubsection{Negative film}
 
 For negative film, the brightness of the image gets lower as the brightness of the
-source increases. To make a scan of negative film look normal it needs to be inverted:
+source increases. To make a scan of negative film look normal it needs to be finverted:
 $f(b) = 1 - b$.
 
 Color negative film also has an orange mask (base color) that was introduced to improve
 the spectral response of the dyes. This can be easily removed with appropriate
 level operations:
 
+
+\newsavebox\mysavebox
 \begin{figure}[H]
   \centering
-  (a) \includegraphics[width=0.4\textwidth]{images/imgop_color1.jpg} \hspace{0.5cm}
-  (b) \includegraphics[width=0.4\textwidth]{images/imgop_color2.jpg}
+  \caption{Color-correcting negative scan}
   
-  (c) \includegraphics[width=0.4\textwidth]{images/imgop_color_h.jpg} \hspace{0.5cm}
-  (d) \includegraphics[width=0.4\textwidth]{images/imgop_color3.jpg}
-  \caption{Color-correcting a negative film scan. (a) raw scan, (b) after inverting, 
-           (c) histogram of (b), shows limited range of values, (d) after stretching levels per channel
-           to actual value range}
+  \subfloat[raw scan]{\includegraphics[width=0.49\textwidth]{images/imgop_color1.jpg}} \ 
+  \subfloat[inverted]{\includegraphics[width=0.49\textwidth]{images/imgop_color2.jpg}}
+
+  \subfloat[histogram of (b)]{\includegraphics[width=0.49\textwidth]{images/imgop_color_h.jpg}} \ 
+  \subfloat[levels stretched to actual value range]{\includegraphics[width=0.49\textwidth]{images/imgop_color3.jpg}}
 \end{figure}
 
 \subsection{Infrared dust / scratch removal}
@@ -2001,9 +2000,10 @@ the pixels affected by dust.
 
 \begin{figure}[H]
   \centering
-  (a) \includegraphics[width=0.4\textwidth]{images/inpaint_1.jpg} \hspace{0.5cm}
-  (b) \includegraphics[width=0.4\textwidth]{images/inpaint_2.jpg}
-  \caption{(a) Crop of slide film scan affected by dust. (b) Infrared channel}
+  \caption{Crop of slide film scan affected by dust}
+  
+  \subfloat[RGB image]{\includegraphics[width=0.49\textwidth]{images/inpaint_1.jpg}} \ 
+  \subfloat[infrared channel]{\includegraphics[width=0.49\textwidth]{images/inpaint_2.jpg}}
 \end{figure}
 
 \subsubsection{Creating a mask}
@@ -2012,7 +2012,7 @@ The simple way of finding which pixels are affected by dust is apply a binary
 threshold: pixels below a certain infrared brightness are considered
 dust. The threshold value could be static or dynamic (adjusting so that for example 10\% of
 the image is masked). Dynamic thresholds can adjust to different scanner settings /
-film types, but they may over/underreact on images with unusually large / small amounts
+film types, but they may under/overreact on images with unusually large / small amounts
 of dust.
 
 Finding scratches is not so easy as they don't have a strong brightness difference
@@ -2023,9 +2023,9 @@ It may also be desirable to use dilation to grow the areas of affected pixels so
 so the pixels just outside the mask are certainly unaffected and not harming the inpainting process.
 
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=6cm]{images/inpaint_3.jpg}
   \caption{Mask on top on image (in red) showing which pixels are affected by dust}
+  \centering
+  \includegraphics[width=0.5\textwidth]{images/inpaint_3.jpg}
 \end{figure}
 
 \subsubsection{Inpainting}
@@ -2069,12 +2069,12 @@ Since dust particles typically cover only small, stripe-like areas diffusion doe
 very acceptable results.
 
 \begin{figure}[H]
+  \caption{Diffusion inpainting}
   \centering
-  (a) \includegraphics[width=0.4\textwidth]{images/inpaint_4a.jpg} \hspace{0.5cm}
-  (b) \includegraphics[width=0.4\textwidth]{images/inpaint_4b.jpg} \hspace{0.5cm}
+  \subfloat[1 iteration]{\includegraphics[width=0.49\textwidth]{images/inpaint_4a.jpg}} \ 
+  \subfloat[10 iterations]{\includegraphics[width=0.49\textwidth]{images/inpaint_4b.jpg}}
   
-  (c) \includegraphics[width=0.4\textwidth]{images/inpaint_4c.jpg}
-  \caption{(a) Image after doing diffusion for (a) 1 iteration, (b) 10 iterations, (c)100 iterations}
+  \subfloat[100 iterations]{\includegraphics[width=0.49\textwidth]{images/inpaint_4c.jpg}}
 \end{figure}
 
 \subsection{Automatic cropping}
@@ -2110,7 +2110,7 @@ for all images on the same film.
 
 \item {\bf Edge detection}
 
-For the line decection step, we want only the border
+For the line detection step, we want only the border
 pixels between light and dark areas to be white. This is done by applying a
 Laplace operator \cite{opencv_gradient} to the threshold image.
 
@@ -2132,7 +2132,7 @@ For each $\rho, \theta$ pair of a line going through the pixel, its cell in the 
 is incremented. After having processed all pixels, the cells with values above some
 threshold are parameters of lines found in the image.
 
-\item {\bf Separate horziontal / vertical lines}
+\item {\bf Separate horizontal / vertical lines}
 
 For computing intersection points between lines, it is necessary to separate
 horizontal from vertical lines because lines that are almost parallel have
@@ -2168,9 +2168,9 @@ the image is slightly rotated.
 \end{enumerate}
 
 \begin{figure}[H]
-  \centering
-  \includegraphics[width=8cm]{images/crop_steps/step6.jpg}
   \caption{Applying crop algorithm to image}
+  \centering
+  \includegraphics[width=0.8\textwidth]{images/crop_steps/step6.jpg}
 \end{figure}
 
 \subsubsection{Performance}
@@ -2274,7 +2274,7 @@ allowed development of a working basic driver with minimal effort.
                          until the device readiness query returns the right response.
                          \\
     {\tt 1b0000000100} & The actual "start scan" command. Is issued after transmitting all scan parameters
-                         before receiving the image data. After recieving this command, the scanner
+                         before receiving the image data. After receiving this command, the scanner
                          starts to make noise and eventually moves the scan head. \\
   \end{tabular}
 \end{table}
@@ -2457,8 +2457,6 @@ parameters. Multi-byte values are in little-endian format.
   \label{table:imageparam_query}
 \end{table}
 
-%\subsubsection{Image transaction}
-%\label{appendix_image}
 
 \subsection{USB traffic during an example scan}
 \label{appendix_actualscan}
@@ -2475,80 +2473,60 @@ parameters. Multi-byte values are in little-endian format.
     \end{tabular}
 \end{table}
 
-\begin{table}[H]
-  \caption{Transactions of the scan}
-  \centering
-  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
-    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
-    S & {\tt dd0000001200} &  & Idle status query \autoref{appendix_status} \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
-    E & {\tt 0a0000000800} & \tt 1300040002 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1300040004 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1300040008 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1400040002 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1400040004 006400 & \\
-    E & {\tt 0a0000000800} & \tt 1400040008 006400 & \\
-    E & {\tt 0a0000000600} & \tt 9500000000 00 & \\
-    S & {\tt 080000008000} &  & \\
-    E & {\tt 0a0000000e00} & \tt 12000a0080 0000000000 b829e71a & Set scan area \autoref{table:param0a} \\
-    E & {\tt 0a0000000600} & \tt 1700020001 00 & \\
-    S & {\tt 030000000e00} &  & \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
-    S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
-    E & {\tt dc0000001d00} & \tt 0000000000 0000000000 0000000000 07001a790b 00fe0f0000 00000000
-                           & Set exposure settings \autoref{table:paramdc} \\
-  \end{tabular}
-  
-  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
-               S - Status, I - Image
-\end{table}
-
-\begin{table}[H]
-  \caption{Transactions of the scan (continued)}
-  \centering
-  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
-    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
-    E & {\tt 150000001000} & \tt 000f2c0180 0404000100 0000008010 00 & \autoref{table:paramdc} \\
-    B & {\tt 1b0000000100} &  & Start scan \ref{ssec:basic_trans} \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 4 times until successful \\ 
-    S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
-    E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
-                           & Set exposure settings \autoref{table:paramdc} \\
-    I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
-    I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image \ref{ssec:rcv_calibimage}  \\
-    S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
-  \end{tabular}
-  
-  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
-               S - Status, I - Image
-\end{table}
-
-\begin{table}[H]
-  \caption{Transactions of the scan (continued)}
-  \centering
-  \begin{tabular}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
-    Ty-\ pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
-    E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
-                           & Set exposure settings \autoref{table:paramdc} \\
-    I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
-    S & {\tt 18000014dc00} &  & Read row mask \ref{appendix_status} \\
-    S & {\tt 0f0000001200} &  & Get size of the main image \autoref{table:imageparam_query}.
-                                Returned status is {\tt bc011f01bc01}... This means the
-                                image has 287 * 3 (color channels) = 861 lines of 444 bytes each. \\
-    B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 3 times until successful \\
-    I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image \ref{ssec:rcv_mainimage}.
-                                Repeated 3 times.
-                                In this case, they are transferred in chunks of 216 lines. It would also
-                                be fine to use the simpler scheme with 255 lines / transaction. \\
-    I & {\tt 08000000d500} &  & Transfer the rest, that is 213 lines / 94572 bytes of the main image. \\
-  \end{tabular}
-  
-  \vspace{5mm} Transaction types: B - Basic, E - Extra parameter,
-               S - Status, I - Image
-\end{table}
+\begin{longtable}{p{0.4cm} | p{2.3cm} | p{2cm} | p{5cm}}
+  \caption{Transactions of the scan} \\
+  Ty\-pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
+  \endfirsthead
+  \caption{Transactions of the scan (continued)} \\
+  Ty\-pe & Main parameters (hex) & Extra parameters (hex) & Description \\ \hline
+  \endhead
+  \\ \caption*{Transaction types: B - Basic, E - Extra parameter, S - Status, I - Image} \\
+  \endfoot
+  \\ \caption*{Transaction types: B - Basic, E - Extra parameter, S - Status, I - Image} \\
+  \endlastfoot
+  S & {\tt dd0000001200} &  & Idle status query \ref{appendix_status} \\
+  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+  E & {\tt 0a0000000800} & \tt 1300040002 006400 & \\
+  E & {\tt 0a0000000800} & \tt 1300040004 006400 & \\
+  E & {\tt 0a0000000800} & \tt 1300040008 006400 & \\
+  E & {\tt 0a0000000800} & \tt 1400040002 006400 & \\
+  E & {\tt 0a0000000800} & \tt 1400040004 006400 & \\
+  E & {\tt 0a0000000800} & \tt 1400040008 006400 & \\
+  E & {\tt 0a0000000600} & \tt 9500000000 00 & \\
+  S & {\tt 080000008000} &  & \\
+  E & {\tt 0a0000000e00} & \tt 12000a0080 0000000000 b829e71a & Set scan area \autoref{table:param0a} \\
+  E & {\tt 0a0000000600} & \tt 1700020001 00 & \\
+  S & {\tt 030000000e00} &  & \\
+  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+  S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
+  E & {\tt dc0000001d00} & \tt 0000000000 0000000000 0000000000 07001a790b 00fe0f0000 00000000
+                         & Set exposure settings \autoref{table:paramdc} \\
+  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans} \\
+  E & {\tt 150000001000} & \tt 000f2c0180 0404000100 0000008010 00 & \autoref{table:paramdc} \\
+  B & {\tt 1b0000000100} &  & Start scan \ref{ssec:basic_trans} \\
+  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 4 times until successful \\ 
+  S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
+  E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
+                         & Set exposure settings \autoref{table:paramdc} \\
+  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
+  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
+  I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image \ref{ssec:rcv_calibimage}  \\
+  S & {\tt d70000006700} &  & Read gain / offset values \ref{appendix_status} \\
+  E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
+                         & Set exposure settings \autoref{table:paramdc} \\
+  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \ref{ssec:rcv_calibimage} \\
+  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated twice until successful \\
+  S & {\tt 18000014dc00} &  & Read row mask \ref{appendix_status} \\
+  S & {\tt 0f0000001200} &  & Get size of the main image \autoref{table:imageparam_query}.
+                              Returned status is {\tt bc011f01bc01}... This means the
+                              image has 287 * 3 (color channels) = 861 lines of 444 bytes each. \\
+  B & {\tt 000000000000} &  & Readiness check \ref{ssec:basic_trans}, repeated 3 times until successful \\
+  I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image \ref{ssec:rcv_mainimage}.
+                              Repeated 3 times.
+                              In this case, they are transferred in chunks of 216 lines. It would also
+                              be fine to use the simpler scheme with 255 lines / transaction. \\
+  I & {\tt 08000000d500} &  & Transfer the rest, that is 213 lines / 94572 bytes of the main image. \\
+\end{longtable}
 
 \newcounter{firstbib}
 \pagebreak
