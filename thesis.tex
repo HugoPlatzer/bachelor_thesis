@@ -11,6 +11,13 @@
 \usepackage{csquotes}
 \usepackage{listings}
 \usepackage{longtable}
+\usepackage{tikz}
+
+\usetikzlibrary{matrix}
+\usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{calc}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{intersections}
 
 \begin{document}
 
@@ -114,9 +121,9 @@ Devices can ask the host for more power (up to 500 mA), those that need even mor
 an external supply. \cite[p. 17f.]{usbstd}
 
 \begin{figure}[H]
-  \caption{USB cable cross-section \cite[p. 17]{usbstd}}
+  \caption{USB cable cross-section (after \cite[p. 17]{usbstd})}
   \centering
-  \includegraphics[width=0.5\textwidth]{images/usb_cable.jpg}
+  \scalebox{2}{\input{images_new/tikz/usb_cable.tex}}
 \end{figure}
 
 \subsection{Signaling}
@@ -183,9 +190,9 @@ USB uses NRZI encoding for the transmitted data: A zero is represented by a chan
 the opposite state while a one is represented by staying in the same state.
 
 \begin{figure}[H]
-  \caption{NRZI bitstream encoding \cite[p. 157]{usbstd}}
+  \caption{NRZI bitstream encoding (after \cite[p. 157]{usbstd})}
   \centering
-  \includegraphics[width=0.5\textwidth]{images/nrzi_encoding.jpg}
+  \scalebox{0.35}{\input{images_new/tikz/usb_nrzi.tex}}
 \end{figure}
 
 For keeping the receiver clock in sync with the data it is not ideal if the signal
@@ -235,9 +242,9 @@ some are only relevant for High Speed) \cite[p. 195]{usbstd}:
 \subsubsection{Token packet}
 
 \begin{figure}[H]
-  \caption{Token packet format \cite[p. 199]{usbstd}}
+  \caption{Token packet format (after \cite[p. 199]{usbstd})}
   \centering
-  \includegraphics[width=0.5\textwidth]{images/token_packet.jpg}
+  \scalebox{1}{\input{images_new/tikz/usb_tokenpacket.tex}}
 \end{figure}
 
 Token packets are used at the start of so-called transactions to specify the target
@@ -254,9 +261,9 @@ right after the reset. It is used mainly for identifying and configuring the dev
 \subsubsection{Data packet}
 
 \begin{figure}[H]
-  \caption{Data packet format \cite[p. 206]{usbstd}}
+  \caption{Data packet format (after \cite[p. 206]{usbstd})}
   \centering
-  \includegraphics[width=0.5\textwidth]{images/data_packet.jpg}
+  \scalebox{1}{\input{images_new/tikz/usb_datapacket.tex}}
 \end{figure}
 
 Used to transmit the actual data in a transaction.
@@ -264,9 +271,9 @@ Used to transmit the actual data in a transaction.
 \subsubsection{Handshake packet}
 
 \begin{figure}[H]
-  \caption{Handshake packet format \cite[p. 206]{usbstd}}
+  \caption{Handshake packet format (after \cite[p. 206]{usbstd})}
   \centering
-  \includegraphics[width=0.21\textwidth]{images/handshake_packet.jpg}
+  \scalebox{1}{\input{images_new/tikz/usb_handshakepacket.tex}}
 \end{figure}
 
 Used to report the status of a transaction.

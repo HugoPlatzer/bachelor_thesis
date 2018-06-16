@@ -1,0 +1,25 @@
+\begin{tikzpicture}
+\matrix (M)
+[
+  matrix of nodes,
+  row sep = -\pgflinewidth,
+  column sep = -\pgflinewidth,
+  nodes = {
+    inner sep=1,
+    outer sep=0,
+    draw,
+    text height = \ht\strutbox,
+    text depth = \dp\strutbox,
+    minimum width = 32,
+    minimum height = 5,
+    text width = 40,
+    align=center
+  },
+  column 1/.style = {column sep = 3\pgflinewidth,nodes={align=right}},
+]
+{
+  \bf Field & PID \\
+  \bf \#Bits & 8 \\
+};
+\end{tikzpicture}
+

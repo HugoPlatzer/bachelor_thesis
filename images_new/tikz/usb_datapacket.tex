@@ -1,0 +1,31 @@
+\begin{tikzpicture}
+\matrix (M)
+[
+  matrix of nodes,
+  row sep = -\pgflinewidth,
+  column sep = -\pgflinewidth,
+  nodes = {
+    inner sep=1,
+    outer sep=0,
+    draw,
+    text height = \ht\strutbox,
+    text depth = \dp\strutbox,
+    minimum width = 32,
+    minimum height = 5,
+    text width = 40,
+    align=center
+  },
+  column 1/.style = {column sep = 3\pgflinewidth,nodes={align=right}},
+]
+{
+  \bf Field & PID & DATA & CRC16 \\
+  \bf \#Bits & 8 & 0-8192 & 16 \\
+};
+
+\coordinate(A) at (M-2-3.south west);
+\coordinate(B) at (M-2-3.south east);
+\coordinate(S) at (M-2-4.south);
+\coordinate(C) at ($0.5*(A) + 0.5*(B) + (0, -3.5mm)$);
+\path[line width=1, draw, decorate, decoration={brace, amplitude=3mm, mirror}] (A) -- (B);
+\draw[-{Latex[width=8,length=4]}, line width=1] (S) -- ++(0, -0.7) -| (C);
+\end{tikzpicture}
