@@ -70,7 +70,7 @@ This scanner is connected via USB. \cite{rcs} \cite{rcs_review}
 \begin{figure}[H]
   \caption{Reflecta CrystalScan 7200}
   \centering
-  \includegraphics[width=0.5\textwidth]{images/presentation/the_scanner.jpg}
+  \includegraphics[width=0.5\textwidth]{images/jpg/device.jpg}
 \end{figure}
 
 \subsection{Software support}
@@ -135,7 +135,7 @@ an external supply. \cite[p. 17f.]{usbstd}
 \begin{figure}[H]
   \caption{USB cable cross-section (after \cite[p. 17]{usbstd})}
   \centering
-  \scalebox{2}{\input{images_new/tikz/usb_cable.tex}}
+  \scalebox{2}{\input{images/tikz/usb_cable.tex}}
 \end{figure}
 
 \subsection{Signaling}
@@ -204,7 +204,7 @@ the opposite state while a one is represented by staying in the same state.
 \begin{figure}[H]
   \caption{NRZI bitstream encoding (after \cite[p. 157]{usbstd})}
   \centering
-  \scalebox{0.35}{\input{images_new/tikz/usb_nrzi.tex}}
+  \scalebox{0.35}{\input{images/tikz/usb_nrzi.tex}}
 \end{figure}
 
 For keeping the receiver clock in sync with the data it is not ideal if the signal
@@ -257,7 +257,7 @@ some are only relevant for High Speed) \cite[p. 195]{usbstd}:
 \begin{figure}[H]
   \caption{Token packet format (after \cite[p. 199]{usbstd})}
   \centering
-  \scalebox{1}{\input{images_new/tikz/usb_tokenpacket.tex}}
+  \scalebox{1}{\input{images/tikz/usb_tokenpacket.tex}}
 \end{figure}
 
 Token packets are used at the start of so-called transactions to specify the target
@@ -276,7 +276,7 @@ right after the reset. It is used mainly for identifying and configuring the dev
 \begin{figure}[H]
   \caption{Data packet format (after \cite[p. 206]{usbstd})}
   \centering
-  \scalebox{1}{\input{images_new/tikz/usb_datapacket.tex}}
+  \scalebox{1}{\input{images/tikz/usb_datapacket.tex}}
 \end{figure}
 
 Used to transmit the actual data in a transaction.
@@ -286,7 +286,7 @@ Used to transmit the actual data in a transaction.
 \begin{figure}[H]
   \caption{Handshake packet format (after \cite[p. 206]{usbstd})}
   \centering
-  \scalebox{1}{\input{images_new/tikz/usb_handshakepacket.tex}}
+  \scalebox{1}{\input{images/tikz/usb_handshakepacket.tex}}
 \end{figure}
 
 Used to report the status of a transaction.
@@ -315,7 +315,7 @@ Transfers usually consist of multiple transactions.
 \begin{figure}[H]
   \caption{Composition of a USB transfer (after \cite[p. 44]{uc})}
   \centering
-  \scalebox{1}{\input{images_new/tikz/usb_composition.tex}}
+  \scalebox{1}{\input{images/tikz/usb_composition.tex}}
 \end{figure}
 
 \subsubsection {Control transfer}
@@ -656,14 +656,14 @@ Others have faced this problem, unsure where it comes from and what to do: \cite
   \caption{A large bulk transfer in Wireshark, {\it Data length} $<$ {\it URB length}
            indicates missing bytes.}
   \centering
-  \includegraphics[width=0.8\textwidth]{images/usbmon_missing.png}
+  \includegraphics[width=0.8\textwidth]{images/jpg/usbmon_wireshark.jpg}
 \end{figure}
 
 \begin{figure}[H]
   \caption{Image reconstructed from payloads. The frequent tearing is caused by the large
   65520 byte transfers being truncated to 61440 bytes.}
   \centering
-  \includegraphics[width=\textwidth]{images/reconstruct_missing.jpg}
+  \includegraphics[width=0.8\textwidth]{images/jpg/usbmon_chopped.jpg}
 \end{figure}
 
 \subsubsection{Kernel patching}
@@ -781,7 +781,7 @@ descriptor and the interface / endpoint descriptor are shown here.
 \begin{figure}[H]
   \caption{Device descriptor of USB keyboard}
   \centering
-  \includegraphics[width=\textwidth]{images/keyboard_sniff1.png}
+  \includegraphics[width=\textwidth]{images/jpg/sniff_keyboard_1.jpg}
 \end{figure}
 
 The class code of 00 signifies that information about the device should be
@@ -791,7 +791,7 @@ from a database by Wireshark (only the 2 byte ID is transmitted over the bus).
 \begin{figure}[H]
   \caption{Interface / endpoint descriptor of USB keyboard}
   \centering
-  \includegraphics[width=\textwidth]{images/keyboard_sniff2.png}
+  \includegraphics[width=\textwidth]{images/jpg/sniff_keyboard_2.jpg}
 \end{figure}
 
 The interface identifies as a keyboard and has one extra input endpoint.
@@ -806,7 +806,7 @@ actual pressed key. \cite{usbhid}
 \begin{figure}[H]
   \caption{HID reports from USB keyboard}
   \centering
-  \includegraphics[width=\textwidth]{images/keyboard_sniff3.png}
+  \includegraphics[width=\textwidth]{images/jpg/sniff_keyboard_3.jpg}
 \end{figure}
 
 In \cite[p.53]{usbusage} the byte values 04 and 05 stand for the a and
@@ -844,7 +844,7 @@ The scanner was connected to the VM via USB passthrough.
 \begin{figure}[H]
   \caption{CyberView X5 software}
   \centering
-  \includegraphics[width=0.75\textwidth]{images/extract_cvx.jpg}
+  \includegraphics[width=0.75\textwidth]{images/jpg/extract_screenshot.jpg}
 \end{figure}
 
 The scanner software was configured to scan a color positive at 1200 dpi resolution.
@@ -870,7 +870,7 @@ is red, green or blue and provides a good impression of overall image quality.
 \begin{figure}[H]
   \caption{Large bulk transfers}
   \centering
-  \includegraphics[width=\textwidth]{images/extract_sniff1.jpg}
+  \includegraphics[width=\textwidth]{images/jpg/extract_sniff_1.jpg}
 \end{figure}
 
 The scan took about 30 seconds and generated a capture around 18 megabytes
@@ -884,7 +884,7 @@ one line after the other.
 \begin{figure}[H]
   \caption{Even (dark) and odd (light) offset bytes of payload}
   \centering
-  \includegraphics[width=\textwidth]{images/extract_sniff2.jpg}
+  \includegraphics[width=\textwidth]{images/jpg/extract_sniff_2.jpg}
 \end{figure}
 
 \label{capture_highlowbytes}
@@ -930,7 +930,7 @@ it performs the following steps:
 \begin{figure}[H]
   \caption{Transferred bytes, line width 1644}
   \centering
-  \includegraphics[height=6cm]{images/extract_1.jpg}
+  \includegraphics[height=6cm]{images/jpg/extract_sections.jpg}
 \end{figure}
 
 The transferred bytes form three distinct images: The first section
@@ -958,9 +958,9 @@ with the start of a line in the scanned image. This can be done quickly using bi
 \begin{figure}[H]
   \caption{Bisecting the correct byte offset}
   \centering
-  \subfloat[offset too low: 0]{{\includegraphics[height=6cm]{images/extract_3.jpg} }}
+  \subfloat[offset too low: 0]{{\includegraphics[height=6cm]{images/jpg/extract_image_3.jpg} }}
   \hspace{3em}
-  \subfloat[offset too high: 600]{{\includegraphics[height=6cm]{images/extract_4.jpg} }}
+  \subfloat[offset too high: 600]{{\includegraphics[height=6cm]{images/jpg/extract_image_4.jpg} }}
   \label{extraction_first}
 \end{figure}
 
@@ -975,7 +975,7 @@ look good, removing unwanted lines on top while keeping all of the main scan.
 \begin{figure}[H]
   \caption{Main scan after adjusting \it{byteOffset, byteNth, lineOffset}}
   \centering
-  \includegraphics[height=6cm]{images/extract_2.jpg}
+  \includegraphics[height=6cm]{images/jpg/extract_image_2.jpg}
   \label{fig:extract_step1}
 \end{figure}
 
@@ -985,7 +985,7 @@ look good, removing unwanted lines on top while keeping all of the main scan.
 \begin{figure}[H]
   \caption{Interleaved color channels}
   \centering
-  \includegraphics[width=8cm]{images/extract_5.jpg}
+  \includegraphics[width=8cm]{images/jpg/extract_image_5.jpg}
 \end{figure}
 
 When looking at the image of \autoref{fig:extract_step1} in detail,
@@ -1001,11 +1001,11 @@ color channel images:
 \begin{figure}[H]
   \caption{Four different line offsets / color channels}
   \centering
-  \subfloat[offset 840]{{\includegraphics[height=3.5cm]{images/extract_6a.jpg} }} \quad
-  \subfloat[offset 841]{{\includegraphics[height=3.5cm]{images/extract_6b.jpg} }}
+  \subfloat[offset 840]{{\includegraphics[height=3.5cm]{images/jpg/extract_image_6a.jpg} }} \quad
+  \subfloat[offset 841]{{\includegraphics[height=3.5cm]{images/jpg/extract_image_6b.jpg} }}
   
-  \subfloat[offset 842]{{\includegraphics[height=3.5cm]{images/extract_6c.jpg} }} \quad
-  \subfloat[offset 843]{{\includegraphics[height=3.5cm]{images/extract_6d.jpg} }}
+  \subfloat[offset 842]{{\includegraphics[height=3.5cm]{images/jpg/extract_image_6c.jpg} }} \quad
+  \subfloat[offset 843]{{\includegraphics[height=3.5cm]{images/jpg/extract_image_6d.jpg} }}
 \end{figure}
 
 Thanks to the choice of image scanned, knowing which offset corresponds to what color channel
@@ -1055,9 +1055,9 @@ converted back to the range $[0, 255]$. This is the resulting 1045x1060 color im
 \begin{figure}[H]
   \caption{Extracted image compared to vendor software output}
   \centering
-  \subfloat[extracted from capture]{{\includegraphics[width=0.6\textwidth]{images/extract_7a.jpg} }}
+  \subfloat[extracted from capture]{{\includegraphics[width=0.6\textwidth]{images/jpg/extract_image_7a.jpg} }}
   
-  \subfloat[saved by CyberView X5]{{\includegraphics[width=0.6\textwidth]{images/extract_7b.jpg} }}
+  \subfloat[saved by CyberView X5]{{\includegraphics[width=0.6\textwidth]{images/jpg/extract_image_7b.jpg} }}
 \end{figure}
 
 The color balance / saturation / contrast is different to the original because of postprocessing
@@ -1093,7 +1093,7 @@ and $y_b, x_b$ for the second.
 \begin{figure}[H]
   \caption{Determining the correct line width for the calibration image (chosen width: 300 pixels)}
   \centering
-  \includegraphics[width=12cm]{images/extract_calib1.jpg}
+  \includegraphics[width=12cm]{images/jpg/extract_calib_1.jpg}
 \end{figure}
 
 The correct width was found to be $(115 - 44) \cdot 300 + 166 - 102 = 21364$ pixels.
@@ -1101,7 +1101,7 @@ The correct width was found to be $(115 - 44) \cdot 300 + 166 - 102 = 21364$ pix
 \begin{figure}[H]
   \caption{Calibration image, width: 21364 pixels}
   \centering
-  \includegraphics[width=12cm, height=2cm]{images/extract_calib2.jpg}
+  \includegraphics[width=12cm, height=2cm]{images/jpg/extract_calib_2.jpg}
 \end{figure}
 
 The calibration image has the same channel interleaving pattern as the regular one.
@@ -1127,11 +1127,11 @@ The final parameters are:
 \begin{figure}[H]
   \caption{Calibration images for all four channels}
   \centering
-  \subfloat[red]{{\includegraphics[height=1cm]{images/extract_calib3r.jpg} }}
-  \subfloat[green]{{\includegraphics[height=1cm]{images/extract_calib3g.jpg} }}
+  \subfloat[red]{{\includegraphics[height=1cm]{images/jpg/extract_calib_3r.jpg} }}
+  \subfloat[green]{{\includegraphics[height=1cm]{images/jpg/extract_calib_3g.jpg} }}
   
-  \subfloat[blue]{{\includegraphics[height=1cm]{images/extract_calib3b.jpg} }}
-  \subfloat[infrared]{{\includegraphics[height=1cm]{images/extract_calib3i.jpg} }}
+  \subfloat[blue]{{\includegraphics[height=1cm]{images/jpg/extract_calib_3b.jpg} }}
+  \subfloat[infrared]{{\includegraphics[height=1cm]{images/jpg/extract_calib_3i.jpg} }}
 \end{figure}
 
 Applying the calibration image to the actual scan is shown in \autoref{ssec:imgproc_calib}.
@@ -1520,7 +1520,7 @@ and the image transaction should be repeated from the start (\autoref{ssec:rcv_m
 \begin{figure}[H]
   \caption{Timing of packets during scan}
   \centering
-  \includegraphics[width=\textwidth]{images/time_diagram.pdf}
+  \includegraphics[width=\textwidth]{images/pdf/time_diagram_eng.pdf}
   \label{time_diagram}
 \end{figure}
 
@@ -1594,7 +1594,7 @@ scanner access.
 \begin{figure}[H]
   \caption{Example SANE hierarchy (after \cite[Figure 3.1]{sane_standard})}
   \centering
-  \resizebox{\textwidth}{!}{\input{images_new/tikz/sane_hierarchy.tex}}
+  \resizebox{\textwidth}{!}{\input{images/tikz/sane_hierarchy.tex}}
   \label{sane_hierarchy}
 \end{figure}
 
@@ -1705,7 +1705,7 @@ When using SANE, typical code flow might look as follows:
 \begin{figure}[H]
   \caption{Typical code flow when using SANE \cite[4.4]{sane_standard}}
   \centering
-  \scalebox{1}{\input{images_new/tikz/sane_codeflow.tex}}
+  \scalebox{1}{\input{images/tikz/sane_codeflow.tex}}
   \label{sane_codeflow}
 \end{figure}
 
@@ -1906,10 +1906,10 @@ Dividing by that factor will give the brightness before the obstacle for any val
 \begin{figure}[H]
   \caption{Applying calibration (blue channel)}
   \centering
-  \subfloat[before calibration]{{\includegraphics[width=0.5\textwidth]{images/calib_a.jpg} }}
-  \subfloat[calibration image]{{\includegraphics[width=0.5\textwidth]{images/calib_b.jpg} }}
+  \subfloat[before calibration]{{\includegraphics[width=0.5\textwidth]{images/jpg/imgproc_calib_1.jpg} }}
+  \subfloat[calibration image]{{\includegraphics[width=0.5\textwidth]{images/jpg/imgproc_calib_2.jpg} }}
   
-  \subfloat[division $a / b$]{{\includegraphics[width=0.5\textwidth]{images/calib_c.jpg} }}
+  \subfloat[division $a / b$]{{\includegraphics[width=0.5\textwidth]{images/jpg/imgproc_calib_3.jpg} }}
 \end{figure}
 
 \subsection{Point operations}
@@ -1981,11 +1981,11 @@ level operations:
   \centering
   \caption{Color-correcting negative scan}
   
-  \subfloat[raw scan]{\includegraphics[width=0.49\textwidth]{images/imgop_color1.jpg}} \ 
-  \subfloat[inverted]{\includegraphics[width=0.49\textwidth]{images/imgop_color2.jpg}}
+  \subfloat[raw scan]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_levels_1.jpg}} \ 
+  \subfloat[inverted]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_levels_2.jpg}}
 
-  \subfloat[histogram of (b)]{\includegraphics[width=0.49\textwidth]{images/imgop_color_h.jpg}} \ 
-  \subfloat[levels stretched to actual value range]{\includegraphics[width=0.49\textwidth]{images/imgop_color3.jpg}}
+  \subfloat[histogram of (b)]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_levels_2h.jpg}} \ 
+  \subfloat[levels stretched to actual value range]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_levels_3.jpg}}
 \end{figure}
 
 \subsection{Infrared dust / scratch removal}
@@ -2007,8 +2007,8 @@ the pixels affected by dust.
   \centering
   \caption{Crop of slide film scan affected by dust}
   
-  \subfloat[RGB image]{\includegraphics[width=0.49\textwidth]{images/inpaint_1.jpg}} \ 
-  \subfloat[infrared channel]{\includegraphics[width=0.49\textwidth]{images/inpaint_2.jpg}}
+  \subfloat[RGB image]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_inpaint_1.jpg}} \ 
+  \subfloat[infrared channel]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_inpaint_2.jpg}}
 \end{figure}
 
 \subsubsection{Creating a mask}
@@ -2030,7 +2030,7 @@ so the pixels just outside the mask are certainly unaffected and not harming the
 \begin{figure}[H]
   \caption{Mask on top on image (in red) showing which pixels are affected by dust}
   \centering
-  \includegraphics[width=0.5\textwidth]{images/inpaint_3.jpg}
+  \includegraphics[width=0.5\textwidth]{images/jpg/imgproc_inpaint_3.jpg}
 \end{figure}
 
 \subsubsection{Inpainting}
@@ -2056,9 +2056,9 @@ typically:
                             \frac{1}{9} & \frac{1}{9} & \frac{1}{9} \\ \end{pmatrix}$
         seems to provide as good results as any other.
   
-  \item Combine the unblurred and blurred images by taking from the blurred only
-        where inpainting should be performed.
-        
+  \item Combine the unblurred and blurred images by taking from the blurred image
+  on the inpainted region, taking from the original image outside the inpainted region.
+  
   \item Repeat steps 1-2 for as many iterations as necessary until there is no
         significant change. This depends on the diameter of the areas to be inpainted.
         For typical dust / scratch inpainting at full resolution of the scanner,
@@ -2076,10 +2076,10 @@ very acceptable results.
 \begin{figure}[H]
   \caption{Diffusion inpainting}
   \centering
-  \subfloat[1 iteration]{\includegraphics[width=0.49\textwidth]{images/inpaint_4a.jpg}} \ 
-  \subfloat[10 iterations]{\includegraphics[width=0.49\textwidth]{images/inpaint_4b.jpg}}
+  \subfloat[1 iteration]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_inpaint_4a.jpg}} \ 
+  \subfloat[10 iterations]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_inpaint_4b.jpg}}
   
-  \subfloat[100 iterations]{\includegraphics[width=0.49\textwidth]{images/inpaint_4c.jpg}}
+  \subfloat[100 iterations]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_inpaint_4c.jpg}}
 \end{figure}
 
 \subsection{Automatic cropping}
@@ -2175,7 +2175,7 @@ the image is slightly rotated.
 \begin{figure}[H]
   \caption{Applying crop algorithm to image}
   \centering
-  \includegraphics[width=0.8\textwidth]{images/crop_steps/step6.jpg}
+  \includegraphics[width=\textwidth]{images/jpg/imgproc_autocrop.jpg}
 \end{figure}
 
 \subsubsection{Performance}

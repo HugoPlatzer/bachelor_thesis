@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 PCAPFILE=../captures/scan_main.pcapng
 OFFSETS="171 1229 1510 3065 5000"

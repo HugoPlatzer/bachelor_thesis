@@ -5,8 +5,8 @@ import numpy as np
 import argparse
 
 
-def drawLines(img, horizLines, vertiLines, step = 1e3,
-              colorHoriz = (0, 0, 255), colorVerti = (0, 127, 255), width = 1):
+def drawLines(img, horizLines, vertiLines, step = 1e5,
+              colorHoriz = (0, 0, 255), colorVerti = (0, 127, 255), width = 3):
   lines = [(l[0], l[1], "H") for l in horizLines]
   lines += [(l[0], l[1], "V") for l in vertiLines]
   for rho, theta, direction in lines:
@@ -20,7 +20,7 @@ def drawLines(img, horizLines, vertiLines, step = 1e3,
     cv.line(img, p1, p2, color, width)
 
 
-def classifyLines(lines, tolerance = 0.05):
+def classifyLines(lines, tolerance = 0.01):
   horizLines, vertiLines = [], []
   for rho, theta in lines:
     lineAngle = theta - np.pi / 2
@@ -47,7 +47,7 @@ def intersectLines(linesA, linesB):
   return [intersectTwoLines(l1, l2) for l1 in linesA for l2 in linesB]
 
 
-def drawPoints(img, points, color = (0, 255, 0), size = 2):
+def drawPoints(img, points, color = (0, 255, 0), size = 3):
   for p in points:
     cv.line(img, p, p, color, size)
 
@@ -108,14 +108,14 @@ def cropImage(args):
   
   if args.visualize:
     cropRectColor = (255, 0, 0)
-    cropRectWidth = 1
+    cropRectWidth = 3
     cv.imshow("gray", gray)
     cv.imshow("threshold", thresh)
     cv.imshow("edges", edges)
     drawLines(img, horizLines, vertiLines)
     drawPoints(img, intersections)
     cv.rectangle(img, cropTopLeft, cropBtmRight, cropRectColor, cropRectWidth)
-    cv.imshow("image", img)
+    cv.imwrite("visualize.png", img)
     cv.waitKey(0)
 
 

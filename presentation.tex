@@ -9,6 +9,8 @@
 \usepackage{graphbox}
 \usepackage[autostyle=true,german=quotes]{csquotes}
 \MakeOuterQuote{"}
+\usetikzlibrary{positioning}
+
 \begin{document}
 
 
@@ -21,9 +23,12 @@
 }
 
 \usebackgroundtemplate{
-  \tikz\node[opacity=0.3]
-  {\includegraphics[height=\paperheight,width=\paperwidth]
-  {images/presentation/the_scanner.jpg}};
+  \begin{tikzpicture}
+    \node[opacity=0.3,
+          minimum width=\paperwidth,
+          minimum height=\paperheight] {
+    \includegraphics[width=0.7\paperwidth]{images/jpg/device.jpg}};
+  \end{tikzpicture}
 }
 
 \title{Entwicklung eines Treibers für einen Filmscanner mittels USB-Sniffing und Reverse Engineering}
@@ -37,9 +42,9 @@
   \begin{itemize}
     \item Zum Digitalisieren von Kleinbilddias / -negativen
     \begin{figure}[H]
-      \subfloat{\includegraphics[height=1.5cm]{images/presentation/film_pos.jpg} }
+      \subfloat{\includegraphics[height=1.5cm]{images/jpg/film_slide.jpg} }
       \quad
-      \subfloat{\includegraphics[height=1.5cm]{images/presentation/film_neg.jpg} }
+      \subfloat{\includegraphics[height=1.5cm]{images/jpg/film_negstrip.jpg} }
       \hspace{\fill}
     \end{figure}
     \item Per USB verbunden
@@ -107,7 +112,7 @@
 
 \frame{\frametitle{Wireshark}
   \noindent\makebox[\textwidth]{
-    \includegraphics[width=\paperwidth]{images/presentation/wireshark.jpg}
+    \includegraphics[width=\paperwidth]{images/jpg/sniff_wireshark.jpg}
   }
 }
 
@@ -116,7 +121,7 @@
     \item Bei großen Paketen wird Payload nach 61440 Bytes abgeschnitten
     \item visuell: Risse im rekonstruierten Bild
       \begin{figure}[H]
-        \includegraphics[height=4cm,left]{images/reconstruct_missing.jpg}
+        \includegraphics[height=4cm,left]{images/jpg/usbmon_chopped.jpg}
       \end{figure}
     \item gelöst durch einfachen Kernel-Patch
     
@@ -136,7 +141,7 @@
     \item Bilddaten werden über große Bulk-Transfers übertragen
     \item zeilenweise 16-bit Little Endian Pixelwerte
     \begin{figure}[H]
-      \includegraphics[height=1.3cm,left]{images/extract_sniff2.jpg}
+      \includegraphics[height=1.3cm,left]{images/jpg/extract_sniff_2.jpg}
     \end{figure}
     \item eingehende Bytes am Bulk-Endpoint sammeln, dann weiterverarbeiten:
     \begin{itemize}
@@ -151,16 +156,22 @@
 
 \frame{\frametitle{Rekonstruktion des Bildes}
     \noindent\makebox[\textwidth]{
-    \includegraphics[height=4cm]{images/presentation/extract_raw.jpg}
-    \includegraphics[height=4cm]{images/extract_3.jpg}
-    \includegraphics[height=4cm]{images/extract_2.jpg}
-    \includegraphics[height=2cm]{images/extract_5.jpg}
+    \includegraphics[height=4cm]{images/jpg/extract_image_1.jpg}
+    \includegraphics[height=4cm]{images/jpg/extract_image_3.jpg}
+    \includegraphics[height=4cm]{images/jpg/extract_image_2.jpg}
+    \includegraphics[height=2cm]{images/jpg/extract_image_5.jpg}
     }
-    \\ \vspace{0.1cm}
+    
+    \vspace{0.5cm}
     \noindent\makebox[\textwidth]{
-    \includegraphics[height=2.5cm]{images/presentation/extract_channels.jpg}
-    \includegraphics[height=2.5cm]{images/extract_7a.jpg}
-    \includegraphics[height=2.5cm]{images/extract_7b.jpg}
+    \begin{tikzpicture}
+      \node[inner sep=0, outer sep=0.3mm] (Ar) {\includegraphics[height=1.25cm]{images/jpg/extract_image_6c.jpg}};
+      \node[inner sep=0, outer sep=0.3mm, right=0 of Ar] (Ag) {\includegraphics[height=1.25cm]{images/jpg/extract_image_6a.jpg}};
+      \node[inner sep=0, outer sep=0.3mm, below=0 of Ar] (Ab){\includegraphics[height=1.25cm]{images/jpg/extract_image_6d.jpg}};
+      \node[inner sep=0, outer sep=0.3mm, right=0 of Ab] (Ai) {\includegraphics[height=1.25cm]{images/jpg/extract_image_6b.jpg}};
+      \node[inner sep=0, outer sep=0.3mm, right=0 of Ag.south east] (B) {\includegraphics[height=2.56cm]{images/jpg/extract_image_7a.jpg}};
+      \node[inner sep=0, outer sep=0.3mm, right=0 of B] (C) {\includegraphics[height=2.56cm]{images/jpg/extract_image_7b.jpg}};
+    \end{tikzpicture}
     }
 }
 
@@ -170,14 +181,14 @@
     \item Grundidee: aufgezeichnete Befehlsfolge zum Gerät wieder abspielen, eingehende Daten speichern
     \item viele Muster in der Kommunikation erkennbar
     \begin{figure}[H]
-      \includegraphics[height=6cm,left]{images/presentation/sniff_pattern.jpg}
+      \includegraphics[height=6cm,left]{images/jpg/sniff_pattern.jpg}
     \end{figure}
   \end{itemize}
 }
 
 \frame{\frametitle{Zeitdiagramm}
   \begin{figure}[H]
-    \includegraphics[height=7cm]{images/presentation/time_diagram.pdf}
+    \includegraphics[height=7cm]{images/pdf/time_diagram_ger.pdf}
   \end{figure}
   \begin{itemize}
     \item an bestimmten Stellen auf Bereitschaft des Geräts warten, sonst Absturz
@@ -207,12 +218,12 @@
       \begin{figure}[H]
         \raggedright
         \begin{tabular}{llll}
-        & \includegraphics[height=2cm, align=c]{images/presentation/division_1.jpg} &
+        & \includegraphics[height=2cm, align=c]{images/jpg/imgproc_calib_1.jpg} &
         $/$ &
-        \includegraphics[height=2cm, align=c]{images/presentation/division_2.jpg} \\
+        \includegraphics[height=2cm, align=c]{images/jpg/imgproc_calib_2.jpg} \\
         & & & \\
         $=$ &
-        \includegraphics[height=2cm, align=c]{images/presentation/division_3.jpg} & & \\
+        \includegraphics[height=2cm, align=c]{images/jpg/imgproc_calib_3.jpg} & & \\
         \end{tabular}
       \end{figure}
       
@@ -225,13 +236,13 @@
 
 \frame{\frametitle{Staub-/Kratzerkorrektur}
   \begin{figure}[H]
-    \includegraphics[height=4cm]{images/presentation/inpaint_1.jpg}
+    \includegraphics[width=0.47\textwidth]{images/jpg/imgproc_inpaint_1.jpg}
     \quad
-    \includegraphics[height=4cm]{images/presentation/inpaint_2.jpg} \\
+    \includegraphics[width=0.47\textwidth]{images/jpg/imgproc_inpaint_2.jpg} \\
     \vspace{0.1cm}
-    \includegraphics[height=4cm]{images/presentation/inpaint_3.jpg}
+    \includegraphics[width=0.47\textwidth]{images/jpg/imgproc_inpaint_3.jpg}
     \quad
-    \includegraphics[height=4cm]{images/presentation/inpaint_4.jpg}
+    \includegraphics[width=0.47\textwidth]{images/jpg/imgproc_inpaint_4c.jpg}
   \end{figure}
 }
 
