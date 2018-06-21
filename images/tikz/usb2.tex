@@ -1,0 +1,13 @@
+\documentclass[border=1cm]{standalone}
+% \url{http://tex.stackexchange.com/q/26382/86}
+\usepackage{tikz}
+\usetikzlibrary{intersections,decorations.markings}
+
+
+\begin{document}
+\begin{tikzpicture}
+\draw[ultra thick,name path=mypath] (0,0) circle[radius=1cm];
+\fill[blue,use path=mypath] (0,0) rectangle (1,1);
+\draw[use path=mypath,postaction={decorate},decoration={markings,mark=at position .5 with {\arrow[orange,line width=5pt]{>};}}] (3,3) -- (4,4);
+\end{tikzpicture}
+\end{document}

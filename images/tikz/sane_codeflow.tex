@@ -1,0 +1,75 @@
+\begin{tikzpicture}
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+\setitemize{leftmargin=*,topsep=5pt,partopsep=0pt,parsep=0pt}
+\node (A) { \begin{minipage}{8cm}
+  \begin{itemize}
+    \item {\tt sane\_init()}
+      \begin{itemize}
+      \item pick desired device, possibly using \\{\tt sane\_get\_devices()}
+      \end{itemize}
+  \end{itemize}
+  \end{minipage}
+};
+
+\node[below right = 0 and -7.8 of A] (B) { \begin{minipage}{8cm}
+  \begin{itemize}
+    \item {\tt sane\_open()}
+  \end{itemize}
+  \end{minipage}
+};
+
+\node[below right = 0 and -7.8 of B] (C) { \begin{minipage}{8cm}
+  \begin{itemize}
+    \item use
+      \begin{itemize}
+        \item {\tt sane\_get\_option\_descriptor()}
+        \item {\tt sane\_contol\_option()}
+      \end{itemize}
+      repeatedly to configure device as desired
+  \end{itemize}
+  \end{minipage}
+};
+\node[below = 0.3 of C] (D) { \begin{minipage}{8cm}
+  \begin{itemize}
+    \item {\tt sane\_start()}
+    \item use
+      \begin{itemize}
+        \item {\tt sane\_get\_parameters()}
+        \item {\tt sane\_read()}
+      \end{itemize}
+      repeatedly until read returns EOF
+    \item go back to {\tt sane\_start()} if more frames desired
+    \item {\tt sane\_cancel()}
+  \end{itemize}
+  \end{minipage}
+};
+
+\node[below left = 0 and -7.8 of D] (E) { \begin{minipage}{8cm}
+  \begin{itemize}
+    \item {\tt sane\_close()}
+  \end{itemize}
+  \end{minipage}
+};
+
+\node[below left = 0 and -7.8 of E] (F) { \begin{minipage}{8cm}
+  \begin{itemize}
+    \item {\tt sane\_exit()}
+  \end{itemize}
+  \end{minipage}
+};
+
+\draw[decorate, decoration={brace, amplitude=3mm}]
+  (C.north east) -- (C.south east)
+  node[midway,right=0.3] {\it device setup};
+
+\draw[decorate, decoration={brace, amplitude=3mm}]
+  (D.north east) -- (D.south east)
+  node[midway,right=0.3] {\it image acquisition};
+\begin{pgfonlayer}{background}
+  \fill[gray!15] (A.north west) rectangle ($(D.north east)!(F.south east)!(D.south east)$);
+  \fill[gray!25] (B.north west) rectangle ($(D.north east)!(E.south east)!(D.south east)$);
+  \fill[gray!35] (C.north west) rectangle (C.south east);
+  \fill[gray!35] (D.north west) rectangle (D.south east);
+\end{pgfonlayer}
+\end{tikzpicture}

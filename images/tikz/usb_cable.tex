@@ -1,0 +1,53 @@
+\begin{tikzpicture}
+\usetikzlibrary{intersections}
+
+\path[draw,name path=ellipse] (0, 0) ellipse (0.09 and 0.47);
+\draw (0, 0.47) -- (-1.90, 0.47);
+\draw (0, -0.47) -- (-1.90, -0.47);
+\path[draw,name path=circle] (-1.90, 0.47) arc (90:270:0.47);
+
+\node[anchor=west,scale=0.5] at (0.3, 0.33) {$V_{BUS}$};
+\node[anchor=west,scale=0.5] at (0.3, 0.1) {$D_+$};
+\node[anchor=west,scale=0.5] at (0.3, -0.1) {$D_-$};
+\node[anchor=west,scale=0.5] at (0.3, -0.33) {$GND$};
+
+\draw[line width=1] (0.3, 0.33) -- (0, 0.33);
+\draw (0.3, 0.1) -- (0, 0.1);
+\draw (0.3, -0.1) -- (0, -0.1);
+\draw[line width=1] (0.3, -0.33) -- (0, -0.33);
+
+\path[name path=line1] (-2.7, 0.33) -- (0, 0.33);
+\path[name path=line2] (-2.7, 0.1) -- (0, 0.1);
+\path[name path=line3] (-2.7, -0.1) -- (0, -0.1);
+\path[name path=line4] (-2.7, -0.33) -- (0, -0.33);
+
+\path [name intersections={of=ellipse and line1}];
+\draw[line width=1] (intersection-1) -- (-2, 0.33);
+\path [name intersections={of=ellipse and line2}];
+\draw (intersection-1) -- (-0.48, 0.1);
+\path [name intersections={of=ellipse and line3}];
+\draw (intersection-1) -- (-0.48, -0.1);
+\path [name intersections={of=ellipse and line4}];
+\draw[line width=1] (intersection-1) -- (-2, -0.33);
+
+\draw[variable=\x,domain=-0.48:(-8*pi)/20-0.48,smooth,samples=100] plot (\x, {0.1*cos(deg((\x+0.48)*30))});
+\draw[variable=\x,domain=-0.48:(-8*pi)/20-0.48,smooth,samples=100] plot (\x, {-0.1*cos(deg((\x+0.48)*30))});
+
+\draw (-1.73663, 0.1) -- (-2.1, 0.1);
+\draw (-1.73663, -0.1) -- (-2.1, -0.1);
+
+\path [name intersections={of=circle and line1}];
+\draw[line width=1] (intersection-1) -- (-2.7, 0.33);
+\path [name intersections={of=circle and line2}];
+\draw (intersection-1) -- (-2.7, 0.1);
+\path [name intersections={of=circle and line3}];
+\draw (intersection-1) -- (-2.7, -0.1);
+\path [name intersections={of=circle and line4}];
+\draw[line width=1] (intersection-1) -- (-2.7, -0.33);
+
+\node[anchor=east,scale=0.5] at (-2.7, 0.33) {$V_{BUS}$};
+\node[anchor=east,scale=0.5] at (-2.7, 0.1) {$D_+$};
+\node[anchor=east,scale=0.5] at (-2.7, -0.1) {$D_-$};
+\node[anchor=east,scale=0.5] at (-2.7, -0.33) {$GND$};
+
+\end{tikzpicture}
