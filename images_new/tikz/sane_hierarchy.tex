@@ -1,0 +1,77 @@
+\begin{tikzpicture}
+\pgfdeclarelayer{background}
+\pgfsetlayers{background,main}
+
+\tikzset{font={\fontsize{16}{16} \selectfont}}
+
+\tikzset{nstyle/.style={
+  inner sep=0,
+  outer sep=0,
+  text height=14,
+  text depth=5,
+  minimum width=60,
+}}
+
+\node[style=nstyle] (machineA) {\it machine A};
+\node[style=nstyle, draw, below = 0.5 of machineA] (dll) {dll};
+\node[style=nstyle, draw, below = 1 of dll] (mustek) {mustek};
+\node[style=nstyle, draw, left = 0.5 of mustek] (pnm) {pnm};
+\node[style=nstyle, draw, right = 0.5 of mustek] (net) {net};
+\node[style=nstyle, below = 0.5 of pnm] (pnmFiles) {\it pnm files};
+\node[style=nstyle, below = 0.5 of mustek] (scanner) {\it scanner};
+
+\node[style=nstyle, right = 6 of machineA] (machineB) {\it machine B};
+\node[style=nstyle, draw, below = 0.5 of machineB] (saned) {saned};
+\node[style=nstyle, draw, below = 0.5 of saned] (dll2) {dll};
+\node[style=nstyle, below = 1 of dll2] (hidden1) {};
+\node[style=nstyle, below = 0.5 of hidden1] (hidden2) {};
+\node[style=nstyle, draw, right = 0.5 of hidden1] (autolum) {autolum};
+\node[style=nstyle, draw, right = 0.5 of hidden2] (qcam) {qcam};
+\node[style=nstyle, draw, left = 0.5 of hidden2] (hp) {hp};
+\node[style=nstyle, below left = 0.5 and -0.5 of hp] (scanner1) {\it scanner 1};
+\node[style=nstyle, below right = 0.5 and -0.5 of hp] (scanner2) {\it scanner 2};
+\node[style=nstyle, below = 0.5 of qcam] (camera) {\it video camera};
+
+\draw
+  (dll.south) -- (mustek.north)
+  (dll.south) -- (pnm.north)
+  (dll.south) -- (net.north)
+  (pnm.south) -- (pnmFiles.north)
+  (mustek.south) -- (scanner.north)
+  (saned.south) -- (dll2.north)
+  (dll2.south) -- (autolum.north)
+  (autolum.south) -- (qcam.north)
+  (dll2.south) -- (hp.north)
+  (hp.south) -- (scanner1.north)
+  (hp.south) -- (scanner2.north)
+  (qcam.south) -- (camera.north);
+
+\useasboundingbox (0,0) rectangle (0,0);
+
+\draw
+  (net.south)
+  .. controls ($(net.south) + (2, -5)$) and
+              ($(saned.north) + (-3, 3)$)
+  .. (saned.north);
+
+\path [postaction={decorate, 
+       decoration={text along path,
+                   text align={left,
+                               left indent=20pt,
+                               right indent=70pt,
+                               fit to path},
+                   text={|\it \Large|network connection}}}]
+  ($(net.south) + (0, 0.1)$)
+  .. controls ($(net.south) + (2, -5) + (0, 0.1)$) and
+              ($(saned.north) + (-3, 3) + (0, 0.1)$)
+  .. ($(saned.north) + (0, 0.1)$);
+
+\begin{pgfonlayer}{background}
+  \fill[gray!20] ($(pnm.north west)!(machineA.north west)!(pnm.south west) + (-0.25,0.25)$)
+    rectangle ($(net.south east) + (0.25,-0.25)$);
+  \fill[gray!20] ($(hp.north west)!(machineB.north west)!(hp.south west) + (-0.25,0.25)$)
+    rectangle ($(qcam.south east) + (0.25,-0.25)$);
+\end{pgfonlayer}
+
+
+\end{tikzpicture}
