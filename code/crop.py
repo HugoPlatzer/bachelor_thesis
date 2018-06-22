@@ -6,7 +6,7 @@ import argparse
 
 
 def drawLines(img, horizLines, vertiLines, step = 1e5,
-              colorHoriz = (0, 0, 255), colorVerti = (0, 127, 255), width = 3):
+              colorHoriz = (0, 0, 255), colorVerti = (0, 127, 255), width = 1):
   lines = [(l[0], l[1], "H") for l in horizLines]
   lines += [(l[0], l[1], "V") for l in vertiLines]
   for rho, theta, direction in lines:
@@ -47,7 +47,7 @@ def intersectLines(linesA, linesB):
   return [intersectTwoLines(l1, l2) for l1 in linesA for l2 in linesB]
 
 
-def drawPoints(img, points, color = (0, 255, 0), size = 3):
+def drawPoints(img, points, color = (0, 255, 0), size = 1):
   for p in points:
     cv.line(img, p, p, color, size)
 
@@ -108,14 +108,14 @@ def cropImage(args):
   
   if args.visualize:
     cropRectColor = (255, 0, 0)
-    cropRectWidth = 3
+    cropRectWidth = 1
     cv.imshow("gray", gray)
     cv.imshow("threshold", thresh)
     cv.imshow("edges", edges)
     drawLines(img, horizLines, vertiLines)
     drawPoints(img, intersections)
     cv.rectangle(img, cropTopLeft, cropBtmRight, cropRectColor, cropRectWidth)
-    cv.imwrite("visualize.png", img)
+    cv.imshow("image", img)
     cv.waitKey(0)
 
 
