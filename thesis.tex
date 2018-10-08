@@ -6,6 +6,7 @@
 \usepackage{float}
 \usepackage{multirow}
 \usepackage{hyperref}
+\usepackage[nameinlink,noabbrev,capitalize]{cleveref}
 \usepackage{subfig}
 \usepackage{amsmath}
 \usepackage{csquotes}
@@ -14,6 +15,7 @@
 \usepackage{enumitem}
 \usepackage{tabularx}
 \usepackage{ltablex}
+\usepackage{xcolor}
 
 \usetikzlibrary{matrix}
 \usetikzlibrary{decorations.text, decorations.pathreplacing}
@@ -22,8 +24,12 @@
 \usetikzlibrary{intersections}
 \usetikzlibrary{positioning}
 
-\renewcommand{\subsectionautorefname}{section}
-\renewcommand{\subsubsectionautorefname}{section}
+\hypersetup{
+    colorlinks,
+    linkcolor={red!50!black},
+    citecolor={blue!50!black},
+    urlcolor={blue!80!black}
+}
 
 \begin{document}
 
@@ -128,7 +134,7 @@ cameras and scanners. Some highlights leading to its wide adoption \cite[p. 11]{
 
 \subsection{Electrical side}
 
-A USB cable has four wires: one as ground, VBUS for a 5 V power supply and two for data transmission (\autoref{fig:usbcable}).
+A USB cable has four wires: one as ground, VBUS for a 5 V power supply and two for data transmission (\cref{fig:usbcable}).
 The power line allows it to draw up to 100 mA without any configuration. This is useful for simple
 devices that are not using the data lanes, just the power, like USB lights. Also it allows for devices
 not taking much power to be self-powered which eliminates the need for an extra power supply and connector.
@@ -167,9 +173,9 @@ Higher frequencies and thus data rates become possible.
 \end{table}
 
 \begin{table}[H]
-  \caption{Low-level data line states (only applies to Full Speed / USB 1.1 links) \cite[p. 145]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | X}
+    \caption{Low-level data line states (only applies to Full Speed / USB 1.1 links) \cite[p. 145]{usbstd}} \\
     Levels & State \\ \hline
     Differential '0' & D- high, D+ low \\
     Differential '1' & D- low, D+ high \\
@@ -186,7 +192,6 @@ Higher frequencies and thus data rates become possible.
   \end{tabularx}
 \end{table}
 
-\pagebreak
 Low Speed is used for devices where speed is not important (mice, keyboards).
 It allows for cheaper cables and electronics. High Speed is only available
 in USB 2.0. For reasons of simplicity, only full speed signaling will be covered
@@ -235,9 +240,10 @@ discard a faulty packet. There are 17 different packet types (PRE and ERR have t
 some are only relevant for High Speed) \cite[p. 195]{usbstd}:
 
 \begin{table}[H]
-  \caption{USB packet types; notice how the least-significant two bits identify the packet category \cite[p. 196]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | l | l | X}
+    \caption{USB packet types; notice how the least-significant two bits identify the packet category \cite[p. 196]{usbstd}} \\
+  
     PID type & PID name & \begin{tabular}{@{}l} PID bits \\ (3..0) \end{tabular} & Description \\ \hline
     \multirow{4}*{Token} & OUT & 0001 & Address + endpoint number for host-to-device transaction \\
                          & IN & 1001 & Address + endpoint number for device-to-host transaction \\
@@ -257,6 +263,7 @@ some are only relevant for High Speed) \cite[p. 195]{usbstd}:
                          & PING & 0100 & High speed control flow probe (only High Speed) \\
                          & Reserved & 0000 & Reserved PID \\
   \end{tabularx}
+  
 \end{table}
 
 \subsubsection{Token packet}
@@ -268,7 +275,7 @@ some are only relevant for High Speed) \cite[p. 195]{usbstd}:
   \label{fig:tokenpacket}
 \end{figure}
 
-Token packets (\autoref{fig:tokenpacket}) are used at the start of so-called transactions to specify the target
+Token packets (\cref{fig:tokenpacket}) are used at the start of so-called transactions to specify the target
 of the transaction on the bus, namely a certain device and endpoint. There are 127
 possible devices on a bus (address 0 is reserved for a device that has not been configured yet).
 \cite[p. 256]{usbstd}
@@ -304,7 +311,7 @@ Used to report the status of a transaction.
 
 \subsection{Transfers}
 
-Transfers (\autoref{fig:usbtransfer}) are the abstraction level of data exchange as seen at the software
+Transfers (\cref{fig:usbtransfer}) are the abstraction level of data exchange as seen at the software
 side of the host. From the host's perspective, a transfer transmits a string of
  bytes from / to the device. A transfer is directed to one of the device's endpoints,
 each of them has one of four transfer types plus a transfer direction
@@ -340,9 +347,11 @@ Control transfers start with a Setup stage / transaction specifying the target d
 and endpoint plus an extra 8 bytes of data called the Device Request \cite[p. 38f.]{usbstd}.
 
 \begin{table}[H]
-  \caption{Device Request format \cite[p. 248]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | l | l | X}
+    \caption{Device Request format \cite[p. 248]{usbstd}} \\
+    \label{table:ctrltransfer}
+    
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
     \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
     
@@ -383,7 +392,6 @@ and endpoint plus an extra 8 bytes of data called the Device Request \cite[p. 38
     6 & wLength & 2 & Number of bytes to be transferred in the data stage
     (0 means no data stage) \\
   \end{tabularx}
-  \label{table:ctrltransfer}
 \end{table}
 
 Depending on the kind of control transfer, there may be a data stage
@@ -398,9 +406,10 @@ its capabilities and set a configuration. For this, there are 11 bRequest values
 called Standard Requests that have to be supported by all devices as part of the standard.
 
 \begin{table}[H]
-  \caption{Some important Standard Requests \cite[p. 250]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | l | X | X}
+    \caption{Some important Standard Requests \cite[p. 250]{usbstd}} \\
+    
     bRequest & \begin{tabular}{@{}l}  bmRequestType \\ (7..0) \end{tabular}
      & wValue & wIndex \\ \hline
     
@@ -490,9 +499,10 @@ After setting the address, a GET\_DESCRIPTOR
 device request is made, asking for the device descriptor.
 
 \begin{table}[H]
-  \caption{Device descriptor format \cite[p. 262f.]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | l | l | X}
+    \caption{Device descriptor format \cite[p. 262f.]{usbstd}} \\
+    
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
     \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
     
@@ -537,9 +547,10 @@ and their characteristics.
 Only one configuration can be active at a time \cite[p. 244]{usbstd}.
 
 \begin{table}[H]
-  \caption{Configuration descriptor format \cite[p. 265]{usbstd}.}
   \centering
   \begin{tabularx}{\textwidth}{l | l | l | X}
+    \caption{Configuration descriptor format \cite[p. 265]{usbstd}.} \\
+    
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
     \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
     
@@ -564,9 +575,10 @@ Additionally, interfaces can have alternate settings that change its endpoints' 
 Device drivers are often assigned to serve a specific interface rather than an entire device.
 
 \begin{table}[H]
-  \caption{Interface descriptor format \cite[p. 268f.]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | l | l | X}
+    \caption{Interface descriptor format \cite[p. 268f.]{usbstd}} \\
+    
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
     \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
 
@@ -587,9 +599,10 @@ Device drivers are often assigned to serve a specific interface rather than an e
 Endpoint descriptors specify an endpoint's address, type, and polling interval.
 
 \begin{table}[H]
-  \caption{Endpoint descriptor format \cite[p. 269ff.]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | l | l | X}
+    \caption{Endpoint descriptor format \cite[p. 269ff.]{usbstd}} \\
+    
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
     \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
     0 & bLength & 1 & Descriptor size in bytes \\
@@ -609,9 +622,9 @@ String descriptors provide information about the device in human-readable form.
 String descriptor 0 transmits language codes supported by the device.
 
 \begin{table}[H]
-  \caption{String descriptor format \cite[p. 273f.]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | l | l | X}
+    \caption{String descriptor format \cite[p. 273f.]{usbstd}} \\
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
     \begin{tabular}{@{}l} Size \\ (bytes) \end{tabular} & Description \\ \hline
     0 & bLength & 1 & Descriptor size in bytes \\
@@ -623,7 +636,8 @@ String descriptor 0 transmits language codes supported by the device.
 \section{USB sniffing}
 
 USB sniffing is the process of recording communication on the USB bus.
-This is useful for device developers, driver developers, keyloggers etc.
+This is useful for device developers, driver developers, keyloggers and other
+applications.
 
 \subsection{Hardware vs. software sniffing}
 \label{ssec:snifferscompared}
@@ -641,7 +655,7 @@ to some software running on the same host.
 \begin{itemize}
 \item Independent of the host, not affected by bugs in its USB hardware / software
 \item Allow analysis down to the lowest level (voltage levels between wires)
-\item See all packets transmitted, including unsuccessful transactions etc.
+\item Present all packets transmitted, including unsuccessful transactions
 \end{itemize}
 
 \paragraph*{Advantages of purely software USB analyzers:}
@@ -655,26 +669,31 @@ to some software running on the same host.
 
 {\it usbmon} is a module for the Linux kernel that allows access to
 USB request blocks (URBs) as they are being processed. URBs are a
-data structure of the Linux kernel and loosely correspond to USB transfers. \cite{usbmon}
+data structure of the Linux kernel and loosely correspond to USB transfers \cite{usbmon}.
 
 \subsubsection{Payload size limitation}
 
 An interesting pitfall when using {\it usbmon} is that for URBs with a payload
 longer than 61440 bytes only the first 61440 are captured, the rest is truncated.
-Others have faced this problem, unsure where it comes from and what to do: \cite{usbmon_others}
+This becomes evident when looking at the details of such a bulk transfer in Wireshark (\cref{fig:bulkxfer_wireshark}),
+where the "Data length" (captured payload bytes) is smaller than the URB length (total payload bytes).
+When reconstructing the image from this recording, tearing artifacts occur (\cref{fig:bulkxfer_tearing})
+because in the pixel stream missing bytes cause parts of some rows to be missing, leading to
+misalignment in subsequent rows.
+Others have faced this problem, unsure where it comes from and what to do (\cite{usbmon_others}).
 
 \begin{figure}[H]
-  \caption{A large bulk transfer in Wireshark, {\it Data length} $<$ {\it URB length}
-           indicates missing bytes.}
+  \caption{A large bulk transfer in Wireshark}
   \centering
   \includegraphics[width=0.8\textwidth]{images/jpg/usbmon_wireshark.jpg}
+  \label{fig:bulkxfer_wireshark}
 \end{figure}
 
 \begin{figure}[H]
-  \caption{Image reconstructed from payloads. The frequent tearing is caused by the large
-  65520 byte transfers being truncated to 61440 bytes.}
+  \caption{Image reconstructed from payloads}
   \centering
   \includegraphics[width=0.8\textwidth]{images/jpg/usbmon_chopped.jpg}
+  \label{fig:bulkxfer_tearing}
 \end{figure}
 
 \subsubsection{Kernel patching}
@@ -720,7 +739,7 @@ Packets can be filtered by field values and only the desired fields printed.
 
 Wireshark version 2.2.6 was used, other versions may be significantly different.
 
-\subsubsection{Steps}
+\subsubsection{Sniffing procedure when using Wireshark}
 \label{sniffingprocess}
 
 \begin{enumerate}
@@ -728,7 +747,7 @@ Wireshark version 2.2.6 was used, other versions may be significantly different.
         Ideally, make sure there are no other devices
         on this bus (except the root hub). Try to plug it into different ports.
   
-  \item Load the {\it usbmon} kernel module. ({\it modprobe usbmon} as root)
+  \item Load the {\it usbmon} kernel module ({\it modprobe usbmon} as root).
   
   \item Launch {\it wireshark} as root.
   
@@ -739,10 +758,10 @@ Wireshark version 2.2.6 was used, other versions may be significantly different.
 
 \subsubsection{Customize columns}
 
-For USB sniffing, it is useful to have the most important packet fields as columns.
+For USB sniffing it is useful to have the most important packet fields as columns.
 This allows a good insight into the data flow at a certain time when scrolling through the packet list.
 Also, packets can be sorted using some column, allowing them to be grouped according to endpoint,
-payload length etc. 
+payload length and other criteria.
 
 To manage columns, go to {\it Edit $\,\to\,$ Preferences $\,\to\,$ Columns}. New columns are best added
 by right clicking on the desired field in the analysis window and selecting "Apply as column".
@@ -756,7 +775,7 @@ For going through long sequences of control transfers, columns for the control t
 \subsubsection{Disable non-USB protocols}
 \label{nonusb}
 
-For USB sniffing, none of the supplied protocol dissectors except USB are helpful.
+For USB sniffing none of the supplied protocol dissectors except USB are helpful.
 Even worse, they can get in the way by seeing the first bytes of the data payload match
 some pattern which causes them to be interpreted as some protocol while they are just raw pixel
 values. For these packets, the {\it usb.capdata} field becomes unavailable which makes their
@@ -767,8 +786,6 @@ To fix this, go to {Analyze $\,\to\,$ Enabled protocols}, click "Disable all" an
 then enable only USB. \cite[Section 10.4]{wireshark_userguide}
 
 \subsection{Example}
-
-\subsubsection{Scenario}
 
 To provide some insight into the sniffing process and how the recorded data can be
 interpreted, I chose to record keystrokes from a USB keyboard. Since USB keyboards
@@ -785,12 +802,12 @@ For brevity, only a few of the captured packets are discussed here.
 
 \subsubsection{Device configuration}
 
-When the device is connected, a process like in \autoref{devinit} starts.
+When the device is connected, a process like in \cref{devinit} starts.
 The device is reset, an address issued and descriptors queried. The device
 descriptor and the interface / endpoint descriptor are shown here.
 
 \begin{figure}[H]
-  \caption{Device descriptor of USB keyboard}
+  \caption{Device descriptor of USB keyboard.}
   \centering
   \includegraphics[width=\textwidth]{images/jpg/sniff_keyboard_1.jpg}
 \end{figure}
@@ -810,7 +827,7 @@ Interrupt transfers should be performed there every 10ms.
 The data received from the endpoint is an 8-byte HID report giving information
 about pressed keys. The first of these bytes describes pressed modifier keys
 (Ctrl, Alt etc.) the second byte is reserved, the third byte describes the
-actual pressed key. \cite{usbhid}
+actual pressed key \cite{usbhid}.
 
 \subsubsection{Data transmitted while keys are pressed}
 
@@ -818,10 +835,12 @@ actual pressed key. \cite{usbhid}
   \caption{HID reports from USB keyboard}
   \centering
   \includegraphics[width=\textwidth]{images/jpg/sniff_keyboard_3.jpg}
+  \label{fig:usbkeyboard_reports}
 \end{figure}
 
-In \cite[p.53]{usbusage} the byte values 04 and 05 stand for the a and
-b keys respectively.
+\cref{fig:usbkeyboard_reports} shows the HID reports send by the analyzed
+keyboard while pressing and releasing the 'a' and 'b' keys.
+In \cite[p.53]{usbusage} the byte values 04 and 05 stand for the 'a' and 'b' keys respectively.
 
 \subsection{Sniffing using VirtualBox}
 \label{ssec:virtualbox}
@@ -837,6 +856,12 @@ relays communication between the actual device on the host and the virtual devic
 to a virtual USB controller for the guest.
 The passthrough is limited to devices with a specified vendor / product ID combination,
 new devices can be added by selecting the machine and clicking (Settings $\,\to\,$ USB).
+
+\subsection{Sniffing the test device}
+The described sniffing and analysis procedure will be used in the next section to
+record USB traffic from the scanner while it is transmitting an image. The transmitted
+image should then be reconstructed from this recording and compared to the image
+the vendor software saves to disk.
 
 \section{Image extraction}
 \label{sec:extract}
@@ -868,8 +893,8 @@ get any kind of calibration data being exchanged only during the first scan.
 Wireshark recording was started before starting the scanner software and stopped
 after the software had saved the image.
 
-It is important to use a kernel capable of recording the full payload (\autoref{ssec:kernelpatch})
-and also to disable extra protocols in Wireshark (\autoref{nonusb}).
+It is important to use a kernel capable of recording the full payload (\cref{ssec:kernelpatch})
+and also to disable extra protocols in Wireshark (\cref{nonusb}).
 
 A color slide photo of a lake, mountain peaks, green / yellow trees,
 reflections in the water and sky was used as target.
@@ -878,34 +903,36 @@ is red, green or blue and provides a good impression of overall image quality.
 
 \subsection{Looking at the capture}
 
-\begin{figure}[H]
-  \caption{Large bulk transfers}
-  \centering
-  \includegraphics[width=\textwidth]{images/jpg/extract_sniff_1.jpg}
-\end{figure}
-
 The scan took about 30 seconds and generated a capture around 18 megabytes
 in size. The image saved by the scanner software was 1644 x 1069 pixels large.
 When scrolling through the capture, there are many large bulk transfers
-incoming from endpoint 1. It seems likely these contain the image data.
+incoming from endpoint 1 (\cref{fig:large_bulkxfers}). It seems likely these contain the image data.
 Since scanners work on a line-by-line basis and the data is transferred
 in small chunks during the scan, the pixels are probably transferred
 one line after the other.
 
 \begin{figure}[H]
-  \caption{Even (dark) and odd (light) offset bytes of payload}
+  \caption{Large bulk transfers}
   \centering
-  \includegraphics[width=\textwidth]{images/jpg/extract_sniff_2.jpg}
+  \includegraphics[width=\textwidth]{images/jpg/extract_sniff_1.jpg}
+  \label{fig:large_bulkxfers}
 \end{figure}
-
-\label{capture_highlowbytes}
 
 When looking at the payload of one of the transfers, bytes with odd offset
 have little variation among their neighbors while those with even offset
-seem almost random. This suggests the scanner delivers uncompressed
-16 bit per pixel little-endian data:
+seem almost random (\cref{fig:evenoddoffset}).
+This suggests the scanner delivers uncompressed 16 bit per pixel little-endian data:
 The odd bytes contain the approximate brightness and
 the even bytes the fine nuances (noise).
+
+\begin{figure}[H]
+  \caption{Even (dark) and odd (light) offset bytes of payload}
+  \centering
+  \includegraphics[width=\textwidth]{images/jpg/extract_sniff_2.jpg}
+  \label{fig:evenoddoffset}
+\end{figure}
+
+\label{capture_highlowbytes}
 
 \subsection{Extraction tool}
 
@@ -938,26 +965,27 @@ it performs the following steps:
 \subsection{Results}
 \label{ssec:extract_results}
 
+The transferred bytes form three distinct images (\cref{fig:extract_calibprevmain}): The first section
+is a calibration scan, the second is a low-resolution preview scan and the third (largest)
+is the actual 1200 dpi scan. The main scan will be analyzed next,
+while the calibration scan is analyzed in \cref{ssec:calibration}.
+The pre-scan is not studied further since its purpose can be served by
+doing a low-dpi regular scan.
+
 \begin{figure}[H]
   \caption{Transferred bytes, line width 1644}
   \centering
   \includegraphics[height=6cm]{images/jpg/extract_sections.jpg}
+  \label{fig:extract_calibprevmain}
 \end{figure}
 
-The transferred bytes form three distinct images: The first section
-is a calibration scan, the second is a low-resolution preview scan and the third (largest)
-is the actual 1200 dpi scan. The main scan will be analyzed next,
-while the calibration scan is analyzed in \autoref{ssec:calibration}.
-The pre-scan is not studied further since its purpose can be served by
-doing a low-dpi regular scan.
-
-\subsubsection{Offsets, line width}
+\subsubsection{Line width and offsets}
 
 To find the exact line width, the guessed line width was incremented / decremented by trial-and-error.
 The line width is correct when vertical lines in the image (mountain peaks in this case) no
 longer appear distorted. The correct line width was found to be 1645.
 
-Only the high bytes were kept to transform the 16-bit pixel values to 8-bit grayscale (\autoref{capture_highlowbytes}),
+Only the high bytes were kept to transform the 16-bit pixel values to 8-bit grayscale (\cref{capture_highlowbytes}),
 this is done with the {\it --byteNth 2} option and a proper {\it --byteOffset}. In this capture,
 the high bytes are at even offsets (use trial-and-error), so {\it --byteOffset} must be even to keep
 high rather than low bytes. This however depends on the number of bytes before the actual image.
@@ -999,7 +1027,7 @@ look good, removing unwanted lines on top while keeping all of the main scan.
   \includegraphics[width=8cm]{images/jpg/extract_image_5.jpg}
 \end{figure}
 
-When looking at the image of \autoref{fig:extract_step1} in detail,
+When looking at the image of \cref{fig:extract_step1} in detail,
 the pixels follow an interleaved line pattern of length 4. For each of
 the different channels red, green, blue and infrared there is a suitable
 value modulo 4 such that the image of this channel is defined by all lines
@@ -1023,22 +1051,23 @@ Thanks to the choice of image scanned, knowing which offset corresponds to what 
 is easy: 840 is green, 841 infrared (only dust visible), 842 red (bright yellow trees), 843 blue (bright sky).
 The order of channels can vary depending on how much data was skipped at the beginning.
 
-The infrared channel will be used in \autoref{sec:imgproc} to remove dust at the other color channels.
+The infrared channel will be used in \cref{sec:imgproc} to remove dust at the other color channels.
 
 \subsubsection{Channel alignment, combination, gamma correction}
 \label{sssec:channelcombine}
 
-The extracted color channels are vertically misaligned, to fix this the
-channel which is the furthest "up" (i.e. the channel for which all other channels only need
+In a line image sensor, the detectors for different channels are stacked vertically, this
+means the image for each channel will be a few rows out of alignment with the other channels.
+To realign, the channel that is the furthest "up" (i.e. the channel for which all other channels only need
 upwards shifting to align) is determined. Then, for each of the other channels the number
-of lines it needs to be moved up to align is determined. This is done visually in GIMP by
+of lines it needs to be moved up to be aligned is determined. This is done visually in GIMP by
 opening the channels as layers and reducing the opacity of the channel to be aligned.
 The dust specks on the scan are ideal anchors for alignment.
 
 The red channel was found to be the furthest up, the green and infrared channels
 needed to be moved up 3 lines and the blue channel 5 lines.
 These numbers are multiplied by 4
-(because of interleaving) and added to the channel line offsets found in \autoref{ssec:deinterleave}.
+(because of interleaving) and added to the channel line offsets found in \cref{ssec:deinterleave}.
 The line offsets now are: red 842 (same as before), green 852 (+12), infrared 853 (+12), blue 863 (+20).
 
 Due to the different line offsets, some channels have more lines than others.
@@ -1073,19 +1102,19 @@ converted back to the range $[0, 255]$. This is the resulting 1045x1060 color im
 
 The color balance / saturation / contrast is different to the original because of postprocessing
 done by CyberView. Vertical stripes on the extracted image could be removed with
-the help of the calibration scan.
-CyberView also removes dust using the infrared channel (called Digital ICE).
+the help of the calibration scan (\cref{ssec:calibration}).
+CyberView also removes dust using the infrared channel (called Digital Image Correction and Enhancement).
 
 \subsection{Calibration image}
 \label{ssec:calibration}
 
-The extracted image has some level of vertical stripes, i.e the brightness is
+The extracted image has some level of vertical stripes, i.e. the brightness is
 slightly different per column. This is caused by slight differences in sensitivity
 among pixels of the line sensor.
 To correct this, the scanner scans a small area where there is only the white background.
-This image can be used to "subtract" (actually it's a division operation) the unwanted
+This image can be used to "subtract" (actually a division operation) the unwanted
 brightness differences from the actual scan.
-The calibration image is transferred before the other scans: \autoref{ssec:extract_results}
+The calibration image is transferred before the other scans (\cref{ssec:extract_results}).
 
 As for the regular scan, we need to identify the right offsets, width, height, and
 extract the channels. As these parameters do not vary with scan parameters and the
@@ -1093,13 +1122,13 @@ calibration image covers the whole sensor width, this only
 has to be done once. This however means the image needs to be adapted (cropped, downscaled)
 based on the vertical area and resolution of the actual scan.
 
-Determining the line width is harder because we don't have a rough guess like the
-vendor software image width and there is no image to orient by. It helps that there
-is a pattern (darker pixel) at the start of each line. So we can extract the image
-with any line size and count the difference in rows and columns between two successive
+Determining the line width is harder because we do not have a rough guess like the
+vendor software image width and there is no image details on the calibration image. It helps that there
+is a pattern (darker pixel) at the start of each line. Thus, we can extract the image
+with any line size ($w_{chosen}$) and count the difference in rows and columns between two successive
 line starts. We then get the line width by $w_{correct} = (y_b - y_a) \cdot w_{chosen} + x_b - x_a$.
-where $y_a, x_a$ are the row and column of the point of the first line start pattern
-and $y_b, x_b$ for the second.
+where $y_a, x_a$ are the row and column of the point of any line start pattern
+and $y_b, x_b$ row and column the line start pattern following the first one.
 
 \begin{figure}[H]
   \caption{Determining the correct line width for the calibration image (chosen width: 300 pixels)}
@@ -1107,7 +1136,7 @@ and $y_b, x_b$ for the second.
   \includegraphics[width=12cm]{images/jpg/extract_calib_1.jpg}
 \end{figure}
 
-The correct width was found to be $(115 - 44) \cdot 300 + 166 - 102 = 21364$ pixels.
+In this case, the line width was found to be $(115 - 44) \cdot 300 + 166 - 102 = 21364$ pixels.
 
 \begin{figure}[H]
   \caption{Calibration image, width: 21364 pixels}
@@ -1145,16 +1174,21 @@ The final parameters are:
   \subfloat[infrared]{{\includegraphics[height=1cm]{images/jpg/extract_calib_3i.jpg} }}
 \end{figure}
 
-Applying the calibration image to the actual scan is shown in \autoref{ssec:imgproc_calib}.
+Applying the calibration image to the actual scan is shown in \cref{ssec:imgproc_calib}.
 
 \section{Controlling the device}
+
+A Python module for writing USB drivers was used to create a simple scanning program
+{\it scanInteractive.py} which performs a scan with certain parameters, does basic image processing
+(see \cref{sec:extract}) and displays the image building up row by row
+as data is received from the scanner.
 
 \subsection{Setup: PyUSB}
 
 PyUSB \cite{pyusb} is a Python module for accessing USB devices.
 Using it is straightforward:
 A handle for the device is created by specifying the characteristic
-vendor and product ID (these are for my scanner, can be found via {\it lsusb}):
+vendor and product ID (these are for the test device, can be found via {\it lsusb}):
 
 \begin{center}
 \tt dev = usb.core.find(idVendor=0x05e3, idProduct=0x0145)
@@ -1177,8 +1211,8 @@ Control transfers are initiated like this:
 dev.ctrl\_transfer(self, bmRequestType, bRequest, wValue, wIndex, data\_or\_wLength, timeout)
 \end{center}
 
-{\it bmRequestType, bRequest, wValue, wIndex, wLength} are described in \autoref{table:ctrltransfer}.
-timeout specifies the number of milliseconds after which the transfer is canceled if
+{\it bmRequestType, bRequest, wValue, wIndex, wLength} are described in \cref{table:ctrltransfer}.
+The timeout specifies the number of milliseconds after which the transfer is canceled if
 still not completed.
 
 For host-to-device control transfers, {\it data\_or\_wLength} contains the data payload
@@ -1200,17 +1234,12 @@ dev.read(endpoint, size, timeout)
 dev.write(endpoint, data, timeout)
 \end{center}
 
-PyUSB was used to create a simple scanning program {\it scanInteractive.py}
-which performs a scan with certain parameters, does basic image processing
-(see \autoref{sec:extract}) and displays the image building up row by row
-as data is received from the scanner.
-
 \subsection{Vendor-specific control transfers}
 
 USB traffic starts when the scanner software loads and continues
 constantly while the software is running (even when idling).
 It consists of vendor-specific control transfers on endpoint 0
-in both directions: bmRequestType 0x40 outgoing / 0xc0 incoming, see \autoref{table:ctrltransfer}.
+in both directions: bmRequestType 0x40 outgoing / 0xc0 incoming (\cref{table:ctrltransfer}).
 Also there are incoming bulk transfers on endpoint 1, used both for
 receiving status information and image data.
 
@@ -1247,7 +1276,7 @@ startup:
   \end{tabular}
 \end{table}
 
-In addition to the parameters, control transfers have a data payload that is {\it wLength} bytes long \autoref{table:ctrltransfer}.
+In addition to the parameters, control transfers have a data payload that is {\it wLength} bytes long (\cref{table:ctrltransfer}).
 The actual commands regarding what the device should do are encoded in this data payload.
 As all but one parameter combination has a one-byte payload, most commands are transferred
 one byte after another, doing one control transfer for each byte.
@@ -1264,13 +1293,14 @@ and the fourth kind is used for retrieving image data.
 
 \subsubsection{Header}
 
-Every transaction begins with the same header that consists of these 11 control transfers:
+Every transaction begins with the same header that consists of the 11 control
+transfers shown in in \cref{table:transheader}.
 
 \begin{table}[H]
-  \caption{Header structure for all three transaction types}
+  \caption{Header structure for all three transaction types.}
   \centering
   \begin{tabular}{l|l|l}
-    Nr. & Parameters \autoref{table:paramcombos} & Data payload \\ \hline
+    Nr. & Parameters (\cref{table:paramcombos}) & Data payload \\ \hline
     1. & e) & 0xff \\
     2. & e) & 0xaa \\
     3. & e) & 0x55 \\
@@ -1292,16 +1322,17 @@ Every transaction begins with the same header that consists of these 11 control 
 At the end of each transaction, but also at other points (like before
 sending extra parameters, before transferring image data) the software has to ask for a device response.
 
-This is done using a control transfer with parameter combination b) in \autoref{table:paramcombos}.
+This is done using a control transfer with parameter combination b) in \cref{table:paramcombos}.
 
 \begin{table}[H]
-  \caption{Device readiness responses}
   \centering
   \begin{tabularx}{\textwidth}{l | X}
+    \caption{Device readiness responses.} \\
+    
     Response & Meaning \\ \hline
     {\tt 0x00} & OK, returned inside extra parameter transaction (before sending extra parameters) \\
     {\tt 0x01} & OK, returned in status / image transaction, before doing bulk reads \\
-    {\tt 0x03} & Read another response byte, see \autoref{table:devready_2} \\
+    {\tt 0x03} & Read another response byte (\cref{table:devready_2}) \\
   \end{tabularx}
 \end{table}
 
@@ -1310,15 +1341,17 @@ response byte. Such a two-byte response means the transaction is now complete (i
 of an image / status transaction, do not continue with this transaction, but repeat the transaction from the start).
 
 \begin{table}[H]
-  \caption{Second response byte}
+
   \centering
   \begin{tabularx}{\textwidth}{l | X}
+    \caption{Second response byte} \\
+    \label{table:devready_2}
+
     Response & Meaning \\ \hline
     {\tt 0x00} & OK. Continue with next transaction. \\
     {\tt 0x02} & Failure due to wrong commands sent by software. Should not happen during normal operation. \\
     {\tt 0x08} & Device not ready yet. Repeat transaction. \\
   \end{tabularx}
-  \label{table:devready_2}
 \end{table}
 
 \subsection{Reading from the bulk endpoint}
@@ -1327,7 +1360,7 @@ of an image / status transaction, do not continue with this transaction, but rep
 For a status transaction or image transaction, data needs to be read from the bulk endpoint of the device.
 This has to be done using a special pattern:
 
-First, a control transfer (combination a) in \autoref{table:paramcombos}) is
+First, a control transfer (combination a) in \cref{table:paramcombos}) is
 performed with the following 8-byte payload (hex): {\tt 00000000xxyy0000},
 where the number of bytes to be read ($c$, $1 \leq c \leq 65520$) from the bulk endpoint is encoded
 in little-endian format, i.e. bytes at offset 4 and 5 ({\tt xx} and {\tt yy}) are set such that
@@ -1342,19 +1375,19 @@ to be necessary.
 
 This type of transaction has the simplest structure. It is used only for a handful of tasks like
 checking device readiness at critical points and the actual "start scan" command.
-Details about the transaction parameters can be found in \autoref{appendix_basic}.
-
-\subsubsection{Structure}
+The structure of the basic transaction is shown in \cref{table:basictransaction}.
 
 \begin{table}[H]
-  \caption{Structure of the basic transaction}
   \centering
   \begin{tabularx}{\textwidth}{X | X | X | X}
+    \caption{Structure of the basic transaction} \\
+    \label{table:basictransaction}
+    
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
-    Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \autoref{appendix_basic} \\
-    Device response & 2 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
+    Header & 11 & \cref{table:transheader} & \cref{table:transheader} \\
+    Main parameters & 6 & c) in \cref{table:paramcombos} & \cref{appendix_basic} \\
+    Device response & 2 & b) in \cref{table:paramcombos} & \cref{ssec:devready} \\
   \end{tabularx}
 \end{table}
 
@@ -1365,21 +1398,21 @@ This transaction is used to set parameters while preparing a scan.
 The bytestring of the "Main parameter" stage defines the purpose of the transaction
 (e.g. setting resolution / exposure parameters). The "Extra parameter" stage
 transfers the values of the parameters that should be set.
-Details about the transaction parameters can be found in \autoref{appendix_extra}.
-
-\subsubsection{Structure}
+The structure of the extra parameter transaction is shown in \cref{table:extratransaction}.
 
 \begin{table}[H]
-  \caption{Structure of the extra parameter transaction}
   \centering
   \begin{tabularx}{\textwidth}{X|X|X|X}
+    \caption{Structure of the extra parameter transaction} \\
+    \label{table:extratransaction}
+    
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
-    Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \autoref{appendix_extra} \\
-    Device response & 1 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready}, {\tt 0x00} expected \\
-    Extra parameters & varies, see \autoref{appendix_extra} & c) in \autoref{table:paramcombos} & see \autoref{appendix_extra} \\
-    Device response & 2 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
+    Header & 11 & \cref{table:transheader} & \cref{table:transheader} \\
+    Main parameters & 6 & c) in \cref{table:paramcombos} & \cref{appendix_extra} \\
+    Device response & 1 & b) in \cref{table:paramcombos} & \cref{ssec:devready}, {\tt 0x00} expected \\
+    Extra parameters & varies (\cref{appendix_extra}) & c) in \cref{table:paramcombos} & \cref{appendix_extra} \\
+    Device response & 2 & b) in \cref{table:paramcombos} & \cref{ssec:devready} \\
   \end{tabularx}
 \end{table}
 
@@ -1387,21 +1420,21 @@ Details about the transaction parameters can be found in \autoref{appendix_extra
 \label{ssec:read_trans}
 
 This is used to read device status from the bulk endpoint.
-Details about the transaction parameters can be found in \autoref{appendix_status}.
-
-\subsubsection{Structure}
+The structure of the status transaction is shown in \cref{table:statustransaction}.
 
 \begin{table}[H]
-  \caption{Structure of the read transaction}
   \centering
   \begin{tabularx}{\textwidth}{X|X|X|X}
+    \caption{Structure of the read transaction} \\
+    \label{table:statustransaction}
+    
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
-    Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \autoref{appendix_status} \\
-    Device response & 1 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready}, {\tt 0x01} expected \\
-    Bulk read & see \autoref{appendix_status} & see \autoref{ssec:bulkread} & see \autoref{ssec:bulkread} \\
-    Device response & 2 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
+    Header & 11 & \cref{table:transheader} & \cref{table:transheader} \\
+    Main parameters & 6 & c) in \cref{table:paramcombos} & \cref{appendix_status} \\
+    Device response & 1 & b) in \cref{table:paramcombos} & \cref{ssec:devready}, {\tt 0x01} expected \\
+    Bulk read & \cref{appendix_status} & \cref{ssec:bulkread} & \cref{ssec:bulkread} \\
+    Device response & 2 & b) in \cref{table:paramcombos} & \cref{ssec:devready} \\
   \end{tabularx}
 \end{table}
 
@@ -1409,20 +1442,21 @@ Details about the transaction parameters can be found in \autoref{appendix_statu
 \subsection{Image transaction}
 
 The image transaction is used for receiving the calibration and the main image.
-
-\subsubsection{Structure}
+The structure of the image transaction is shown in \cref{table:imgtransaction}.
 
 \begin{table}[H]
-  \caption{Structure of the image transaction}
   \centering
   \begin{tabularx}{\textwidth}{X|X|X|X}
+    \caption{Structure of the image transaction} \\
+    \label{table:imgtransaction}
+  
     Stage & No. of transfers / bytes & Transfer parameters & Data payload \\ \hline
     
-    Header & 11 & see \autoref{table:transheader} & see \autoref{table:transheader} \\
-    Main parameters & 6 & c) in \autoref{table:paramcombos} & see \autoref{ssec:image_param} \\
-    Device response & 1 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
-    Bulk reads & see \autoref{ssec:image_bulk} & see \autoref{ssec:bulkread} & see \autoref{ssec:bulkread} \\
-    Device response & 2 & b) in \autoref{table:paramcombos} & see \autoref{ssec:devready} \\
+    Header & 11 & \cref{table:transheader} & \cref{table:transheader} \\
+    Main parameters & 6 & c) in \cref{table:paramcombos} & \cref{ssec:image_param} \\
+    Device response & 1 & b) in \cref{table:paramcombos} & \cref{ssec:devready} \\
+    Bulk reads & \cref{ssec:image_bulk} & \cref{ssec:bulkread} & \cref{ssec:bulkread} \\
+    Device response & 2 & b) in \cref{table:paramcombos} & \cref{ssec:devready} \\
   \end{tabularx}
 \end{table}
 
@@ -1432,29 +1466,30 @@ The image transaction is used for receiving the calibration and the main image.
 An image transaction has the parameter string (hex) {\tt 08000000xx00}.
 The byte at offset 4 represents the number of lines of the image that
 should be received.
-g
+
 An image transaction that transfers for example 14 lines would be identical
 up to the main parameter stage
 to an extra parameter transaction with main parameter string {\tt 080000000e00}.
-The device response after the main parameter stage however has to be different
+The device response after the main parameter stage, however, has to be different
 (0x00 for extra parameter, 0x01 for image). This shows that the device has
 to consider context when analyzing the meaning of a transaction's main parameters
 ({\tt 080000000e00} means "set scan area" while preparing the scan but
-"transfer 14 lines" after the scan has started).
+"transfer 14 lines" after the scan has started), illustrated by the following
+comment in the SANE driver for this device {\cite[\tt pieusb\_scancmd.c, sanei\_pieusb\_cmd\_start\_scan()]{sane_code}}:
 
-\blockquote[{\cite[\tt pieusb\_scancmd.c, sanei\_pieusb\_cmd\_start\_scan()]{sane_code}}]
-{This is a SCSI READ command (code 0x08).
+\blockquote[]
+{\it This is a SCSI READ command (code 0x08).
  It is distinguished from the other READ commands by the context
  in which it is issued. \\}
 
 \subsubsection{Bulk reads}
 \label{ssec:image_bulk}
 
-In this stage, the image data is transferred using one ore more
-bulk reads (see \autoref{ssec:bulkread}).
+In this stage the image data is transferred using one ore more
+bulk reads (\cref{ssec:bulkread}).
 
 For this, the amount of bytes per line of the image $c_l$ needs to be known
-(see \autoref{table:imageparam_query}). This is multiplied by the number of lines $l$ to be transferred
+(\cref{table:imageparam_query}). This is multiplied by the number of lines $l$ to be transferred
 to get the total amount of bytes to be transferred:
 
 \begin{center}
@@ -1463,28 +1498,26 @@ $ c = c_l * l $
 \end{tabular}
 \end{center}
 
-This amount gets divided into 65520 ({\tt 0xfff0}) byte chunks plus a possible rest:
+The bytes are transferred in $n$ 65520-byte reads followed by one $m$-byte
+read (if m is nonzero), where
 
 \begin{center}
 \begin{tabular}{l}
 $n = \lfloor \frac{c}{65520} \rfloor $ \\
-$m = c \mod 65520$ \\
+$m = c \mod 65520$. \\
 \end{tabular}
 \end{center}
-
-The data is transferred in $n$ 65520-byte reads followed by one $m$-byte
-read (if m is nonzero).
 
 \subsection{Receiving the calibration image}
 \label{ssec:rcv_calibimage}
 
-The size and format of the calibration image does not depend on the scanner settings.
+The size and format of the calibration image do not depend on the scanner settings.
 On this scanner, it has 180 (45 per channel) lines of 5341 16-bit pixels (10682 bytes).
 The total calibration image size is 1922760 bytes.
 
-The lines follow a RGBI channel interleaving (see \autoref{sec:extract}).
+The lines follow an RGBI channel interleaving (\cref{sec:extract}).
 
-In the actual scan (\autoref{ssec:actualscan}), at first 4 lines get transferred, then 172, then the last 4.
+In the actual scan (\cref{ssec:actualscan}), at first 4 lines get transferred, then 172, then the last 4.
 
 \subsection{Receiving the main image}
 \label{ssec:rcv_mainimage}
@@ -1492,17 +1525,17 @@ In the actual scan (\autoref{ssec:actualscan}), at first 4 lines get transferred
 When receiving the main image, it is essential to know how many lines the image
 has and how many bytes there are per line. These values are used to generate image transactions.
 
-The number of lines $l$ gets divided into 255-line chunks plus a possible rest:
+The number of lines $l$ gets divided into $p$ 255-line chunks plus a possible rest $q$, where
 
 \begin{center}
 \begin{tabular}{l}
-$n = \lfloor \frac{c}{255} \rfloor $ \\
-$m = c \mod 255$ \\
+$p = \lfloor \frac{l}{255} \rfloor $ \\
+$q = l \mod 255$ .\\
 \end{tabular}
 \end{center}
 
-The image is transferred in $n$ 255-line image transactions followed by one $m$-line
-image transaction (if m is nonzero). Each mage transactions itself of course needs
+The image is transferred in $p$ 255-line image transactions followed by one $q$-line
+image transaction (if $q$ is nonzero). Each image transaction needs
 to be adjusted to its line count and the number of bytes per line.
 
 If the data is read faster than the scanner can produce it, the device readiness
@@ -1518,15 +1551,15 @@ at once (and wait for incoming packets at the right points).
 This is due to the importance of timing. At certain points, the device
 is not immediately ready for the next command. The most important point
 where this is the case is after starting the scan before doing the first
-image transaction. To ensure device readiness, a basic query (\autoref{ssec:basic_trans})
-is used. The device response (\autoref{ssec:devready}) in this query returns "busy" if the device
+image transaction. To ensure device readiness, a basic query (\cref{ssec:basic_trans})
+is used. The device response (\cref{ssec:devready}) in this query returns "busy" if the device
 is not ready yet. After receiving a busy response, the software should sleep
 for a bit (the vendor software uses a 1.5 second interval) and repeat the basic transaction
-until the device responds that it's not busy.
+until the device responds that it is not busy.
 
 Something similar happens when doing image transactions faster than the device
 can scan the lines. Before the bulk read stage, the device responds "busy"
-and the image transaction should be repeated from the start (\autoref{ssec:rcv_mainimage}).
+and the image transaction should be repeated from the start (\cref{ssec:rcv_mainimage}).
 
 \begin{figure}[H]
   \caption{Timing of packets during scan}
@@ -1535,7 +1568,7 @@ and the image transaction should be repeated from the start (\autoref{ssec:rcv_m
   \label{time_diagram}
 \end{figure}
 
-This diagram illustrates the rate at which packets are transmitted
+\cref{time_diagram} illustrates the rate at which packets are transmitted
 during a simple scan (no prescan, no calibration) with the vendor-supplied
 (CyberView X5) software.
 The scanning process can be separated into five phases:
@@ -1543,10 +1576,10 @@ The scanning process can be separated into five phases:
 \begin{enumerate}
 
 \item During the idle phase before the scan, every 1.5 seconds a status read query
-(\autoref{ssec:read_trans}) is performed.
+(\cref{ssec:read_trans}) is performed.
 
 \item When the user presses "start scan", all scan parameters being transferred
-in rapid succession causes a quick increase in packet count.
+in rapid succession cause a quick increase in packet count.
 
 \item After the parameters are sent to the device, but before the image is transferred
 the software has to wait for readiness (1.5 second waits in between a basic transaction
@@ -1576,9 +1609,9 @@ to the device straight after the scanner has started
 after having started).
 
 The scan parameters and USB traffic (modeled in these transactions) can be found
-in \autoref{appendix_actualscan}.
+in \cref{appendix_actualscan}.
 
-\section{SANE}
+\section{Scanner Access Now Easy}
 \label{sec:sane}
 
 SANE (abbreviated for "Scanner Access Now Easy") is the standard software package
@@ -1609,7 +1642,7 @@ scanner access.
   \label{sane_hierarchy}
 \end{figure}
 
-\subsection{The SANE standard}
+\subsection{Backend / frontend interface}
 \label{ssec:sanestd}
 
 As mentioned before, SANE consists of backends (that manage devices) and frontends
@@ -1624,7 +1657,7 @@ Frontend and backend can be combined either by static or dynamic linking.
 To make a frontend support multiple backends, the frontend can be linked to a
 meta-backend that finds out which backend is suitable for the currently attached
 scanner, loads it via dynamic linking, and then mimics the behavior
-of the suitable backend. \cite[3.1]{sane_standard}
+of the suitable backend \cite[3.1]{sane_standard}.
 
 \subsubsection{Primitive types}
 
@@ -1656,20 +1689,22 @@ device-specific settings; this is independent of manufacturer / backend.
 
 The option descriptor is a struct type with various components specifying an option's
 meaning and its possible values: name (unique identifier),
-title (human-readable name), description, type (bool / string etc.), unit (pixels / millimeters etc.)
-and constraints (f.e. a range of possible coordinate values in a dimension,
-a list of allowed string values). \cite[4.2.9]{sane_standard}
+title (human-readable name), description, type (bool / string ...), unit (pixels / millimeters ...)
+and constraints (e.g., a range of possible coordinate values in a dimension,
+a list of allowed string values) \cite[4.2.9]{sane_standard}.
 
 Every device handle has a certain number of option descriptors associated
 with it. An option descriptor can be fetched with the {\it sane\_get\_option\_descriptor}
 procedure by specifying the index of the option.
 Backends can define any number of custom option descriptors, but some
-descriptors' meaning is specified in the standard:
+descriptors' meanings are specified in the standard (\cref{table:optiondescriptors}).
 
 \begin{table}[H]
-  \caption{Special option descriptors specified in the SANE standard \cite[4.5]{sane_standard}}
   \centering
   \begin{tabularx}{\textwidth}{l | X}
+    \caption{Special option descriptors specified in the SANE standard \cite[4.5]{sane_standard}.} \\
+    \label{table:optiondescriptors}
+    
     Name & Description \\ \hline
       Option count & Always available at index 0. Tells how many options
                             there are in total. \\
@@ -1680,21 +1715,25 @@ descriptors' meaning is specified in the standard:
   \end{tabularx}
 \end{table} 
 
-Options values are queried/set using the {\it sane\_control\_option} procedure
+Option values are queried/set using the {\it sane\_control\_option} procedure
 specifying the option index and a generic pointer to load / store the value.
-This also reports back on how well the request could be met (f.e. a resolution could
+This also reports back on how well the request could be met (e.g., a resolution could
 not be set exactly) and whether the changed setting has changed the availability
-of other options. \cite[4.4]{sane_standard}
+of other options \cite[4.4]{sane_standard}.
 
 \subsubsection{Operations}
 
 The standard specifies various procedures for initialization, configuring options,
-scanning and retrieving data.
+scanning, and retrieving data (\cref{table:saneoperations}).
+Typical code flow using these operations during normal scanner usage is illustrated
+in \cref{sane_codeflow}.
 
 \begin{table}[H]
-  \caption{Operations defined in the SANE standard (not exhaustive) \cite[4.3]{sane_standard}}
   \centering
   \begin{tabularx}{\textwidth}{l | X}
+    \caption{Operations defined in the SANE standard (not exhaustive) \cite[4.3]{sane_standard}} \\
+    \label{table:saneoperations}
+    
     Name & Description \\ \hline
     \it sane\_init & Must be called before using other procedures of the backend \\
     \it sane\_get\_devices & Get a list of device descriptors, one for each device
@@ -1711,8 +1750,6 @@ scanning and retrieving data.
   \end{tabularx}
 \end{table}
 
-When using SANE, typical code flow might look as follows:
-
 \begin{figure}[H]
   \caption{Typical code flow when using SANE \cite[4.4]{sane_standard}}
   \centering
@@ -1723,15 +1760,15 @@ When using SANE, typical code flow might look as follows:
 \subsubsection{Network protocol}
 
 This specifies how a SANE daemon should communicate with a client, possibly on a
-remote machine. This protocol is done in a RPC (remote-procedure-call) style:
+remote machine. This protocol is done in a RPC (remote-procedure-call) style.
 The client calls procedures on the server in a similar fashion to how they are
-called locally: The parameters are encoded in a packet, sent over the network,
+called locally. The parameters are encoded in a packet, sent over the network,
 unpacked at the server, the procedure is executed there, the return value takes
 the reverse direction.
 
 The exact encoding of packets is not specified (TCP/IP is not the only possible
 transport layer), for compatibility it seems reasonable to consider the official
-implementations of {\it saned} ( server) and the {\it net} backend (client). \cite[5]{sane_standard}
+implementations of {\it saned} ( server) and the {\it net} backend (client) \cite[5]{sane_standard}.
 
 \subsection{Developing a driver / backend}
 
@@ -1740,7 +1777,7 @@ The SANE developers give some tips on writing a backend \cite{sane_develop}:
 \begin{itemize}
   \item First, one should acquire information on how the device is controlled. This
         can be official documentation released by the manufacturer or obtained via
-        various kinds of reverse engineering (software, firmware, sniffing, hardware...).
+        various kinds of reverse engineering (software, firmware, sniffing, hardware).
   \item It is advisable to first write a minimal, working standalone scanning program not part of SANE.
         This makes debugging easier.
   \item After the standalone program is working, one can start developing the backend:
@@ -1778,7 +1815,7 @@ to older SCSI scanners, the website provides useful information:
 
 {\it pieusb} is a SANE backend that supports the CrystalScan 7200 among
 other scanners sold under the Reflecta brand. Development began
-in 2012 by Klaus Kaempf et al., in 2015 it got merged into mainline SANE code.
+in 2012 by Klaus Kaempf et al.; in 2015 it got merged into mainline SANE code.
 Supported devices include:
 
 \begin{itemize}
@@ -1792,11 +1829,11 @@ Debian 9 (Stretch).
 
 To use the {\it pieusb} driver, it must be enabled when compiling SANE
 (environment variable {\it BACKENDS}) and enabled in the dynamic loader backend
-\autoref{sec:sane} ({\it dll.conf}).
+\cref{sec:sane} ({\it dll.conf}).
 
 \subsubsection{Fixing I/O errors}
 
-For my device, scanning unfortunately did not work as-is. When testing operation
+For the test device, scanning unfortunately did not work out of the box. When testing operation
 using {\it scanimage}, an "Error during device I/O" was reported. To find the
 cause of such problems, SANE can provide useful debugging output. This is controlled
 using environment variables to set a debugging verbosity level for various SANE
@@ -1854,7 +1891,7 @@ were commented out, SANE recompiled and {\it scanimage} run again:
 
 This section of code was commented out as well. After this patch, the scan
 completed successfully. No problems were observed when scanning with various
-parameters, so it seems the offending commands were superfluous for my device.
+parameters, so it seems the offending commands were superfluous for the test device.
 It could be that there are multiple iterations of the CrystalScan 7200 that differ
 slightly in their I/O syntax.
 
@@ -1883,6 +1920,11 @@ file is not larger than when scanning without IR.
 \section{Image processing}
 \label{sec:imgproc}
 
+The raw pixel data coming from the scanner does not yet make for a usable image.
+Many processing steps need to be done before the scan looks presentable. Some are
+specific to this model of scanner, these are described in \cref{sec:extract}. Generic
+image processing operations dealing with contrast, colors, dust removal and cropping are described in this section.
+
 \subsection{Calibration}
 \label{ssec:imgproc_calib}
 
@@ -1890,9 +1932,9 @@ Due to uneven sensitivity among pixels of the line sensor, the columns of the ra
 have uneven brightness, which is noticeable especially in uniform-colored areas.
 To correct this, the scanner performs a calibration scan on just the white background,
 which can be used to "subtract" the artifacts from the actual scan.
-Retrieving the calibration image is described in \autoref{ssec:rcv_calibimage}, extracting it
-from a capture file in \autoref{ssec:calibration}. For my device the calibration image is always
-$5341$ pixels wide and x pixels long (for each of the 4 channels red, green, blue, infrared,
+Retrieving the calibration image is described in \cref{ssec:rcv_calibimage}, extracting it
+from a capture file in \cref{ssec:calibration}. For the test device the calibration image is always
+5341 pixels wide and 45 pixels high (for each of the 4 channels red, green, blue, infrared,
 which are contained in a line-interleaved pattern just like the regular image).
 
 As the calibration image is always recorded for the full sensor resolution, differences in
@@ -1900,7 +1942,7 @@ scan area (vertical crop) and resolution need to be accounted for. The device co
 provides a buffer that contains a bitmask specifying which pixels of the sensor are part of the
 resulting image. Only taking the columns of the calibration image where this mask is set to 1
 gives it the same width as the actual image and properly aligns the two images.
-Retrieving this bitmask is specified in \autoref{appendix_status}.
+Retrieving this bitmask is specified in \cref{appendix_status}.
 
 Also, the calibration image needs to be scaled to the same number of rows as the actual scan.
 To do this, it seems reasonable to compute the average of all rows (reduces noise) and repeat
@@ -1934,13 +1976,13 @@ it is clipped to the respective limit.
 \subsubsection{Brightness}
 
 Adjusting brightness means adding an absolute number to each pixel value.
-To increase the brightness by $k$, a function $f(b) = b + k$ is used.
+To increase the brightness by $k$, a function $b'_x = b_x + k$ is used.
 
 \subsubsection{Contrast}
 
 Changing contrast means compressing the brightness function so that its climb
 is steeper at the middle.
-To increase the contrast by a factor $k > 0$, a function $f(b) = (b - 0.5) * k + 0.5$ is used.
+To increase the contrast by a factor $k > 0$, a function $b'_x = (b_x - 0.5) * k + 0.5$ is used.
 The brightness function gets centered around zero, steepened by factor k, then moved
 back.
 
@@ -1948,11 +1990,11 @@ back.
 
 Changing gamma means bending the brightness function so more of its climb
 is in the dark / light area.
-To apply gamma correction for a $k > 0$, a function $f(b) = b^k$ is used.
+To apply gamma correction for a $k > 0$, a function $b'_x = b_x^k$ is used.
 If $k < 1$, the function will be bent to the right so the majority of the climb
 happens in darker areas.
-If $k > 1$, the function will be bent to the right so the majority of the climb
-happens in darker areas.
+If $k > 1$, the function will be bent to the left so the majority of the climb
+happens in lighter areas.
 
 Different image recording (film, digital sensors) and image display (screen, print)
 technologies have a different inherent gamma function (their input-output response curve)
@@ -1965,7 +2007,7 @@ the full brightness range. Typical sensor output only has a small range of value
 (this allows it to record images of various sources without risking clipping),
 so it has to be stretched to look appealing.
 
-It can be represented by $f(b) = \frac{b - k_1}{k_2 - k_1}$ where $k_1$ is the lower
+It can be represented by $b'_x = \frac{b_x - k_1}{k_2 - k_1}$ where $k_1$ is the lower
 and $k_2$ the upper limit of the input values.
 
 Level stretching is also used to correct color balance. Improper color balance may
@@ -1984,10 +2026,9 @@ $f(b) = 1 - b$.
 
 Color negative film also has an orange mask (base color) that was introduced to improve
 the spectral response of the dyes. This can be easily removed with appropriate
-level operations:
+level operations (\cref{fig:colorcorrect}).
 
 
-\newsavebox\mysavebox
 \begin{figure}[H]
   \centering
   \caption{Color-correcting negative scan}
@@ -1997,17 +2038,19 @@ level operations:
 
   \subfloat[histogram of (b)]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_levels_2h.jpg}} \ 
   \subfloat[levels stretched to actual value range]{\includegraphics[width=0.49\textwidth]{images/jpg/imgproc_levels_3.jpg}}
+  
+  \label{fig:colorcorrect}
 \end{figure}
 
 \subsection{Infrared dust / scratch removal}
 \label{ssec:imgproc_dice}
 
 Dust and scratches are an undesired but hardly avoidable artifact on scanned film material. Depending
-on the condition the film is in, dust particles can be very noticeable on the scans
+on the condition the film is in, dust particles can be very noticeable on the scans,
 especially in areas of uniform color like the sky.
 
-To deal with this, a technique often called Digital ICE \cite{inpainting_dice} was developed. It involves
-scanning the film in the infrared spectrum in addition to the red, green, blue bands.
+To deal with this, a technique often called Digital Image Correction and Enhancement \cite{inpainting_dice} was developed.
+It involves scanning the film in the infrared spectrum in addition to the red, green, and blue bands.
 As the dyes in color film are mostly transparent to infrared, the infrared image
 only shows the dust and scratches against a uniformly colored background.
 From the IR image, a binary mask set at these pixels affected by dust / scratches
@@ -2031,12 +2074,13 @@ the image is masked). Dynamic thresholds can adjust to different scanner setting
 film types, but they may under/overreact on images with unusually large / small amounts
 of dust.
 
-Finding scratches is not so easy as they don't have a strong brightness difference
+Finding scratches is not so easy as they do not have a strong brightness difference
 from the unaffected pixels. To find them, an edge detector such as Difference-of-Gaussians
 plus thresholding could be utilized.
 
-It may also be desirable to use dilation to grow the areas of affected pixels somewhat
-so the pixels just outside the mask are certainly unaffected and not harming the inpainting process.
+It may also be desirable to use dilation to grow the area around affected pixels somewhat
+so the pixels just outside the affected range, i.e. those used as a template
+to paint over the affected pixels, are certainly unaffected and not harming the inpainting process.
 
 \begin{figure}[H]
   \caption{Mask on top on image (in red) showing which pixels are affected by dust}
@@ -2052,7 +2096,7 @@ result appears as natural as possible. Manual inpainting was a useful skill long
 the advent of digital imaging to restore old paintings / photographs or
 to manipulate images by for example removing a person from it. Automatic inpainting
 is an active research area in image processing and there is no single algorithm
-that can claim to be the best in all scenarios. \cite{inpainting_survey}
+that can claim to be the best in all scenarios \cite{inpainting_survey}.
 
 The possibly simplest inpainting algorithm that gives decent results is called
 diffusion \cite{inpainting_diffusion}. Its idea is to let image information flow from the edges of the mask
@@ -2183,10 +2227,14 @@ the image is slightly rotated.
 
 \end{enumerate}
 
+\cref{fig:cropalgo_result} shows this algorithm applied to a real scan: Detected lines
+are in red and orange, intersection points in green, and the blue rectangle is the resulting crop area.
+
 \begin{figure}[H]
   \caption{Applying crop algorithm to image}
   \centering
   \includegraphics[width=\textwidth]{images/jpg/imgproc_autocrop_2.jpg}
+  \label{fig:cropalgo_result}
 \end{figure}
 
 \subsubsection{Performance}
@@ -2195,7 +2243,7 @@ This algorithm uses rather basic image processing operations, but given
 the correct parameters (threshold, hough granularity / sensitivity) seems to
 work reliably on images with strong exposure where there is a significant brightness
 difference along the entire border of the frame, which seems to include the
-majority of daylight photos. For an image that however has little to no exposure
+majority of daylight photos. For an image that, however, has little to no exposure
 and therefore no strong brightness change on some side, thresholding will not give
 a good edge and the line will not be found. Also, when scanning slide film in plastic
 frames, the scanner does not pick up a significant brightness change between
@@ -2209,46 +2257,47 @@ algorithm and still enjoy significant time savings compared to cropping every im
 
 To make the CrystalScan 7200 usable under Linux, the reverse engineering technique
 of USB sniffing was employed. For this, the USB standard was summarized with particular
-focus on the types and structure of control transfers \autoref{sec:usb}. After that, various methods of
-sniffing USB traffic were compared \autoref{ssec:snifferscompared}. Software sniffing is done using the usbmon
+focus on the types and structure of control transfers (\cref{sec:usb}). After that, various methods of
+sniffing USB traffic were compared (\cref{ssec:snifferscompared}). Software sniffing is done using the usbmon
 Linux kernel module. To allow access to all of the payload of large packets / control transfers,
-a simple patch had to be applied to this kernel module \autoref{ssec:kernelpatch}. Wireshark / tshark was used
-to decode raw packets and extract control transfer parameters \autoref{ssec:wireshark}. The vendor-supplied
+a simple patch had to be applied to this kernel module (\cref{ssec:kernelpatch}). Wireshark / tshark was used
+to decode raw packets and extract control transfer parameters (\cref{ssec:wireshark}). The vendor-supplied
 software was run on Windows inside VirtualBox (using the USB passthrough feature)
-while letting Wireshark sniff on the Linux host \autoref{ssec:virtualbox}.
+while letting Wireshark sniff on the Linux host (\cref{ssec:virtualbox}).
 
-As a partial goal, the image was reconstructed from the captured packet stream \autoref{sssec:channelcombine}.
-Then, the packet sequence was studied for patterns. All traffic could me modeled
-using four types of transaction \autoref{ssec:transactionpatterns}. By trial and error the meaning of some of the bytes
-in the transaction parameters was uncovered \autoref{appendix_meaning}. Keeping the importance of proper timing
+As a partial goal, the image was reconstructed from the captured packet stream (\cref{sssec:channelcombine}).
+Then, the packet sequence was studied for patterns. All traffic could be modeled
+using four types of transaction (\cref{ssec:transactionpatterns}). By trial and error the meaning of some of the bytes
+in the transaction parameters was uncovered (\cref{appendix_meaning}). Keeping the importance of proper timing
 in mind, (slightly modified versions of) the packet stream could be replayed to the device
 to make a usable scanning software.
 
 The SANE Linux scanning framework's driver only needed minimal modifications
-to make it work with the scanner, most features are supported \autoref{sec:sane}.
+to make it work with the scanner, most features are supported (\cref{sec:sane}).
 This driver was studied to extend the description
 of the transaction parameters in the previous section.
 
 Finally, there is a lot of digital image processing required before a raw image
-from the scanner becomes usable \autoref{sec:imgproc}. The basic steps include assembling the image
-from the data packets, performing shading calibration, gamma and level correction.
+from the scanner becomes usable (\cref{sec:imgproc}). The basic steps include assembling the image
+from the data packets, performing shading calibration, gamma, and level correction.
 To eliminate dust and scratches,a simple yet sufficient inpainting algorithm
-was presented \autoref{ssec:imgproc_dice}. A method for automatically cropping
-away the unexposed area of the film was demonstrated \autoref{ssec:imgproc_crop}.
+was presented (\cref{ssec:imgproc_dice}). A method for automatically cropping
+away the unexposed area of the film was demonstrated (\cref{ssec:imgproc_crop}).
 
 There are some aspects of scanner behavior that make using the device
 more complex and were not covered in this work:
 
 \begin{itemize}
-\item There are various patterns in which the color channel lines can be interleaved,
-not just the described RGBI order. The order is chosen based on the "color format" parameter
-(see \autoref{table:param15}) and possibly the resolution and color mode.
+\item The lines from the different color channels can be interleaved in different patterns / sequences,
+the "RGBIRGBI..." order was assumed in this work.
+The pattern by which the device interleaves the channels is chosen based on the "color format" parameter
+(\cref{table:param15}) and possibly the resolution and color mode.
 
 \item
 The scanner has a maximum advertised resolution of 7200 dpi. The maximum line width
 however is 5341 pixels, giving a horizontal resolution of only
 $\frac{5341 \text{px} \cdot 25.4 \text{mm per inch}}{36 \text{mm scan area}} \approx 3768$
-dpi. The 7200 dpi are only achieved in vertical direction: In a scanner,
+dpi. The 7200 dpi are only achieved in vertical direction. In a scanner,
 vertical resolution can easily be increased by letting the scan head run slower, but
 the maximum horizontal resolution is limited by the amount of pixels in the line sensor.
 This means the resulting image has twice as many lines of the same width (compared to a 3600 dpi scan).
@@ -2269,7 +2318,9 @@ into the device not possible with USB sniffing. However, the simple idea of repl
 (perhaps slightly modified) versions of the captured packet stream to the device
 allowed development of a working basic driver with minimal effort.
 
+
 \appendix
+\newpage
 \section*{Appendices}
 \addcontentsline{toc}{section}{Appendices}
 \renewcommand{\thesubsection}{\Alph{subsection}}
@@ -2282,9 +2333,10 @@ allowed development of a working basic driver with minimal effort.
 \label{appendix_basic}
 
 \begin{table}[H]
-  \caption{Observed values for the "Main parameters" bytestring}
   \centering
   \begin{tabularx}{\textwidth}{l | X}
+    \caption{Observed values for the "Main parameters" bytestring} \\
+    
     Value (hex) & Description \\ \hline
     {\tt 000000000000} & Used to wait for device readiness at various points while preparing to scan. The transaction is repeated
                          until the device readiness query returns the right response.
@@ -2299,9 +2351,10 @@ allowed development of a working basic driver with minimal effort.
 \label{appendix_extra}
 
 \begin{table}[H]
-  \caption{Observed values for the "Main parameters" bytestring}
   \centering
   \begin{tabularx}{\textwidth}{l | X}
+    \caption{Observed values for the "Main parameters" bytestring} \\
+    
     Value (hex) & Description \\ \hline
     {\tt 0a0000000600} & Unclear purpose \\
     {\tt 0a0000000800} & Unclear purpose \\
@@ -2312,14 +2365,14 @@ allowed development of a working basic driver with minimal effort.
 \end{table}
 
 Only bytes at offset 0 and 4 are set. The byte at offset 0 identifies the
-purpose of this transaction (e.g. set resolution, scan area). The byte value at offset 4 equals
+purpose of this transaction (e.g., set resolution, scan area). The byte value at offset 4 equals
 the number of bytes that are later transferred in the "Extra parameter"
 stage.
 
 Sometimes, the same byte 0 (purpose) is used with varying bytes 4 (length).
 It is unclear whether such extra parameter bytestrings of different lengths
 are related to each other. Usually, only one of these lengths is used to transmit
-a string that actually carries relevant information (i.e. it changes when
+a string that actually carries relevant information (i.e., it changes when
 changing settings in the vendor software).
 
 For three main parameter strings, the extra parameter string varies
@@ -2330,16 +2383,18 @@ is taken from comments in the code of the SANE backend for this device.
 For each of the three parameters, an example string from an actual
 scan is analyzed:
 
-\paragraph{0a0000000e00}
+\paragraph{Scan frame}
 
-This parameter string is used to set the boundaries of the scan
+The parameter string "0a0000000e00" is used to set the boundaries of the scan
 frame / scan area. The corresponding extra parameter bytestring
 consists of 5 2-byte little-endian values:
 
 \begin{table}[H]
-  \caption{Decoding extra parameters for "0a0000000e00"}
   \centering
   \begin{tabularx}{\textwidth}{p{1cm} | p{1cm} | X}
+    \caption{Decoding extra parameters for "0a0000000e00"} \\
+    \label{table:param0a}
+    
     Offset & Value (hex) & Description \\ \hline
     0-1 & {\tt 1200} & Constant representing "scan frame" \\
     2-3 & {\tt 0a00} & Size of rest of frame (10 bytes), constant \\
@@ -2352,7 +2407,6 @@ consists of 5 2-byte little-endian values:
   
   \vspace{5mm}
   Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
-  \label{table:param0a}
 \end{table}
 
 The ratio of x distance to y distance in this example is:
@@ -2361,14 +2415,16 @@ $\frac{\textrm{0x2928} - \textrm{0x026f}}{\textrm{0x19f8} - \textrm{0x000f}} = \
 
 This matches the proportions of a 35mm film frame: $\frac{36 \textrm{mm}}{24 \textrm{mm}} = 1.5$.
 
-\paragraph{150000001000} This is used to set many different scan parameters
+\paragraph{Scan resolution} The parameter string "150000001000" is used to set many different scan parameters
 such as resolution, color mode, color depth etc. Multi-byte
 values are in little-endian format.
 
 \begin{table}[H]
-  \caption{Decoding extra parameters for "150000001000"}
   \centering
   \begin{tabularx}{\textwidth}{p{1cm} | p{1cm} | X}
+    \caption{Decoding extra parameters for "150000001000"} \\
+    \label{table:param15}
+    
     Offset & Value (hex) & Description \\ \hline
     0-1 & {\tt 000f} & Constant representing "scan parameters" \\
     2-3 & {\tt b004} & Scan resolution (in dots per inch) \\
@@ -2388,17 +2444,18 @@ values are in little-endian format.
   
   \vspace{5mm}
   Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
-  \label{table:param15}
 \end{table}
 
-\paragraph{dc0000001d00} This is used to set some parameters such as exposure time
+\paragraph{Gain / offset} The parameter string "dc0000001d00" is used to set some parameters such as exposure time
 per channel and digitizer gain / offset. Multi-byte
 values are in little-endian format.
 
 \begin{table}[H]
-  \caption{Decoding extra parameters for "dc0000001d00"}
   \centering
   \begin{tabularx}{\textwidth}{p{1cm} | p{2.5cm} | X}
+    \caption{Decoding extra parameters for "dc0000001d00"} \\
+    \label{table:paramdc}
+    
     Offset & Value (hex) & Description \\ \hline
     0-5 & {\tt 7e26661c1515} & exposure time for red, green, blue channel
                                (one 16-bit little-endian value per channel) \\
@@ -2418,15 +2475,15 @@ values are in little-endian format.
   
   \vspace{5mm}
   Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
-  \label{table:paramdc}
 \end{table}
 
 \subsubsection{Status transaction}
 \label{appendix_status}
 \begin{table}[H]
-  \caption{Observed values for the "Main parameters" bytestring}
   \centering
   \begin{tabularx}{\textwidth}{l | X}
+    \caption{Observed values for the "Main parameters" bytestring} \\
+    
     Value (hex) & Description \\ \hline
     {\tt 030000000e00} & Unknown purpose \\
     {\tt 080000008000} & Unknown purpose \\
@@ -2443,21 +2500,21 @@ values are in little-endian format.
 
 Many different main parameter combinations are used for status reads. As most of the returned
 information is not critical for basic scanning functionality, not all bytestrings are
-studied in detail.
-
-Bytes at offset 0, 3, 4 can be set. Bytes 3 and 4 specify the number of bytes to
+studied in detail. Bytes at offset 0, 3, 4 can be set. Bytes 3 and 4 specify the number of bytes to
 be read from the bulk endpoint: $256 * b_3 + b_4$.
 
-\paragraph{0f0000001200}
+\paragraph{Image dimensions}
 
-This parameter string is used to receive information about the image produced by the scanner.
+This parameter string "0f0000001200" is used to receive information about the image produced by the scanner.
 It contains the image width / height, this is needed to use the proper image transaction
 parameters. Multi-byte values are in little-endian format.
 
 \begin{table}[H]
-  \caption{Decoding status response for "0f0000001200"}
   \centering
   \begin{tabularx}{\textwidth}{p{1cm} | p{2cm} | X}
+    \caption{Decoding status response for "0f0000001200"} \\
+    \label{table:imageparam_query}
+    
     Offset & Value (hex) & Description \\ \hline
     0-1 & {\tt 7406} & Line width (pixels) \\
     2-3 & {\tt 2c04} & Number of lines in the image \\
@@ -2472,7 +2529,6 @@ parameters. Multi-byte values are in little-endian format.
   
   \vspace{5mm}
   Information taken from comments in this C code: \cite[\texttt{pieusb\_scancmd.c}]{sane_code}
-  \label{table:imageparam_query}
 \end{table}
 
 
@@ -2480,9 +2536,10 @@ parameters. Multi-byte values are in little-endian format.
 \label{appendix_actualscan}
 
 \begin{table}[H]
-  \caption{Scan parameters}
   \centering
   \begin{tabularx}{\textwidth}{p{3cm} | X}
+    \caption{Scan parameters} \\
+    
     Setting & Value \\ \hline
     Scan mode & Pre-scan \\
     Resolution & 300 dpi (main image), 3600 dpi (calibration image) \\
@@ -2502,8 +2559,8 @@ parameters. Multi-byte values are in little-endian format.
   \endfoot
   \\ \caption*{Transaction types: B - Basic, E - Extra parameter, S - Status, I - Image} \\
   \endlastfoot
-  S & {\tt dd0000001200} &  & Idle status query \autoref{appendix_status} \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans} \\
+  S & {\tt dd0000001200} &  & Idle status query (\cref{appendix_status}) \\
+  B & {\tt 000000000000} &  & Readiness check (\cref{ssec:basic_trans}) \\
   E & {\tt 0a0000000800} & \tt 1300040002 006400 & \\
   E & {\tt 0a0000000800} & \tt 1300040004 006400 & \\
   E & {\tt 0a0000000800} & \tt 1300040008 006400 & \\
@@ -2512,34 +2569,34 @@ parameters. Multi-byte values are in little-endian format.
   E & {\tt 0a0000000800} & \tt 1400040008 006400 & \\
   E & {\tt 0a0000000600} & \tt 9500000000 00 & \\
   S & {\tt 080000008000} &  & \\
-  E & {\tt 0a0000000e00} & \tt 12000a0080 0000000000 b829e71a & Set scan area \autoref{table:param0a} \\
+  E & {\tt 0a0000000e00} & \tt 12000a0080 0000000000 b829e71a & Set scan area (\cref{table:param0a}) \\
   E & {\tt 0a0000000600} & \tt 1700020001 00 & \\
   S & {\tt 030000000e00} &  & \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans} \\
-  S & {\tt d70000006700} &  & Read gain / offset values \autoref{appendix_status} \\
+  B & {\tt 000000000000} &  & Readiness check (\cref{ssec:basic_trans}) \\
+  S & {\tt d70000006700} &  & Read gain / offset values (\cref{appendix_status}) \\
   E & {\tt dc0000001d00} & \tt 0000000000 0000000000 0000000000 07001a790b 00fe0f0000 00000000
-                         & Set exposure settings \autoref{table:paramdc} \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans} \\
-  E & {\tt 150000001000} & \tt 000f2c0180 0404000100 0000008010 00 & \autoref{table:paramdc} \\
-  B & {\tt 1b0000000100} &  & Start scan \autoref{ssec:basic_trans} \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, 3rd attempt is successful \\ 
-  S & {\tt d70000006700} &  & Read gain / offset values \autoref{appendix_status} \\
+                         & Set exposure settings (\cref{table:paramdc}) \\
+  B & {\tt 000000000000} &  & Readiness check (\cref{ssec:basic_trans}) \\
+  E & {\tt 150000001000} & \tt 000f2c0180 0404000100 0000008010 00 & Set gain / offset values (\cref{table:paramdc}) \\
+  B & {\tt 1b0000000100} &  & Start scan (\cref{ssec:basic_trans}) \\
+  B & {\tt 000000000000} &  & Readiness check (\cref{ssec:basic_trans}), 3rd attempt is successful \\ 
+  S & {\tt d70000006700} &  & Read gain / offset values (\cref{appendix_status}) \\
   E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
-                         & Set exposure settings \autoref{table:paramdc} \\
-  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \autoref{ssec:rcv_calibimage} \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, 2nd attempt is successful \\
-  I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image \autoref{ssec:rcv_calibimage}  \\
-  S & {\tt d70000006700} &  & Read gain / offset values \autoref{appendix_status} \\
+                         & Set exposure settings (\cref{table:paramdc}) \\
+  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image (\cref{ssec:rcv_calibimage}) \\
+  B & {\tt 000000000000} &  & Readiness check (\cref{ssec:basic_trans}), 2nd attempt is successful \\
+  I & {\tt 08000000ac00} &  & Transfer 172 lines / 1837304 bytes of the calibration image (\cref{ssec:rcv_calibimage}) \\
+  S & {\tt d70000006700} &  & Read gain / offset values (\cref{appendix_status}) \\
   E & {\tt dc0000001d00} & \tt 7b1e2f168c 1017141000 0000212121 070000790b 14000f0000 00000000
-                         & Set exposure settings \autoref{table:paramdc} \\
-  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image \autoref{ssec:rcv_calibimage} \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, 2nd attempt is successful \\
-  S & {\tt 18000014dc00} &  & Read row mask \autoref{appendix_status} \\
-  S & {\tt 0f0000001200} &  & Get size of the main image \autoref{table:imageparam_query}.
-                              Returned status is {\tt bc011f01bc01}... This means the
+                         & Set exposure settings (\cref{table:paramdc}) \\
+  I & {\tt 080000000400} &  & Transfer 4 lines / 42728 bytes of the calibration image (\cref{ssec:rcv_calibimage}) \\
+  B & {\tt 000000000000} &  & Readiness check (\cref{ssec:basic_trans}), 2nd attempt is successful \\
+  S & {\tt 18000014dc00} &  & Read row mask (\cref{appendix_status}) \\
+  S & {\tt 0f0000001200} &  & Get size of the main image (\cref{table:imageparam_query}).
+                              Returned status is {\tt bc011f01bc01...}. This means the
                               image has 287 * 3 (color channels) = 861 lines of 444 bytes each. \\
-  B & {\tt 000000000000} &  & Readiness check \autoref{ssec:basic_trans}, 3rd attempt is successful \\
-  I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image \autoref{ssec:rcv_mainimage}.
+  B & {\tt 000000000000} &  & Readiness check (\cref{ssec:basic_trans}), 3rd attempt is successful \\
+  I & {\tt 08000000d800} &  & Transfer 216 lines / 95904 bytes of the main image (\cref{ssec:rcv_mainimage}).
                               Repeated 3 times.
                               In this case, they are transferred in chunks of 216 lines. It would also
                               be fine to use the simpler scheme with 255 lines / transaction. \\
