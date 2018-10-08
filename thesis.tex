@@ -22,6 +22,9 @@
 \usetikzlibrary{intersections}
 \usetikzlibrary{positioning}
 
+\renewcommand{\subsectionautorefname}{section}
+\renewcommand{\subsubsectionautorefname}{section}
+
 \begin{document}
 
 \title{Developing a driver for a film scanner by means of USB sniffing and reverse engineering}
@@ -30,16 +33,14 @@
 
 \begin{abstract}
 An open-source driver for a film scanner (Reflecta CrystalScan 7200) is created using
-reverse engineering techniques. For this, the USB communication between the device and
+reverse engineering techniques. The USB communication between the device and
 the supplied vendor software is recorded and analyzed. As a first stage, the transferred
 image is reconstructed from the recording.  After that, a program that closely models
 that communication is created to perform scanning without the vendor software.
 Patterns in the transferred data are studied so scan parameters can be customized.
-The popular SANE framework contains a driver for this device,
-which is however not compatible out-of-the-box.
-Using minor code modifications, the SANE driver is made usable.
-Finally, image processing operations relevant to scanning,
-in particular those used for infrared dust removal are described.
+Image processing operations relevant to optimizing scanner images are described.
+The final driver allows for basic operation (receiving usable images) of the device.
+
 \end{abstract}
 
 \section{Introduction}
@@ -55,17 +56,21 @@ undocumented.
 This paper focuses on a scanner for film material. The communication between the
 device and the supplied Windows software is recorded and analyzed. Based on this analysis,
 a working driver supporting basic scanning functionality is created.
+It allows the scanner to be controlled without the vendor-supplied software,
+making it directly usable under Linux. Also, the device-driver communication
+becomes more transparent to developers.
 
-\subsection{The device}
+\subsection{The test device}
 
 The Reflecta CrystalScan 7200 is a device for digitizing 35mm film material like
 slide, color negative and black-and-white negative film.
 It uses a linear CCD sensor on a head moving vertically to record the image on a row-by-row basis.
 The maximum scan resolution is 7200 dots per inch which amounts to around 70 megapixels
-on a 35mm film frame. It also has a feature called Digital ICE: In addition to red, green, blue, it also
-records an infrared channel of the film. The dyes in color film are transparent to infrared light,
+on a 35mm film frame. It also has a feature called Digital Image Correction and Enhancement:
+In addition to red, green and blue, it also records an infrared image of the film.
+The dyes in color film are transparent to infrared light,
 but dust is not, so the information from this channel is useful for removing it in software.
-This scanner is connected via USB. \cite{rcs} \cite{rcs_review}
+This scanner is connected via USB \cite{rcs} \cite{rcs_review}.
 
 \begin{figure}[H]
   \caption{Reflecta CrystalScan 7200}
@@ -80,10 +85,10 @@ provides basic functionality (adjust resolution, scan area, image processing par
 The software only runs on the Windows and macOS operating systems.
 
 For the Linux operating system, there is a community effort to build scanning software
-called SANE \cite{saneproject}. As opposed to vendor-supplied software, it supports many scanners
-from various manufacturers. Unfortunately, my scanner was not yet supported.
+called SANE (Scanner Access Now Easy) \cite{saneproject}. As opposed to vendor-supplied software, it supports many scanners
+from various manufacturers. Unfortunately, the test device was not yet supported.
 There exist third-party software products that support this scanner: VueScan \cite{vuescan}
-and SilverFast \cite{silverfast}. VueScan also runs on Linux. These however are commercial software
+and SilverFast \cite{silverfast}. VueScan also runs on Linux. These, however, are commercial software
 and not open-sourced.
 
 \subsection{Reverse engineering}
@@ -103,16 +108,14 @@ was communicating with the vendor-supplied software.
 \section{The USB standard}
 \label{sec:usb}
 
-\subsection{Motivation}
-
-USB is an interface intended to connect various peripherals to PCs. These include:
-Human interface devices like keyboards and mice; storage devices like card readers,
+USB (Universal Serial Bus) is an interface intended to connect various peripherals to PCs. These include:
+human interface devices like keyboards and mice; storage devices like card readers,
 external hard disks, memory sticks and smartphones; multimedia devices like microphones, speakers,
-cameras and scanners. Some highlights leading to its wide adoption \cite[p. 11]{usbstd}:
+cameras and scanners. Some highlights leading to its wide adoption \cite[p. 11]{usbstd} are:
 
 \begin{itemize}
   \item Unified interface for all kinds of peripherals
-  \item Plug and play: The user plugs in the device, the configuration (e.g. loading the appropriate drivers)
+  \item Plug and play: the user plugs in the device, the configuration (e.g., loading the appropriate drivers)
   is done automatically by the operating system
   \item Number of ports can be increased using hubs. Multiple hubs can be chained
         allowing for up to 127 devices on a single root port.
@@ -125,20 +128,24 @@ cameras and scanners. Some highlights leading to its wide adoption \cite[p. 11]{
 
 \subsection{Electrical side}
 
-A USB cable has four wires: One as ground, VBUS for a 5 V power supply and two for data transmission.
+A USB cable has four wires: one as ground, VBUS for a 5 V power supply and two for data transmission (\autoref{fig:usbcable}).
 The power line allows it to draw up to 100 mA without any configuration. This is useful for simple
 devices that are not using the data lanes, just the power, like USB lights. Also it allows for devices
 not taking much power to be self-powered which eliminates the need for an extra power supply and connector.
 Devices can ask the host for more power (up to 500 mA), those that need even more (like a lot of scanners) need
-an external supply. \cite[p. 17f.]{usbstd}
+an external supply \cite[p. 17f.]{usbstd}.
 
 \begin{figure}[H]
   \caption{USB cable cross-section (after \cite[p. 17]{usbstd})}
   \centering
   \scalebox{2}{\input{images/tikz/usb_cable.tex}}
+  \label{fig:usbcable}
 \end{figure}
 
 \subsection{Signaling}
+
+On the lowest level, data on the USB bus is transmitted using changes in voltage
+between the two data transmission wires.
 
 \subsubsection{Low-level states}
 
@@ -160,7 +167,7 @@ Higher frequencies and thus data rates become possible.
 \end{table}
 
 \begin{table}[H]
-  \caption{Low-level data line states (only applies to Full Speed) \cite[p. 145]{usbstd}}
+  \caption{Low-level data line states (only applies to Full Speed / USB 1.1 links) \cite[p. 145]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | X}
     Levels & State \\ \hline
@@ -183,22 +190,22 @@ Higher frequencies and thus data rates become possible.
 Low Speed is used for devices where speed is not important (mice, keyboards).
 It allows for cheaper cables and electronics. High Speed is only available
 in USB 2.0. For reasons of simplicity, only full speed signaling will be covered
-here. \cite[p. 12]{usbstd}
+here \cite[p. 12]{usbstd}.
 
 SE0 is the state of the data lines if no device is connected. The host
 recognizes a device being plugged in by the D+ line being "pulled up" to high.
 It then most likely initiates a reset so the device is in a known state for
-communication to begin. Similarly, a disconnect is sensed by a SE0 for some time.
-\cite[p. 149]{usbstd}
+communication to begin. Similarly, a disconnect is sensed by a SE0 for some time
+\cite[p. 149]{usbstd}.
 
 It is important to note that {\bf all communication on the USB bus is initiated by the
-host}. Devices on the bus can not directly talk to each other and can only talk
-to the host as a direct response to a request made by it before.
-\cite[p. 27]{usbstd}
+host}. Devices on the bus cannot directly talk to each other and can only talk
+to the host as a direct response to a request made by it before
+\cite[p. 27]{usbstd}.
 
 \subsubsection{Bitstream encoding}
 
-USB uses NRZI encoding for the transmitted data: A zero is represented by a change to
+USB uses NRZI (Non-return-to-zero inverted) encoding for the transmitted data: A zero is represented by a change to
 the opposite state while a one is represented by staying in the same state.
 
 \begin{figure}[H]
@@ -210,8 +217,8 @@ the opposite state while a one is represented by staying in the same state.
 For keeping the receiver clock in sync with the data it is not ideal if the signal
 stays at J or K for too long. To prevent this, a technique called "bit stuffing"
 is used: Before doing NRZI encoding, a zero is inserted after every six consecutive ones
-in the data. The receiver recognizes the stuffed bits during decoding and discards them.
-\cite[p. 157]{usbstd}
+in the data. The receiver recognizes the stuffed bits during decoding and discards them
+\cite[p. 157]{usbstd}.
 
 \subsection {Packets}
 
@@ -219,7 +226,7 @@ Packets are the atomic unit of data transmission in USB. In between packet trans
 the bus remains in an idle state. Every packet starts with a sync pattern to synchronize
 the clocks between sender and receiver. Next are the actual data bits. The packet is
 terminated by an EOP state. Fields in a packet are transmitted least-significant
-bit first. \cite[p. 195]{usbstd}
+bit first \cite[p. 195]{usbstd}.
 
 The first 8 bits of every packet contain the packet ID (PID) which identifies its type
 and thus how the rest of the packet data should be interpreted. The PID is 4 bits long,
@@ -258,9 +265,10 @@ some are only relevant for High Speed) \cite[p. 195]{usbstd}:
   \caption{Token packet format (after \cite[p. 199]{usbstd})}
   \centering
   \scalebox{1}{\input{images/tikz/usb_tokenpacket.tex}}
+  \label{fig:tokenpacket}
 \end{figure}
 
-Token packets are used at the start of so-called transactions to specify the target
+Token packets (\autoref{fig:tokenpacket}) are used at the start of so-called transactions to specify the target
 of the transaction on the bus, namely a certain device and endpoint. There are 127
 possible devices on a bus (address 0 is reserved for a device that has not been configured yet).
 \cite[p. 256]{usbstd}
@@ -271,6 +279,8 @@ Endpoint 0 is a special bidirectional pipe that must be available on every devic
 right after the reset. It is used mainly for identifying and configuring the device.
 \cite[p. 33]{usbstd}
 
+A 5-bit checksum validates the endpoint and address information.
+
 \subsubsection{Data packet}
 
 \begin{figure}[H]
@@ -280,6 +290,7 @@ right after the reset. It is used mainly for identifying and configuring the dev
 \end{figure}
 
 Used to transmit the actual data in a transaction.
+A 16-bit checksum validates the transmitted data.
 
 \subsubsection{Handshake packet}
 
@@ -293,7 +304,7 @@ Used to report the status of a transaction.
 
 \subsection{Transfers}
 
-Transfers are the abstraction level of data exchange as seen at the software
+Transfers (\autoref{fig:usbtransfer}) are the abstraction level of data exchange as seen at the software
 side of the host. From the host's perspective, a transfer transmits a string of
  bytes from / to the device. A transfer is directed to one of the device's endpoints,
 each of them has one of four transfer types plus a transfer direction
@@ -313,9 +324,10 @@ packets \cite[p. 209ff.]{usbstd}:
 Transfers usually consist of multiple transactions.
 
 \begin{figure}[H]
-  \caption{Composition of a USB transfer (after \cite[p. 44]{uc})}
+  \caption{Composition of a USB transfer (after \cite[p. 44]{uc}).}
   \centering
   \scalebox{1}{\input{images/tikz/usb_composition.tex}}
+  \label{fig:usbtransfer}
 \end{figure}
 
 \subsubsection {Control transfer}
@@ -325,7 +337,7 @@ are message-based. This means each transfer is for a specific message which has
 defined length, format and purpose. There can be transfers in either direction
 on the same endpoint, although each transfer has a specified (data stage) direction.
 Control transfers start with a Setup stage / transaction specifying the target device
-and endpoint plus an extra 8 bytes of data called the Device Request. \cite[p. 38f.]{usbstd}
+and endpoint plus an extra 8 bytes of data called the Device Request \cite[p. 38f.]{usbstd}.
 
 \begin{table}[H]
   \caption{Device Request format \cite[p. 248]{usbstd}}
@@ -440,7 +452,7 @@ Despite the name, interrupt transfers have nothing to do with hardware interrupt
 All communication on the USB bus is initiated by the host, so it has to poll the device
 for data.
 Typical uses for interrupt transfers are receiving key presses from keyboards and
-movements from mice. \cite[p. 48ff.]{usbstd}
+movements from mice \cite[p. 48ff.]{usbstd}.
 
 \subsubsection {Isochronous transfer}
 
@@ -449,8 +461,8 @@ latency. Compared to interrupt transfers, they offer a guaranteed transfer rate
 (with interrupt transfers the interval between two transfers can be anywhere
 between zero and the specified maximum). The drawback is a lack of any handshake
 / retry mechanism.
-Typical uses for isochronous transfers are USB sound cards or webcams.
-\cite[p. 44ff.]{usbstd}
+Typical uses for isochronous transfers are USB sound cards or webcams
+\cite[p. 44ff.]{usbstd}.
 
 \subsection{Device initialization}
 \label{devinit}
@@ -522,11 +534,10 @@ are unique per device.
 
 Configurations are profiles that define one or more interfaces for the device
 and their characteristics.
-Only one configuration can be active at a time.
-\cite[p. 244]{usbstd}
+Only one configuration can be active at a time \cite[p. 244]{usbstd}.
 
 \begin{table}[H]
-  \caption{Configuration descriptor format \cite[p. 265]{usbstd}}
+  \caption{Configuration descriptor format \cite[p. 265]{usbstd}.}
   \centering
   \begin{tabularx}{\textwidth}{l | l | l | X}
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
@@ -547,8 +558,8 @@ Only one configuration can be active at a time.
 
 Interfaces are sets of related endpoints that together provide a certain feature
 of the device. Devices can have multiple active interfaces at the same time.
-Additionally, interfaces can have alternate settings that change its endpoints' characteristics.
-\cite[p. 244]{usbstd}
+Additionally, interfaces can have alternate settings that change its endpoints' characteristics
+\cite[p. 244]{usbstd}.
 
 Device drivers are often assigned to serve a specific interface rather than an entire device.
 
@@ -573,10 +584,10 @@ Device drivers are often assigned to serve a specific interface rather than an e
 
 \subsubsection{Endpoint descriptor}
 
-Endpoint descriptors specify an endpoint's address, type and polling interval.
+Endpoint descriptors specify an endpoint's address, type, and polling interval.
 
 \begin{table}[H]
-  \caption{String descriptor format \cite[p. 269ff.]{usbstd}}
+  \caption{Endpoint descriptor format \cite[p. 269ff.]{usbstd}}
   \centering
   \begin{tabularx}{\textwidth}{l | l | l | X}
     \begin{tabular}{@{}l} Offset \\ (bytes) \end{tabular} & Field &
@@ -946,7 +957,7 @@ To find the exact line width, the guessed line width was incremented / decrement
 The line width is correct when vertical lines in the image (mountain peaks in this case) no
 longer appear distorted. The correct line width was found to be 1645.
 
-Only the high bytes were kept to transform the 16-bit pixel values to 8-bit grayscale \autoref{capture_highlowbytes},
+Only the high bytes were kept to transform the 16-bit pixel values to 8-bit grayscale (\autoref{capture_highlowbytes}),
 this is done with the {\it --byteNth 2} option and a proper {\it --byteOffset}. In this capture,
 the high bytes are at even offsets (use trial-and-error), so {\it --byteOffset} must be even to keep
 high rather than low bytes. This however depends on the number of bytes before the actual image.
